@@ -11,8 +11,38 @@ nodes by hand.</p>
 </div>
 <pre class="md-hero-install"><code>remotes::install_github("hdbt/metrodag")</code></pre>
 </div>
-<div class="md-hero-figure">
-<img src="gallery/annotated_04_statin_events.svg" alt="A twelve-variable DAG of statin therapy and vascular events, with adjusted, unobserved, exposure and outcome variables marked." />
+<div class="md-hero-figure md-views">
+<div class="md-views-head">
+<p class="md-views-kicker">One layout, three analyses</p>
+<div class="md-views-tabs">
+<input type="radio" name="md-view" id="md-view-pick-1" class="md-views-pick md-views-pick-view" />
+<label for="md-view-pick-1" class="md-views-tab md-views-tab-1">Unadjusted</label>
+<input type="radio" name="md-view" id="md-view-pick-2" class="md-views-pick md-views-pick-view" />
+<label for="md-view-pick-2" class="md-views-tab md-views-tab-2">Adjusted</label>
+<input type="radio" name="md-view" id="md-view-pick-3" class="md-views-pick md-views-pick-view" />
+<label for="md-view-pick-3" class="md-views-tab md-views-tab-3">Unobserved confounder</label>
+<input type="radio" name="md-view" id="md-view-auto" class="md-views-pick" checked />
+<label for="md-view-auto" class="md-views-tab md-views-resume">Play</label>
+</div>
+</div>
+<div class="md-views-stage" role="img" aria-label="One DAG of alcohol use and coronary events, drawn three times on the same layout. Unadjusted: three backdoor paths are open. Adjusted for household income, baseline health and smoking: every backdoor path is blocked. Baseline health unobserved: its backdoor path stays open. No variable moves between the views.">
+<div class="md-view md-view-1"><img src="views/alcohol-unadjusted.svg" alt="" /></div>
+<div class="md-view md-view-2"><img src="views/alcohol-adjusted.svg" alt="" /></div>
+<div class="md-view md-view-3"><img src="views/alcohol-unobserved.svg" alt="" /></div>
+</div>
+<div class="md-views-captions" aria-hidden="true">
+<p class="md-views-caption md-views-caption-1">No adjustment: three backdoor paths from alcohol use to coronary events stay open.</p>
+<p class="md-views-caption md-views-caption-2">Adjusting for income, baseline health and smoking blocks every backdoor path.</p>
+<p class="md-views-caption md-views-caption-3">Baseline health is unobserved, so its backdoor path cannot be blocked.</p>
+</div>
+<div class="md-views-legend" aria-hidden="true">
+<span class="md-views-key"><span class="md-key md-key-exposure"></span>Exposure</span>
+<span class="md-views-key"><span class="md-key md-key-outcome"></span>Outcome</span>
+<span class="md-views-key"><span class="md-key md-key-adjusted"></span>Adjusted</span>
+<span class="md-views-key"><span class="md-key"></span>Observed, not adjusted</span>
+<span class="md-views-key"><span class="md-key md-key-unobserved"></span>Unobserved</span>
+<span class="md-views-key"><span class="md-key md-key-path"></span>Open backdoor path</span>
+</div>
 </div>
 </div>
 

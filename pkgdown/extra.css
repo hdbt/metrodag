@@ -117,6 +117,138 @@
 }
 .md-hero-figure img { display: block; width: 100%; height: auto; }
 
+/* ---- Hero: one layout, three analysis views ------------------------------
+   Three frames of one DAG are stacked and crossfaded on a 13.5 s cycle
+   (4.5 s per view, 0.7 s fades). Frame 1 stays opaque underneath, so only one
+   layer fades at a time and arrows shared by two views never dim. Captions
+   and tabs follow the same clock through negative delays. Picking a tab pins
+   that view; "Play" resumes the cycle. */
+.md-views { padding: 1rem 1.1rem 0.9rem; }
+.md-views p { margin: 0; }
+
+.md-views-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.6rem 1rem;
+  margin-bottom: 0.4rem;
+}
+.md-views-kicker {
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--md-blue-ink);
+}
+/* Pandoc wraps the inline inputs and labels in a <p>. */
+.md-views-tabs, .md-views-tabs > p { display: flex; flex-wrap: wrap; align-items: center; gap: 0.35rem; }
+.md-views-tab {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.25rem 0.7rem;
+  border: 1px solid #C9D3DD;
+  border-radius: 999px;
+  background: #fff;
+  color: var(--md-ink-soft);
+  font-size: 0.8rem;
+  font-weight: 600;
+  line-height: 1.3;
+  cursor: pointer;
+  user-select: none;
+}
+.md-views-tab:hover { border-color: var(--md-navy); color: var(--md-navy); }
+.md-views-pick { position: absolute; width: 1px; height: 1px; margin: -1px; opacity: 0; pointer-events: none; }
+.md-views-pick:focus-visible + .md-views-tab { outline: 2px solid var(--md-blue-ink); outline-offset: 2px; }
+.md-views-pick:checked + .md-views-tab { background: var(--md-navy); border-color: var(--md-navy); color: #fff; }
+.md-views-resume { display: none; }
+.md-views:has(.md-views-pick-view:checked) .md-views-resume { display: inline-flex; }
+
+/* The frames' layout padding leaves ~50 pt of blank canvas above the drawing
+   and ~21 pt below; trim 6% of the width (27 pt) from the top of every frame. */
+.md-views-stage { display: grid; overflow: hidden; }
+.md-view { grid-area: 1 / 1; }
+.md-view img { margin-top: -6%; }
+.md-view-2, .md-view-3 { opacity: 0; }
+
+.md-views-captions { display: grid; margin-top: 0.35rem; }
+.md-views-caption {
+  grid-area: 1 / 1;
+  opacity: 0;
+  text-align: center;
+  font-size: 0.95rem;
+  font-weight: 500;
+  color: var(--md-navy);
+}
+.md-views-caption-1 { opacity: 1; }
+
+.md-view-2 { animation: md-view-2 13.5s ease-in-out infinite; }
+.md-view-3 { animation: md-view-3 13.5s ease-in-out infinite; }
+.md-views-caption { animation: md-view-slot 13.5s ease-in-out infinite; }
+.md-views-tab-1, .md-views-tab-2, .md-views-tab-3 { animation: md-view-tab 13.5s ease-in-out infinite; }
+/* After the shorthands above, which reset the delay. */
+.md-views-caption-2, .md-views-tab-2 { animation-delay: -9s; }
+.md-views-caption-3, .md-views-tab-3 { animation-delay: -4.5s; }
+
+@keyframes md-view-2 {
+  0%, 28.15% { opacity: 0; }
+  33.33%, 66.67% { opacity: 1; }
+  66.68%, 100% { opacity: 0; }
+}
+@keyframes md-view-3 {
+  0%, 61.48% { opacity: 0; }
+  66.67%, 94.81% { opacity: 1; }
+  100% { opacity: 0; }
+}
+@keyframes md-view-slot {
+  0%, 28.15% { opacity: 1; }
+  30.74%, 97.41% { opacity: 0; }
+  100% { opacity: 1; }
+}
+@keyframes md-view-tab {
+  0%, 28.15% { background-color: #1F2A36; border-color: #1F2A36; color: #fff; }
+  30.74%, 97.41% { background-color: #fff; border-color: #C9D3DD; color: #5B6775; }
+  100% { background-color: #1F2A36; border-color: #1F2A36; color: #fff; }
+}
+
+/* A picked view stays put. */
+.md-views:has(.md-views-pick-view:checked) :is(.md-view, .md-views-caption, .md-views-tab) { animation: none; }
+.md-views:has(.md-views-pick-view:checked) .md-views-caption-1 { opacity: 0; }
+.md-views:has(#md-view-pick-1:checked) .md-views-caption-1,
+.md-views:has(#md-view-pick-2:checked) :is(.md-view-2, .md-views-caption-2),
+.md-views:has(#md-view-pick-3:checked) :is(.md-view-3, .md-views-caption-3) { opacity: 1; }
+
+/* The figure's legend, drawn once for all three views. */
+.md-views-legend, .md-views-legend > p {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.3rem 1rem;
+}
+.md-views-legend {
+  margin-top: 0.7rem;
+  padding-top: 0.65rem;
+  border-top: 1px solid var(--md-line);
+  font-size: 0.76rem;
+  color: var(--md-ink-soft);
+}
+.md-views-key { display: inline-flex; align-items: center; white-space: nowrap; }
+.md-key {
+  display: inline-block;
+  flex: none;
+  width: 0.7rem;
+  height: 0.7rem;
+  margin-right: 0.35rem;
+  border: 1.5px solid #34424D;
+  border-radius: 50%;
+  background: #fff;
+}
+.md-key-exposure { background: #0072B2; border-color: #0072B2; }
+.md-key-outcome { background: #D55E00; border-color: #D55E00; }
+.md-key-adjusted { border-radius: 1px; background: #DDE2E6; }
+.md-key-unobserved { border-style: dashed; }
+.md-key-path { width: 1.1rem; height: 0; border: 0; border-top: 3px solid #C0392B; border-radius: 0; }
+
 /* ---- Gallery ------------------------------------------------------------- */
 .md-gallery {
   display: grid;
@@ -156,7 +288,16 @@ main:has(.md-hero) h2 { margin-top: 2.25rem; font-weight: 750; letter-spacing: -
   .md-hero .page-header .logo { height: 72px; }
 }
 
+@media (max-width: 575.98px) {
+  .md-views { padding: 0.8rem 0.7rem 0.75rem; }
+  .md-views-caption { font-size: 0.88rem; }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .md-gallery-item { transition: none; }
   .md-gallery-item:hover { transform: none; }
+  /* Show the first view; the tabs still switch views. */
+  .md-views :is(.md-view, .md-views-caption, .md-views-tab) { animation: none; }
+  .md-views:not(:has(.md-views-pick-view:checked)) .md-views-tab-1 { background: #1F2A36; border-color: #1F2A36; color: #fff; }
+  .md-views-resume { display: none !important; }
 }
