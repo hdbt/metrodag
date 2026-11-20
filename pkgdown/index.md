@@ -28,6 +28,26 @@ labelled smoking and lung cancer diagram, explains the inputs, and checks the
 export. Install the development version with
 `remotes::install_github("hdbt/metrodag")`.
 
+## How metrodag differs from other DAG tools
+
+- **Layout and drawing are separate.** `layout_metro_dag()` computes the
+  geometry; `metro_dag()` and `plot_metro_dag()` draw it. To show several
+  analyses of one graph, reuse `attr(p, "metrodag_layout")` instead of
+  recomputing the layout.
+- **Roles are annotations you supply.** `exposure`, `outcome`, `adjusted`,
+  `unobserved` and `selected` are never inferred from the graph, and they never
+  move nodes or arrows.
+- **`estimand` is a label, not a check.** Call `check_metro_adjustment()`
+  (requires dagitty) to test an adjustment set; plotting never runs it.
+- **metrodag is not built on ggdag.** dagitty and ggdag objects are accepted as
+  input, but metrodag draws its own layers: restyle with `metro_style()` and
+  `edge_style` rather than ggdag geoms. Ordinary ggplot2 additions such as
+  `ggplot2::labs()` still work.
+- **Text is measured on the output device.** `ggplot2::ggsave()` works, but
+  `save_metro_dag()` adds journal column widths and automatic height, and
+  refuses to write a figure that cannot fit every arrow. Check the figure with
+  `diagnose_metro_dag()` at its final width and format.
+
 ## Choose a guide
 
 | What you want to do | Read |

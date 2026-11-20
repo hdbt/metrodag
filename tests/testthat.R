@@ -14,6 +14,7 @@ if (isTRUE(as.logical(Sys.getenv("NOT_CRAN")))) {
   cran_tests <- c(
     "adjustment-views", "causal-safety", "comparison-nudges", "components",
     "composition", "conventions", "crossing-input-regressions", "dagitty",
+    "documentation-coverage",
     "diagnostics", "examples", "export-path-scale-regressions",
     "ggdag-compatibility", "graph-inputs", "layout", "node-groups",
     "route-resolution", "style", "tidygraph-compatibility",

@@ -21,16 +21,69 @@ appearance. The vignettes \code{vignette("metrodag")},
 \code{vignette("analysis-views")}, \code{vignette("publication")} and
 \code{vignette("algorithm")} cover the workflow.
 }
+\section{Workflow}{
+
+\enumerate{
+\item Supply a graph: an igraph or tidygraph object, a dagitty or ggdag DAG, a
+two-column edge matrix, a data frame with \code{from} and \code{to} columns, or
+tables built with \code{\link[=metro_graph]{metro_graph()}} or \code{\link[=metro_graph_from_adjacency]{metro_graph_from_adjacency()}}.
+\code{\link[=metrodag_examples]{metrodag_examples()}} returns small teaching graphs to try.
+\item Draw it with \code{\link[=metro_dag]{metro_dag()}}, giving roles (\code{exposure}, \code{outcome},
+\code{adjusted}, \code{unobserved}, \code{selected}) and display \code{labels}. For more
+control, compute the geometry with \code{\link[=layout_metro_dag]{layout_metro_dag()}} (\code{rank},
+\code{align}, \code{direction}) and draw it with \code{\link[=plot_metro_dag]{plot_metro_dag()}}.
+\item Show other analyses of the same graph on the same geometry: pass
+\code{attr(p, "metrodag_layout")} back to \code{\link[=metro_dag]{metro_dag()}}, or use
+\code{\link[=compare_metro_dags]{compare_metro_dags()}} for aligned panels.
+\item Optionally check an adjustment set with \code{\link[=check_metro_adjustment]{check_metro_adjustment()}} and
+emphasise open paths with \code{\link[=highlight_paths]{highlight_paths()}} (both need dagitty).
+\item Check the figure with \code{\link[=diagnose_metro_dag]{diagnose_metro_dag()}} at its final width and
+device, then export it with \code{\link[=save_metro_dag]{save_metro_dag()}}, or compose it with other
+plots through \code{\link[=as_metro_grob]{as_metro_grob()}}. \code{\link[=layout_metrics]{layout_metrics()}} and
+\code{\link[=count_crossings]{count_crossings()}} quantify the drawing.
+}
+}
+
+\section{How metrodag differs from other DAG tools}{
+
+\itemize{
+\item Layout and drawing are separate steps, and the layout is deterministic:
+the same graph gives the same drawing on every platform.
+\item Roles are annotations supplied by the analyst. Nothing is inferred from
+the graph, and annotations never move nodes or arrows.
+\item \code{estimand} is a descriptive label, not an identification check; plotting
+never runs \code{\link[=check_metro_adjustment]{check_metro_adjustment()}} implicitly.
+\item metrodag is not built on ggdag. dagitty and ggdag objects are accepted as
+input, but metrodag draws its own layers: restyle with \code{\link[=metro_style]{metro_style()}} and
+\code{edge_style} rather than ggdag geoms. Ordinary ggplot2 additions such as
+\code{\link[ggplot2:labs]{ggplot2::labs()}} still work.
+\item Text is measured on the output device. \code{\link[ggplot2:ggsave]{ggplot2::ggsave()}} works, but
+\code{\link[=save_metro_dag]{save_metro_dag()}} adds journal column widths (\code{"single"}, \code{"1.5"},
+\code{"double"}) and automatic height, and refuses to write a figure that
+cannot fit every arrow.
+}
+}
+
+\examples{
+edges <- data.frame(
+  from = c("C", "C", "X", "M"),
+  to   = c("X", "Y", "M", "Y")
+)
+p <- metro_dag(edges, exposure = "X", outcome = "Y", adjusted = "C")
+
+# Reuse the same geometry for another analysis view
+fixed <- attr(p, "metrodag_layout")
+crude <- metro_dag(fixed, exposure = "X", outcome = "Y", unadjusted = TRUE)
+
+out <- tempfile(fileext = ".pdf")
+save_metro_dag(out, p, width = "single")
+unlink(out)
+}
 \seealso{
 \code{\link[=metro_dag]{metro_dag()}}, \code{\link[=layout_metro_dag]{layout_metro_dag()}}, \code{\link[=plot_metro_dag]{plot_metro_dag()}},
 \code{\link[=save_metro_dag]{save_metro_dag()}}, \code{\link[=metro_style]{metro_style()}}
 }
 \author{
 \strong{Maintainer}: Hamid Bulut \email{me@hamidbulut.com} [copyright holder]
-
-Authors:
-\itemize{
-  \item Hamid Bulut \email{me@hamidbulut.com} [copyright holder]
-}
 
 }

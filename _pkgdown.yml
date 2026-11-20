@@ -37,11 +37,17 @@ reference:
       - metro_style
       - metrodag_examples
   - title: Compare analyses and check adjustment
+    desc: >
+      Show several analyses on one fixed geometry, and test adjustment sets
+      with the optional dagitty package.
     contents:
       - compare_metro_dags
       - check_metro_adjustment
       - highlight_paths
   - title: Inspect and export figures
+    desc: >
+      Check a figure at its printed size, export it at journal widths, compose
+      it with other plots, and quantify the layout.
     contents:
       - diagnose_metro_dag
       - save_metro_dag
@@ -49,6 +55,7 @@ reference:
       - layout_metrics
       - count_crossings
   - title: Package
+    desc: Workflow overview and how metrodag differs from other DAG tools.
     contents:
       - metrodag-package
 figures:
