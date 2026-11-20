@@ -1,0 +1,216 @@
+---
+title: "Getting started with metrodag"
+description: "Build, annotate, inspect, and export your first causal diagram."
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Getting started with metrodag}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(collapse = TRUE, comment = "#>", error = FALSE,
+  fig.width = 7, fig.height = 3, fig.align = "center",
+  dev = if (requireNamespace("svglite", quietly = TRUE)) "svglite" else "png",
+  fig.ext = if (requireNamespace("svglite", quietly = TRUE)) "svg" else "png",
+  dev.args = list(bg = "white"))
+```
+
+## What you will make
+
+This guide takes you from a table of assumed causal relationships to a labelled
+figure that you can save for a manuscript. You only need basic R: no knowledge
+of igraph or manual node coordinates is required.
+
+Our illustrative question is whether smoking affects lung cancer, possibly
+through tar deposits in the lung. We assume that socioeconomic background
+affects both smoking and lung cancer. These are teaching assumptions, not findings
+about the real world. A DAG records the relationships you posit; metrodag
+chooses where to draw the variables and arrows.
+
+## Install and load the package
+
+Install the development version from GitHub. Include `build_vignettes = TRUE`
+if you want these guides available through R's `vignette()` interface; building
+them also requires knitr, rmarkdown, and Pandoc.
+
+```{r installation, eval=FALSE}
+install.packages("remotes") # Once, if needed
+remotes::install_github("hdbt/metrodag")
+
+# Optional: install with locally browsable guides
+# install.packages(c("knitr", "rmarkdown"))
+# remotes::install_github("hdbt/metrodag", build_vignettes = TRUE)
+```
+
+```{r load}
+library(metrodag)
+```
+
+## 1. Write down the arrows
+
+Each row is one arrow, from the variable in `from` to the variable in `to`.
+Use short, stable identifiers in this table. You will add readable labels later.
+
+```{r edges}
+edges <- data.frame(
+  from = c("C", "C", "X", "X", "M"),
+  to   = c("X", "Y", "M", "Y", "Y")
+)
+edges
+```
+
+Here `C` denotes socioeconomic background, `X` cigarettes per day, `M` tar
+deposits, and `Y` lung cancer. `C -> X` and `C -> Y` encode a possible common cause
+of smoking and lung cancer. `X -> M -> Y` represents the proposed mediated pathway;
+`X -> Y` allows a pathway that does not pass through `M`.
+
+Arrows specify direction, not effect size or sign. Missing arrows are also
+substantive assumptions. The graph must be directed and acyclic: feedback over
+time needs distinct variables for the different occasions.
+
+## 2. Draw the graph
+
+```{r first-dag, fig.cap="The assumed graph, initially drawn using its short variable identifiers.", fig.alt="Four-node DAG: C points to X and Y; X points to M and Y; M points to Y."}
+p <- metro_dag(edges)
+p
+```
+
+Layout and edge routing happen automatically. `metro_dag()` returns a ggplot
+object; printing it renders the diagram at the current device size. Lines can
+cross or share part of a route: only a station marker represents a variable,
+and only the supplied arrow endpoints define relationships.
+
+## 3. Add readable names and the research target
+
+```{r labelled-dag, fig.cap="The same graph with readable labels and an explicit exposure and outcome.", fig.alt="The graph labels C as socioeconomic background, X as cigarettes per day, M as tar deposits, and Y as lung cancer. X and Y have filled role markers."}
+display_labels <- c(
+  C = "Socioeconomic background",
+  X = "Cigarettes per day",
+  M = "Tar deposits",
+  Y = "Lung cancer"
+)
+
+p <- metro_dag(
+  edges,
+  labels = display_labels,
+  exposure = "X",
+  outcome = "Y"
+)
+p
+```
+
+The names of `display_labels` match the identifiers in `edges`. Changing a
+display label does not rename the variable. Arguments such as `exposure`,
+`outcome`, and `adjusted` always use identifiers, so write `exposure = "X"`,
+not `exposure = "Cigarettes per day"`.
+
+The filled exposure and outcome markers describe your chosen research target.
+An ordinary hollow circle denotes an observed variable without another selected
+role. It does not mean the variable is irrelevant. In particular, `M` does not
+need a special mediator marker: its proposed position in the graph is visible
+from the arrows. Adjustment annotations and unobserved variables are covered in
+[Variables, adjustment sets, and analysis views](analysis-views.html).
+
+## 4. Check and save the figure
+
+Check the size and format you intend to export. Width is in millimetres by
+default; 180 mm is an example two-column width, not a universal journal rule.
+
+```{r diagnose}
+report <- diagnose_metro_dag(p, width = 180, device = "pdf")
+report
+report$issues
+```
+
+`report$ok` is `FALSE` if a rendering error is detected. Warnings still need
+inspection even when it is `TRUE`. This checks the drawing, not the causal
+assumptions or the appropriateness of an adjustment set.
+
+The following exports actually run when this guide is built. They use a
+temporary directory so trying the example will not overwrite your own figures.
+
+```{r export}
+figure_dir <- tempdir()
+save_metro_dag("smoking.pdf", p, path = figure_dir, width = 180)
+save_metro_dag("smoking.svg", p, path = figure_dir, width = 180)
+save_metro_dag("smoking.png", p, path = figure_dir, width = 180, dpi = 300)
+```
+
+For your project, create a permanent directory and pass its name as `path`:
+
+```{r project-export, eval=FALSE}
+dir.create("figures", showWarnings = FALSE)
+save_metro_dag("smoking.pdf", p, path = "figures", width = 180)
+```
+
+PDF and SVG retain vector lines and text. PNG is a raster image; its resolution
+depends on `dpi`. The export function chooses a height if you omit it and
+recalculates labels on the export device. Always inspect the saved file at its
+intended printed size. See [Preparing figures for publication](publication.html)
+for dimensions, fonts, alternative styles, and troubleshooting.
+
+## Already have a graph?
+
+You can enter the same graph in several ways:
+
+| Your starting point | Input to `metro_dag()` |
+|:--|:--|
+| An edge table | A data frame with `from` and `to` columns |
+| An edge matrix | A two-column matrix of variable identifiers |
+| Separate node and edge tables | Construct the graph with `metro_graph(nodes, edges)` |
+| A named binary adjacency matrix | Construct the graph with `metro_graph_from_adjacency(adjacency)` |
+| An igraph graph | A directed, simple, acyclic `igraph` object |
+| A tidygraph graph | A directed acyclic `tbl_graph`, in either active context |
+| A DAGitty model | A `dagitty` DAG with directed edges and supported node statuses |
+| A ggdag model | A `tidy_dagitty` object whose plotting data agrees with its embedded DAG |
+| A diagram you want to reuse | The `metrodag_layout` stored on an existing plot |
+
+For example, this uses igraph without changing the graph's causal structure:
+
+```{r igraph-input}
+g <- igraph::graph_from_data_frame(edges, directed = TRUE)
+from_igraph <- metro_dag(g, labels = display_labels,
+  exposure = "X", outcome = "Y")
+```
+
+An edge list cannot declare a variable that has no arrows. Use a node table to
+retain isolated variables and display metadata:
+
+```{r node-table}
+nodes <- data.frame(
+  name = c("C", "X", "M", "Y", "I"),
+  label = c(unname(display_labels[c("C", "X", "M", "Y")]), "Isolated variable")
+)
+with_isolate <- metro_graph(nodes, edges)
+```
+
+The returned graph works with `metro_dag()` and the other graph entry points.
+An adjacency matrix must use the explicit `metro_graph_from_adjacency()`
+constructor: a matrix passed directly to `metro_dag()` is always interpreted as
+a two-column edge list, including a 2 by 2 matrix. In an adjacency matrix,
+row A, column B equal to 1 means `A -> B`; rows and columns must name the same
+variables, and weights other than 0 or 1 are unsupported.
+
+DAGitty and ggdag inputs require their optional packages. Their original
+coordinates are replaced with metrodag's layout. See the import example and
+supported statuses in the [analysis guide](analysis-views.html#starting-from-dagitty).
+Inconsistent ggdag plotting data and embedded graph metadata are rejected;
+converting a plotting table alone would discard causal information.
+
+## Where to go next
+
+- [Variables, adjustment sets, and analysis views](analysis-views.html): distinguish
+  observability from adjustment, reuse a layout, compare analyses, and check a
+  total-effect adjustment set with DAGitty.
+- [Preparing figures for publication](publication.html): tailor labels, styles,
+  temporal ranks, alignment, and exports to the space available.
+- [Algorithm and constraints](algorithm.html): understand the layout heuristic,
+  its diagnostics, and its limitations.
+- [Six annotated examples](https://github.com/hdbt/metrodag/blob/main/inst/benchmarks/REPORT.md):
+  inspect larger social and environmental research diagrams and their complete
+  generation script.
+
+For an individual argument, use `?metro_dag`, `?plot_metro_dag`, or
+`?save_metro_dag`. If you installed the vignettes, `browseVignettes("metrodag")`
+lists the guides in R.

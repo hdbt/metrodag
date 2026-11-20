@@ -1,0 +1,11 @@
+"graph","method","seconds","nodes","edges","crossings","total_bends","mean_bends","total_edge_length","maximum_edge_length","area","aspect_ratio","node_spacing_variance","directional_consistency","overlap_segments","shared_track_length","node_edge_collisions"
+"chain","metrodag",0.048,4,3,0,0,0,12,4,0,Inf,10.6666666666667,1,0,0,0
+"fork","metrodag",0.165,4,3,0,0,0,15.3137084989848,5.65685424949238,32,0.5,2.51505533468699,1,0,0,0
+"collider","metrodag",0.128,4,3,0,0,0,15.3137084989848,5.65685424949238,32,0.5,2.51505533468699,1,0,0,0
+"diamond","metrodag",0.114,4,4,0,4,1,19.3137084989848,4.82842712474619,32,2,2.22249827733468,1,0,0,0
+"long_edge","metrodag",1.063,5,6,0,4,0.666666666666667,47.3137084989848,16.8284271247462,64,4,16.4864097253864,1,0,0,0
+"causal","metrodag",1.345,6,8,0,4,0.5,66.2842712474619,15.6568542494924,144,2.25,16.9523138023367,1,0,0,0
+"dense","metrodag",4.168,8,16,31,24,1.5,226.79393923934,18.9705627484771,210,0.933333333333333,20.8427733861086,1,9,11.8994949366117,0
+"random_20","metrodag",9.546,20,26,NA,NA,NA,NA,NA,2679,1.21276595744681,NA,1,NA,NA,NA
+"random_50","metrodag",17.882,50,49,NA,NA,NA,NA,NA,10712,0.990384615384615,NA,1,NA,NA,NA
+"random_100","metrodag",31.686,100,92,NA,NA,NA,NA,NA,50996,1.16746411483254,NA,1,NA,NA,NA

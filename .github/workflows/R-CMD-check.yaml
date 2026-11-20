@@ -1,0 +1,94 @@
+# Based on the r-lib/actions check-standard workflow.
+name: R-CMD-check
+on:
+  push:
+    branches: [main]
+  pull_request:
+permissions:
+  contents: read
+concurrency:
+  group: R-CMD-check-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  check:
+    runs-on: ${{ matrix.config.os }}
+    timeout-minutes: 120
+    name: ${{ matrix.config.os }} / R ${{ matrix.config.r }} / ggplot2 ${{ matrix.config.ggplot }}
+    strategy:
+      fail-fast: false
+      matrix:
+        config:
+          - {os: ubuntu-latest, r: release, ggplot: current}
+          - {os: windows-latest, r: release, ggplot: current}
+          - {os: macos-latest, r: release, ggplot: current}
+          - {os: ubuntu-latest, r: oldrel-1, ggplot: '3.4.4'}
+          - {os: ubuntu-latest, r: devel, ggplot: current}
+    env:
+      GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
+      R_KEEP_PKG_SOURCE: yes
+    steps:
+      - uses: actions/checkout@v6
+      - uses: r-lib/actions/setup-pandoc@v2
+      # CRAN's macOS machines have XQuartz, which R's Cairo devices need.
+      - name: Install XQuartz
+        if: runner.os == 'macOS'
+        run: brew install --cask xquartz
+      - uses: r-lib/actions/setup-r@v2
+        with:
+          r-version: ${{ matrix.config.r }}
+          use-public-rspm: true
+      - uses: r-lib/actions/setup-r-dependencies@v2
+        with:
+          extra-packages: |
+            any::rcmdcheck
+            any::remotes
+            any::dagitty
+            any::ggdag
+            any::tidygraph
+            any::svglite
+          needs: check
+      - name: Check legacy ggplot2 support
+        if: matrix.config.ggplot == '3.4.4'
+        shell: Rscript {0}
+        run: |
+          remotes::install_version('ggplot2', version = '3.4.4', upgrade = 'never')
+          remotes::install_version('ggforce', version = '0.4.1', upgrade = 'never')
+          remotes::install_version('ggraph', version = '2.1.0', upgrade = 'never')
+          remotes::install_version('patchwork', version = '1.2.0', upgrade = 'never')
+      # Test files run in parallel (Config/testthat/parallel). Use every core
+      # for the full suite; the CRAN-like devel job keeps testthat's default
+      # of two workers, the most CRAN allows. R CMD check runs the tests with
+      # --vanilla, so an Ncpus option in ~/.Rprofile does not override this.
+      - name: Use every core for the full test suite
+        if: matrix.config.r != 'devel'
+        shell: Rscript {0}
+        run: |
+          cat(sprintf("TESTTHAT_CPUS=%d\n", parallel::detectCores()),
+            file = Sys.getenv("GITHUB_ENV"), append = TRUE)
+      - name: Verify optional input integrations are available
+        shell: Rscript {0}
+        run: |
+          stopifnot(requireNamespace('dagitty', quietly = TRUE),
+                    requireNamespace('ggdag', quietly = TRUE),
+                    requireNamespace('tidygraph', quietly = TRUE))
+      - uses: r-lib/actions/check-r-package@v2
+        env:
+          NOT_CRAN: ${{ matrix.config.r != 'devel' }}
+          _R_CHECK_CRAN_INCOMING_: ${{ matrix.config.r == 'devel' }}
+        with:
+          build_args: 'c("--no-manual")'
+          args: 'c("--no-manual", "--as-cran")'
+          error-on: '"warning"'
+          upload-results: ${{ matrix.config.r == 'devel' }}
+          upload-snapshots: true
+      - name: Layout speed guard
+        if: matrix.config.os == 'ubuntu-latest' && matrix.config.r == 'release'
+        run: |
+          R CMD INSTALL --no-docs --no-multiarch .
+          Rscript -e '
+            library(metrodag)
+            ref <- utils::read.csv("inst/benchmarks/speed_metrics.csv")
+            ref <- utils::tail(ref$layout_seconds[ref$graph == "causal"], 1L)
+            t <- stats::median(replicate(3, system.time(layout_metro_dag(metrodag_examples("causal")))[["elapsed"]]))
+            cat(sprintf("causal layout %.2f s (reference %.2f s)\n", t, ref))
+            if (t > 4 * ref) stop("Layout is more than four times slower than the recorded reference.")'

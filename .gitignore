@@ -1,0 +1,16 @@
+.Rhistory
+.RData
+.Ruserdata
+Rplots.pdf
+*.Rcheck/
+*.tar.gz
+_site/
+inst/doc/
+vignettes/*.html
+vignettes/*.R
+vignettes/*_files/
+vignettes/*.knit.md
+
+# Claude Code local files
+.claude/
+CLAUDE.md

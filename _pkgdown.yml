@@ -1,0 +1,60 @@
+url: https://hdbt.github.io/metrodag/
+destination: _site
+template:
+  bootstrap: 5
+  bootswatch: flatly
+development:
+  mode: release
+home:
+  title: Publication-oriented causal DAGs in R
+  description: >
+    Create, annotate, compare, and export causal diagrams with deterministic
+    layouts and readable publication figures.
+navbar:
+  structure:
+    left: [intro, reference, articles, news]
+    right: [search, github]
+articles:
+  - title: Research workflows
+    navbar: Guides
+    contents:
+      - metrodag
+      - analysis-views
+      - publication
+  - title: Technical background
+    navbar: Technical background
+    contents:
+      - algorithm
+reference:
+  - title: Create and draw a DAG
+    desc: Start with a graph, then reuse its layout when needed.
+    contents:
+      - metro_dag
+      - metro_graph
+      - metro_graph_from_adjacency
+      - layout_metro_dag
+      - plot_metro_dag
+      - metro_style
+      - metrodag_examples
+  - title: Compare analyses and check adjustment
+    contents:
+      - compare_metro_dags
+      - check_metro_adjustment
+      - highlight_paths
+  - title: Inspect and export figures
+    contents:
+      - diagnose_metro_dag
+      - save_metro_dag
+      - as_metro_grob
+      - layout_metrics
+      - count_crossings
+  - title: Package
+    contents:
+      - metrodag-package
+figures:
+  dev: grDevices::png
+  fig.ext: png
+  bg: white
+  dpi: 120
+  fig.width: 7
+  fig.height: 5

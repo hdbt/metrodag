@@ -1,0 +1,3 @@
+"id","align","nodes","edges","crossings","total_bends","mean_bends","total_edge_length","maximum_edge_length","area","aspect_ratio","node_spacing_variance","directional_consistency","overlap_segments","shared_track_length","node_edge_collisions","label_warnings_svg","label_warnings_png"
+"06_longitudinal",FALSE,9,14,5,12,0.857142857142857,120.225396744416,13.6568542494924,180,1.8,20.2667057695266,1,0,0,0,0,0
+"06_longitudinal",TRUE,9,14,8,15,1.07142857142857,144.982756057297,19.4852813742386,207,2.55555555555556,38.0658007073294,1,0,0,0,0,0

@@ -1,0 +1,50 @@
+Package: metrodag
+Title: Monotone Schematic Layouts for Directed Acyclic Graphs
+Version: 0.3.0
+Authors@R: person("Hamid", "Bulut", email = "me@hamidbulut.com", role = c("aut", "cre", "cph"))
+Description: Draws causal directed acyclic graphs (DAGs) for epidemiology and
+    causal inference as publication figures in a schematic metro-map style.
+    A deterministic layered layout in the tradition of Sugiyama, Tagawa and
+    Toda (1981) <doi:10.1109/TSMC.1981.4308636> places variables and routes
+    arrows along vertical and diagonal tracks; labels, arrowheads and station
+    clearances are measured on the output device so exported figures stay
+    legible at manuscript sizes. Analysis roles (exposure, outcome, adjusted,
+    unobserved) annotate the same fixed geometry across analysis views, and
+    adjustment sets can optionally be checked with 'dagitty', the R interface
+    to 'DAGitty' described by Textor et al. (2016) <doi:10.1093/ije/dyw341>.
+    Figures are drawn with 'ggplot2'; layout computation is separate from
+    rendering and reports quantitative readability metrics.
+License: MIT + file LICENSE
+Encoding: UTF-8
+Language: en-GB
+Roxygen: list(markdown = TRUE)
+Depends:
+    R (>= 4.1.0)
+Imports:
+    igraph,
+    ggplot2 (>= 3.4.0),
+    gtable,
+    grid,
+    grDevices,
+    stats,
+    tools,
+    utils
+Suggests:
+    dagitty,
+    ggdag (>= 0.2.13),
+    tidygraph,
+    testthat (>= 3.1.7),
+    knitr,
+    rmarkdown,
+    svglite,
+    patchwork
+Config/testthat/edition: 3
+Config/testthat/parallel: true
+Config/testthat/start-first: layout-quality-regressions, geometry-snapshot,
+    arrowhead-spacing, arrow-hooks, label-association, layout-variants,
+    arrangement, rank-refinement, comparison-size
+Config/Needs/website: pkgdown
+VignetteBuilder: knitr
+URL: https://github.com/hdbt/metrodag, https://hdbt.github.io/metrodag/
+BugReports: https://github.com/hdbt/metrodag/issues
+Config/roxygen2/version: 8.1.1

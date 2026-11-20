@@ -1,0 +1,8 @@
+"graph","method","seconds","width","height"
+"chain","igraph_sugiyama",0.00300000000000011,0,3
+"fork","igraph_sugiyama",0.00100000000000477,2,1
+"collider","igraph_sugiyama",0.000999999999990564,2,1
+"diamond","igraph_sugiyama",0.000999999999990564,1,2
+"long_edge","igraph_sugiyama",0.00100000000000477,1,4
+"causal","igraph_sugiyama",0.00100000000000477,2.5,4
+"dense","igraph_sugiyama",0.00100000000000477,3,1

@@ -1,0 +1,11 @@
+"example","width_mm","device","expected_edges","svg_arrowheads","errors","warnings"
+"node_groups",120,"svg",10,10,0,0
+"node_groups",120,"png",10,NA,0,0
+"node_groups",180,"svg",10,10,0,0
+"node_groups",180,"png",10,NA,0,0
+"node_groups_monochrome",120,"svg",10,10,0,0
+"node_groups_monochrome",120,"png",10,NA,0,0
+"node_groups_monochrome",180,"svg",10,10,0,0
+"node_groups_monochrome",180,"png",10,NA,0,0
+"node_groups_comparison",240,"svg",20,20,0,0
+"node_groups_comparison",240,"png",20,NA,0,0

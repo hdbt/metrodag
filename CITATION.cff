@@ -1,0 +1,26 @@
+cff-version: 1.2.0
+message: "If you use metrodag in your research, please cite the software."
+type: software
+title: "metrodag: Monotone Schematic Layouts for Directed Acyclic Graphs"
+abstract: >-
+  Publication-oriented causal DAG figures in R. A deterministic layered layout
+  places variables and routes arrows along vertical and diagonal tracks in a
+  schematic metro-map style; labels, arrowheads and station clearances are
+  measured on the output device so exported figures stay legible at
+  manuscript sizes.
+authors:
+  - given-names: Hamid
+    family-names: Bulut
+    email: me@hamidbulut.com
+version: 0.3.0
+date-released: 2026-11-05
+license: MIT
+repository-code: "https://github.com/hdbt/metrodag"
+url: "https://hdbt.github.io/metrodag/"
+keywords:
+  - causal inference
+  - directed acyclic graph
+  - DAG
+  - epidemiology
+  - graph drawing
+  - R package

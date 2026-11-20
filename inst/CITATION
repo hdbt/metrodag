@@ -1,0 +1,14 @@
+# The release year: CRAN's publication date, else the DESCRIPTION date, else
+# the year this version was released (never the current date).
+year <- c(meta[["Date/Publication"]], meta[["Date"]], "2026")[[1L]]
+year <- substr(year, 1L, 4L)
+
+bibentry(
+  bibtype = "Manual",
+  title = paste0("metrodag: ", meta$Title),
+  author = person("Hamid", "Bulut"),
+  year = year,
+  note = paste("R package version", meta$Version),
+  url = "https://github.com/hdbt/metrodag",
+  header = "To cite metrodag in publications use:"
+)
