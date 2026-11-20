@@ -16,6 +16,13 @@
 * Local, the same machine with ggplot2 3.4.4 and patchwork 1.2.0 (older
   releases, for the lower bound in Imports): the CRAN test selection, all
   examples and all vignettes.
+* GitHub Actions, `R CMD check --as-cran` (full regression suite with
+  `NOT_CRAN=true`, except on R-devel):
+  * Ubuntu latest: R-devel (with the CRAN incoming checks), R release, and
+    R oldrel-1 with ggplot2 3.4.4.
+  * Windows latest: R release.
+  * macOS latest (arm64, with XQuartz): R release.
+* win-builder: R-devel.
 
 ## Tests
 
