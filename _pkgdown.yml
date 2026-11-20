@@ -52,8 +52,8 @@ reference:
     contents:
       - metrodag-package
 figures:
-  dev: grDevices::png
-  fig.ext: png
+  dev: svglite::svglite
+  fig.ext: svg
   bg: white
   dpi: 120
   fig.width: 7
