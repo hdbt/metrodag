@@ -21,3 +21,4 @@
 (^|/)Rplots\.pdf$
 ^\.claude$
 ^CLAUDE\.md$
+^AGENTS\.md$

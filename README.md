@@ -23,7 +23,7 @@ annotations supplied by the analyst; nothing is inferred from the graph. They
 annotate one fixed geometry, so several analyses of the same causal model can
 be shown side by side.
 
-![Long labels and explicit variable roles](inst/benchmarks/figures/publication.svg)
+![Long labels and explicit variable roles](https://raw.githubusercontent.com/hdbt/metrodag/main/inst/benchmarks/figures/publication.svg)
 
 ## Key Features
 
@@ -93,6 +93,26 @@ Exposure and outcome use filled markers, adjusted variables are squares,
 selected variables are double-outlined squares, and unobserved variables and
 their outgoing arrows are dashed.
 
+## How metrodag differs from other DAG tools
+
+- **Layout and drawing are separate.** `layout_metro_dag()` computes the
+  geometry; `metro_dag()` and `plot_metro_dag()` draw it. To show several
+  analyses of one graph, reuse `attr(p, "metrodag_layout")` instead of
+  recomputing the layout.
+- **Roles are annotations you supply.** `exposure`, `outcome`, `adjusted`,
+  `unobserved` and `selected` are never inferred from the graph, and they never
+  move nodes or arrows.
+- **`estimand` is a label, not a check.** Call `check_metro_adjustment()`
+  (requires dagitty) to test an adjustment set; plotting never runs it.
+- **metrodag is not built on ggdag.** dagitty and ggdag objects are accepted as
+  input, but metrodag draws its own layers: restyle with `metro_style()` and
+  `edge_style` rather than ggdag geoms. Ordinary ggplot2 additions such as
+  `ggplot2::labs()` still work.
+- **Text is measured on the output device.** `ggplot2::ggsave()` works, but
+  `save_metro_dag()` adds journal column widths and automatic height, and
+  refuses to write a figure that cannot fit every arrow. Check the figure with
+  `diagnose_metro_dag()` at its final width and format.
+
 ## Main Functions
 
 ### `metro_dag()`
@@ -105,6 +125,11 @@ on top of the layout; the graph and its geometry are never modified by them.
 ### `metro_graph()` and `metro_graph_from_adjacency()`
 Build a graph from explicit node and edge tables (keeping isolated variables
 and `label`/`role` columns) or from a named binary adjacency matrix.
+
+### `metrodag_examples()`
+Returns small teaching graphs (`"chain"`, `"fork"`, `"collider"`, `"diamond"`,
+`"long_edge"`, `"causal"`, `"dense"`) and seeded random DAGs as igraph objects,
+for trying the package and writing reproducible examples.
 
 ### `layout_metro_dag()` and `plot_metro_dag()`
 Compute the layout and draw it as separate steps. Long edges are expanded into
@@ -170,7 +195,7 @@ save_metro_dag("analyses.pdf", comparison, width = 190)
 The views keep the display labels of `p`. With these labels, two panels side
 by side need 190 mm; `ncol = 1` stacks them within 180 mm.
 
-![One fixed DAG with unadjusted and adjusted views](inst/benchmarks/figures/adjustment_views.png)
+![One fixed DAG with unadjusted and adjusted views](https://raw.githubusercontent.com/hdbt/metrodag/main/inst/benchmarks/figures/adjustment_views.png)
 
 `estimand` is a descriptive label, not an identification check. With the
 optional dagitty package, `check_metro_adjustment(p)` tests whether the
@@ -214,10 +239,10 @@ size.
 
 Six annotated DAGs provide a stable evaluation set for the layout algorithm;
 their edges, labels and roles stay fixed across releases. Browse the images,
-metrics and diagnostics in [the benchmark report](inst/benchmarks/REPORT.md),
+metrics and diagnostics in [the benchmark report](https://github.com/hdbt/metrodag/blob/main/inst/benchmarks/REPORT.md),
 or regenerate them with `Rscript data-raw/annotated_gallery.R`.
 
-[![DAG 4: Statin therapy and vascular events](inst/benchmarks/figures/annotated_04_statin_events.png)](inst/benchmarks/figures/annotated_04_statin_events.svg)
+[![DAG 4: Statin therapy and vascular events](https://raw.githubusercontent.com/hdbt/metrodag/main/inst/benchmarks/figures/annotated_04_statin_events.png)](https://github.com/hdbt/metrodag/blob/main/inst/benchmarks/figures/annotated_04_statin_events.svg)
 
 ## Documentation
 
@@ -226,10 +251,10 @@ The rendered guides and function reference are on the
 
 | Guide | What you will learn |
 |:--|:--|
-| [Getting started](vignettes/metrodag.Rmd) | Build a DAG from an edge table, add labels, inspect it, and export it |
-| [Variables and analysis views](vignettes/analysis-views.Rmd) | Observability, adjustment, custom groups and research targets; compare analyses and run DAGitty checks |
-| [Publication figures](vignettes/publication.Rmd) | Styles, fonts, labels, temporal ranks, alignment, and output dimensions |
-| [Algorithm and constraints](vignettes/algorithm.Rmd) | How the layout heuristic works and where it stops |
+| [Getting started](https://hdbt.github.io/metrodag/articles/metrodag.html) | Build a DAG from an edge table, add labels, inspect it, and export it |
+| [Variables and analysis views](https://hdbt.github.io/metrodag/articles/analysis-views.html) | Observability, adjustment, custom groups and research targets; compare analyses and run DAGitty checks |
+| [Publication figures](https://hdbt.github.io/metrodag/articles/publication.html) | Styles, fonts, labels, temporal ranks, alignment, and output dimensions |
+| [Algorithm and constraints](https://hdbt.github.io/metrodag/articles/algorithm.html) | How the layout heuristic works and where it stops |
 
 Locally, install with `build_vignettes = TRUE` and run:
 
@@ -274,12 +299,12 @@ browseVignettes("metrodag")
 ## Contributing
 
 Contributions are welcome! Please feel free to open an issue or submit a pull
-request; see [CONTRIBUTING.md](CONTRIBUTING.md). Development notes live in
-[DEVELOPMENT.md](DEVELOPMENT.md) and open work in [ROADMAP.md](ROADMAP.md).
+request; see [CONTRIBUTING.md](https://github.com/hdbt/metrodag/blob/main/CONTRIBUTING.md). Development notes live in
+[DEVELOPMENT.md](https://github.com/hdbt/metrodag/blob/main/DEVELOPMENT.md) and open work in [ROADMAP.md](https://github.com/hdbt/metrodag/blob/main/ROADMAP.md).
 
 ## License
 
-This project is licensed under the MIT License - see the [LICENSE.md](LICENSE.md)
+This project is licensed under the MIT License - see the [LICENSE.md](https://github.com/hdbt/metrodag/blob/main/LICENSE.md)
 file for details.
 
 ## Citation
@@ -302,4 +327,4 @@ A BibTeX entry for LaTeX users is:
 }
 ```
 
-You can also run `citation("metrodag")` in R, or use [CITATION.cff](CITATION.cff).
+You can also run `citation("metrodag")` in R, or use [CITATION.cff](https://github.com/hdbt/metrodag/blob/main/CITATION.cff).
