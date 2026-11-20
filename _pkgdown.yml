@@ -72,7 +72,10 @@ reference:
     contents:
       - metrodag-package
 figures:
-  dev: svglite::svglite
+  # Not svglite: pkgdown 2.2 always saves reference figures with bg = NA,
+  # which svglite rejects. The cairo SVG device accepts it and draws text as
+  # outlines in the font it measured, so labels cannot overflow in a browser.
+  dev: grDevices::svg
   fig.ext: svg
   bg: white
   dpi: 120
