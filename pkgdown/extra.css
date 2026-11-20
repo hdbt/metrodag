@@ -1,0 +1,164 @@
+/* metrodag site styling. Colours come from the hex logo (data-raw/logo.R). */
+:root {
+  --md-navy: #1F2A36;
+  --md-navy-deep: #0F151B;
+  --md-blue: #5AB4F0;
+  --md-orange: #F2884B;
+  --md-green: #34C994;
+  --md-ink-soft: #5B6775;
+  --md-line: #E3E8EE;
+}
+
+/* ---- Navbar ------------------------------------------------------------ */
+.navbar {
+  border-bottom: 3px solid transparent;
+  border-image: linear-gradient(90deg, var(--md-blue), var(--md-orange), var(--md-green)) 1;
+}
+.navbar .navbar-brand { font-weight: 700; letter-spacing: -0.01em; }
+
+
+/* ---- Hero ---------------------------------------------------------------- */
+.md-hero {
+  position: relative;
+  overflow: hidden;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 1.75rem;
+  margin: 1.5rem 0 2.5rem;
+  padding: 2.25rem 2rem 2rem;
+  border-radius: 1.1rem;
+  color: #fff;
+  background:
+    radial-gradient(circle at 92% 8%, rgba(90, 180, 240, 0.22), transparent 42%),
+    radial-gradient(circle at 4% 96%, rgba(52, 201, 148, 0.16), transparent 40%),
+    linear-gradient(160deg, var(--md-navy) 0%, var(--md-navy-deep) 100%);
+  box-shadow: 0 18px 40px -22px rgba(15, 21, 27, 0.65);
+}
+.md-hero > * { position: relative; }
+
+/* pkgdown wraps the first <h1> with the logo in .page-header; lay it out
+   inside the hero with the logo on the right. */
+.md-hero .page-header {
+  display: flex;
+  flex-direction: row-reverse;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1.5rem;
+  margin: 0 0 1rem;
+  padding: 0;
+  border: 0;
+}
+.md-hero .page-header .logo {
+  float: none;
+  width: auto;
+  height: 118px;
+  margin: 0;
+  filter: drop-shadow(0 8px 18px rgba(0, 0, 0, 0.45));
+}
+
+.md-hero-eyebrow {
+  margin: 0 0 0.6rem;
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--md-blue);
+}
+.md-hero .md-hero-title {
+  margin: 0;
+  font-size: clamp(1.9rem, 1.2rem + 2.4vw, 2.75rem);
+  font-weight: 800;
+  line-height: 1.1;
+  letter-spacing: -0.025em;
+  color: #fff;
+}
+.md-hero-lede {
+  max-width: 38rem;
+  margin: 0 0 1.5rem;
+  font-size: 1.08rem;
+  line-height: 1.55;
+  color: rgba(255, 255, 255, 0.82);
+}
+.md-hero-actions { display: flex; flex-wrap: wrap; gap: 0.6rem; margin-bottom: 1.25rem; }
+.md-hero .btn {
+  padding: 0.6rem 1.15rem;
+  font-weight: 600;
+  border-radius: 999px;
+  text-decoration: none;
+}
+.md-btn-primary { background: var(--md-blue); border: 1px solid var(--md-blue); color: var(--md-navy-deep); }
+.md-btn-primary:hover { background: #7cc5f4; border-color: #7cc5f4; color: var(--md-navy-deep); }
+.md-btn-ghost { background: transparent; border: 1px solid rgba(255, 255, 255, 0.35); color: #fff; }
+.md-btn-ghost:hover { background: rgba(255, 255, 255, 0.1); border-color: #fff; color: #fff; }
+
+.md-hero pre.md-hero-install {
+  display: inline-block;
+  max-width: 100%;
+  margin: 0;
+  padding: 0.55rem 0.9rem;
+  overflow-x: auto;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 0.5rem;
+  background: rgba(0, 0, 0, 0.28);
+}
+.md-hero pre.md-hero-install code { color: #E6EDF3; background: none; font-size: 0.85rem; }
+.md-hero-install::before { content: "> "; color: var(--md-green); font-family: var(--bs-font-monospace); font-size: 0.85rem; }
+/* pkgdown adds a copy button to every <pre>; it adds clutter in the hero. */
+.md-hero .btn-copy-ex { display: none; }
+
+.md-hero-figure {
+  margin: 0;
+  padding: 0.75rem;
+  border-radius: 0.8rem;
+  background: #fff;
+  box-shadow: 0 10px 30px -12px rgba(0, 0, 0, 0.6);
+}
+.md-hero-figure img { display: block; width: 100%; height: auto; }
+
+/* ---- Gallery ------------------------------------------------------------- */
+.md-gallery {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(15rem, 1fr));
+  gap: 1rem;
+  margin: 1rem 0 2.5rem;
+}
+.md-gallery-item {
+  overflow: hidden;
+  border: 1px solid var(--md-line);
+  border-radius: 0.8rem;
+  background: #fff;
+  transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
+}
+/* Pandoc may wrap the link in a <p>; neutralise it. */
+.md-gallery-item p { margin: 0; }
+.md-gallery-item a { display: flex; flex-direction: column; height: 100%; color: inherit; text-decoration: none; }
+.md-gallery-item:hover {
+  transform: translateY(-3px);
+  border-color: #C9D3DD;
+  box-shadow: 0 14px 28px -18px rgba(31, 42, 54, 0.55);
+}
+.md-gallery-item img { display: block; width: 100%; aspect-ratio: 16 / 10; object-fit: contain; padding: 0.5rem; }
+.md-gallery-item span {
+  margin-top: auto;
+  padding: 0.6rem 0.85rem 0.75rem;
+  border-top: 1px solid var(--md-line);
+  font-size: 0.88rem;
+  font-weight: 600;
+}
+
+/* ---- General polish ------------------------------------------------------ */
+main:has(.md-hero) h2 { margin-top: 2.25rem; font-weight: 750; letter-spacing: -0.015em; }
+
+@media (min-width: 992px) {
+  .md-hero { padding: 2.75rem 2.5rem 2.5rem; }
+}
+
+@media (max-width: 575.98px) {
+  .md-hero { padding: 1.5rem 1.1rem; margin-top: 1rem; }
+  .md-hero .page-header .logo { height: 72px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .md-gallery-item { transition: none; }
+  .md-gallery-item:hover { transform: none; }
+}

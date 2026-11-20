@@ -2,7 +2,18 @@ url: https://hdbt.github.io/metrodag/
 destination: _site
 template:
   bootstrap: 5
-  bootswatch: flatly
+  bslib:
+    # Colours taken from the hex logo (data-raw/logo.R).
+    primary: "#1F6FB2"
+    dark: "#1F2A36"
+    body-color: "#1F2A36"
+    headings-color: "#1F2A36"
+    link-color: "#1F6FB2"
+    border-radius: 0.6rem
+    base_font: {google: "Inter"}
+    heading_font: {google: "Inter"}
+    code_font: {google: "JetBrains Mono"}
+    code-bg: "#F3F6F9"
 development:
   mode: release
 home:
@@ -11,6 +22,8 @@ home:
     Create, annotate, compare, and export causal diagrams with deterministic
     layouts and readable publication figures.
 navbar:
+  bg: dark
+  type: dark
   structure:
     left: [intro, reference, articles, news]
     right: [search, github]

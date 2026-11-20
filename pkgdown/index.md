@@ -1,13 +1,20 @@
-# metrodag <img src="man/figures/logo.png" align="right" height="139" alt="metrodag logo" />
-
-**Publication-oriented causal DAGs, without hand-placing every node.**
-
-Turn a graph of assumed causal relationships into a readable diagram. Metrodag
-places variables, routes arrows, and adapts labels to the size of your exported
-figure. Use it to show one research question, compare analysis views of the
-same graph, or prepare figures for a manuscript.
-
-![A smoking and lung cancer DAG with readable labels and marked exposure and outcome.](man/figures/documentation-example.svg)
+<div class="md-hero">
+<div class="md-hero-text">
+<p class="md-hero-eyebrow">R package for causal diagrams</p>
+<h1 class="md-hero-title">Causal DAGs that are ready for publication.</h1>
+<p class="md-hero-lede">metrodag places variables, routes arrows like a metro map, and
+sizes every label for the width your journal prints. You don't need to place
+nodes by hand.</p>
+<div class="md-hero-actions">
+<a class="btn md-btn-primary" href="articles/metrodag.html">Get started</a>
+<a class="btn md-btn-ghost" href="#gallery">See the gallery</a>
+</div>
+<pre class="md-hero-install"><code>remotes::install_github("hdbt/metrodag")</code></pre>
+</div>
+<div class="md-hero-figure">
+<img src="gallery/annotated_04_statin_events.svg" alt="A twelve-variable DAG of statin therapy and vascular events, with adjusted, unobserved, exposure and outcome variables marked." />
+</div>
+</div>
 
 ## Start with a small graph
 
@@ -28,6 +35,44 @@ labelled smoking and lung cancer diagram, explains the inputs, and checks the
 export. Install the development version with
 `remotes::install_github("hdbt/metrodag")`.
 
+## Gallery {#gallery}
+
+Six annotated teaching models, all drawn with the default settings. Click a
+figure to open the full-size SVG. Each one comes with runnable R code in the
+[benchmark report](https://github.com/hdbt/metrodag/blob/main/inst/benchmarks/REPORT.md).
+Their roles and adjustment annotations are illustrative.
+
+<div class="md-gallery">
+<div class="md-gallery-item">
+<a href="gallery/annotated_01_alcohol_heart.svg"><img src="gallery/annotated_01_alcohol_heart.svg" alt="Alcohol and coronary heart disease" loading="lazy" /><span>Alcohol and coronary heart disease</span></a>
+</div>
+<div class="md-gallery-item">
+<a href="gallery/annotated_02_air_pollution.svg"><img src="gallery/annotated_02_air_pollution.svg" alt="Air pollution and asthma attacks" loading="lazy" /><span>Air pollution and asthma attacks</span></a>
+</div>
+<div class="md-gallery-item">
+<a href="gallery/annotated_03_sugary_drinks.svg"><img src="gallery/annotated_03_sugary_drinks.svg" alt="Sugary drinks, body fat and HbA1c" loading="lazy" /><span>Sugary drinks, body fat and HbA1c</span></a>
+</div>
+<div class="md-gallery-item">
+<a href="gallery/annotated_04_statin_events.svg"><img src="gallery/annotated_04_statin_events.svg" alt="Statin therapy and vascular events" loading="lazy" /><span>Statin therapy and vascular events</span></a>
+</div>
+<div class="md-gallery-item">
+<a href="gallery/annotated_05_obesity_admission.svg"><img src="gallery/annotated_05_obesity_admission.svg" alt="Obesity, hospital admission and heart failure" loading="lazy" /><span>Obesity, hospital admission and heart failure</span></a>
+</div>
+<div class="md-gallery-item">
+<a href="gallery/annotated_06_longitudinal.svg"><img src="gallery/annotated_06_longitudinal.svg" alt="Blood pressure and creatinine across three waves" loading="lazy" /><span>Blood pressure and creatinine across three waves</span></a>
+</div>
+</div>
+
+## Choose a guide
+
+| What you want to do | Read |
+|:--|:--|
+| Create your first graph | [Getting started](articles/metrodag.html) |
+| Show observed and unobserved variables, adjustment, and custom groups | [Variables and analysis views](articles/analysis-views.html) |
+| Prepare a figure for a paper | [Publication figures](articles/publication.html) |
+| Understand layout decisions and limitations | [Algorithm and constraints](articles/algorithm.html) |
+| Look up an argument | [Function reference](reference/index.html) |
+
 ## How metrodag differs from other DAG tools
 
 - **Layout and drawing are separate.** `layout_metro_dag()` computes the
@@ -47,31 +92,6 @@ export. Install the development version with
   `save_metro_dag()` adds journal column widths and automatic height, and
   refuses to write a figure that cannot fit every arrow. Check the figure with
   `diagnose_metro_dag()` at its final width and format.
-
-## Choose a guide
-
-| What you want to do | Read |
-|:--|:--|
-| Create your first graph | [Getting started](articles/metrodag.html) |
-| Show observed and unobserved variables, adjustment, and custom groups | [Variables and analysis views](articles/analysis-views.html) |
-| Prepare a figure for a paper | [Publication figures](articles/publication.html) |
-| Understand layout decisions and limitations | [Algorithm and constraints](articles/algorithm.html) |
-| Look up an argument | [Function reference](reference/index.html) |
-
-## Explore the six annotated examples
-
-The [benchmark report](https://github.com/hdbt/metrodag/blob/main/inst/benchmarks/REPORT.md)
-contains six larger diagrams, with PNG previews, SVGs, and runnable R code:
-
-1. Alcohol and coronary heart disease.
-2. Air pollution and asthma attacks.
-3. Sugary drinks, body fat, and HbA1c.
-4. Statin therapy and vascular events.
-5. Obesity, hospital admission and heart failure.
-6. Blood pressure and creatinine across three waves.
-
-These teaching models also provide a stable gallery for evaluating the layout
-algorithm. Their roles and adjustment annotations are illustrative.
 
 ## Cite metrodag
 
