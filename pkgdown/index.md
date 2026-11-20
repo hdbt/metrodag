@@ -1,4 +1,4 @@
-# metrodag
+# metrodag <img src="man/figures/logo.png" align="right" height="139" alt="metrodag logo" />
 
 **Publication-oriented causal DAGs, without hand-placing every node.**
 

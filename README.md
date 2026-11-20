@@ -1,4 +1,4 @@
-# metrodag: Monotone Schematic Layouts for Directed Acyclic Graphs
+# metrodag: Monotone Schematic Layouts for Directed Acyclic Graphs <img src="man/figures/logo.png" align="right" width="150" alt="metrodag logo" />
 
 <!-- badges: start -->
 [![CRAN status](https://www.r-pkg.org/badges/version/metrodag)](https://CRAN.R-project.org/package=metrodag)
