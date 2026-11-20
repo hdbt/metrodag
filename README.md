@@ -1,22 +1,72 @@
-# metrodag
+# metrodag: Monotone Schematic Layouts for Directed Acyclic Graphs
 
 <!-- badges: start -->
+[![CRAN status](https://www.r-pkg.org/badges/version/metrodag)](https://CRAN.R-project.org/package=metrodag)
 [![R-CMD-check](https://github.com/hdbt/metrodag/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/hdbt/metrodag/actions/workflows/R-CMD-check.yaml)
+[![R](https://img.shields.io/badge/R-%3E%3D4.1.0-blue)](https://www.r-project.org/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Lifecycle: experimental](https://img.shields.io/badge/lifecycle-experimental-orange.svg)](https://lifecycle.r-lib.org/articles/stages.html#experimental)
-[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE.md)
 <!-- badges: end -->
 
-**Publication-oriented causal DAGs, without hand-placing every node.**
+## Overview
 
-`metrodag` combines a deterministic layered layout with the regular lines of a
-metro map. Long arrows route around intermediate variables, arrowheads stop at
-station rims, and labels adapt to the size of the exported figure. The default
-is a clean, white, restrained publication style.
+The metrodag package draws causal directed acyclic graphs (DAGs) for
+epidemiology and causal inference as publication-ready figures, without
+hand-placing every node. A deterministic layered layout, in the tradition of
+Sugiyama, Tagawa and Toda (1981), is combined with the regular lines of a metro
+map: long arrows route around intermediate variables along vertical and
+diagonal tracks, arrowheads stop at station rims, and labels are measured on
+the output device so exported figures stay legible at manuscript sizes.
+
+Analysis roles (exposure, outcome, adjusted, unobserved, selected) are explicit
+annotations supplied by the analyst; nothing is inferred from the graph. They
+annotate one fixed geometry, so several analyses of the same causal model can
+be shown side by side.
+
+![Long labels and explicit variable roles](inst/benchmarks/figures/publication.svg)
+
+## Key Features
+
+- **One-call Workflow**: `metro_dag()` lays out, annotates and draws a DAG from
+  an igraph, tidygraph, dagitty or ggdag object, an edge matrix or a
+  `from`/`to` data frame
+- **Deterministic Layout**: `layout_metro_dag()` gives the same drawing for the
+  same graph on every platform, with octilinear routes, bounded refinement
+  passes and optional `rank` and `align` constraints for temporal order and
+  repeated measures
+- **Publication Export**: `save_metro_dag()` writes PDF, SVG, EPS, PNG and TIFF
+  at journal column widths (`"single"`, `"1.5"`, `"double"`), with automatic
+  height and text measured on the export device
+- **Fixed Geometry, Several Analyses**: reuse one layout across exposures,
+  outcomes and adjustment sets; `compare_metro_dags()` aligns the views in
+  panels of equal physical size with a single legend
+- **Readability Diagnostics**: `diagnose_metro_dag()` reports station, arrow
+  and label conflicts at the printed size and format; `layout_metrics()` and
+  `count_crossings()` quantify the drawing
+- **Causal Checks**: with the optional dagitty package,
+  `check_metro_adjustment()` tests a total-effect adjustment set and
+  `highlight_paths()` emphasises the paths it leaves open
+- **Styles**: restrained publication, monochrome and colourful metro presets,
+  customised with `metro_style()` and per-arrow `edge_style`
+- **Composition**: `as_metro_grob()` combines figures with other plots, for
+  example in patchwork layouts
+
+## Installation
+
+You can install the development version from GitHub:
 
 ```r
 # install.packages("remotes")
 remotes::install_github("hdbt/metrodag")
 ```
+
+or, once it is released, the stable version from CRAN:
+
+```r
+install.packages("metrodag")
+```
+
+## Quick Start
 
 ```r
 library(metrodag)
@@ -39,35 +89,64 @@ save_metro_dag("dag.pdf", p, width = "double")   # 180 mm, automatic height
 save_metro_dag("dag.svg", p, width = 120)        # 120 mm vector artwork
 ```
 
-![Long labels and explicit variable roles](inst/benchmarks/figures/publication.svg)
-
-The roles `exposure`, `outcome`, `adjusted`, `unobserved` and `selected` are
-explicit annotations supplied by the analyst; nothing is inferred from the
-graph. Exposure and outcome use filled markers, adjusted variables are squares,
+Exposure and outcome use filled markers, adjusted variables are squares,
 selected variables are double-outlined squares, and unobserved variables and
 their outgoing arrows are dashed.
 
-## Learn metrodag
+## Main Functions
 
-| Guide | What you will learn |
-|:--|:--|
-| [Getting started](vignettes/metrodag.Rmd) | Build a DAG from an edge table, add labels, inspect it, and export it |
-| [Variables and analysis views](vignettes/analysis-views.Rmd) | Observability, adjustment, custom groups and research targets; compare analyses and run DAGitty checks |
-| [Publication figures](vignettes/publication.Rmd) | Styles, fonts, labels, temporal ranks, alignment, and output dimensions |
-| [Algorithm and constraints](vignettes/algorithm.Rmd) | How the layout heuristic works and where it stops |
+### `metro_dag()`
+Draws a DAG with publication defaults in one call. It accepts an igraph
+(including tidygraph), a dagitty or ggdag DAG, a two-column edge matrix, a data
+frame with `from` and `to` columns, or a previously computed layout. Roles,
+display labels, estimand titles, node groups and arrow styles are annotations
+on top of the layout; the graph and its geometry are never modified by them.
 
-The rendered guides and function reference are on the
-[documentation site](https://hdbt.github.io/metrodag/). Locally, install with
-`build_vignettes = TRUE` and run `browseVignettes("metrodag")`.
+### `metro_graph()` and `metro_graph_from_adjacency()`
+Build a graph from explicit node and edge tables (keeping isolated variables
+and `label`/`role` columns) or from a named binary adjacency matrix.
 
-## Inputs
+### `layout_metro_dag()` and `plot_metro_dag()`
+Compute the layout and draw it as separate steps. Long edges are expanded into
+private waypoints before crossing reduction, routes use vertical and 45-degree
+segments that avoid unrelated nodes, and a final pass removes unnecessary
+bends without adding crossings or shared track. `rank` fixes temporal order,
+`align` keeps repeated measures on one row, and `direction` rotates the
+drawing.
 
-`metro_dag()` accepts an `igraph` (including `tidygraph`), a `dagitty` DAG, a
-ggdag `tidy_dagitty`, a two-column edge matrix, or a data frame with `from` and
-`to` columns. `metro_graph()` builds a graph from node and edge tables, keeping
-isolated variables and `label`/`role` columns; `metro_graph_from_adjacency()`
-reads a named binary adjacency matrix. Vertex names identify variables; display
-labels can be longer and are wrapped on the output device.
+### `compare_metro_dags()`
+Computes one layout and shows several analysis views of the same causal graph
+in aligned panels with equal physical sizes and a single role legend.
+
+### `save_metro_dag()`
+Exports a figure at publication dimensions. PDF, SVG and EPS are vector
+formats; PNG and TIFF default to 600 dpi. If the requested size cannot fit
+every arrow and station, export stops with an informative error rather than
+silently dropping edges.
+
+### `diagnose_metro_dag()`
+Renders privately on the export device and lists station, edge and label
+conflicts, including geometry outside the visible figure. Diagnose on the
+device you export to: text is measured on that device.
+
+### `check_metro_adjustment()` and `highlight_paths()`
+With the optional dagitty package, check whether the chosen set meets the
+adjustment criterion for a total effect under the assumed graph, and emphasise
+the paths between exposure and outcome that remain open. Plotting never runs
+these checks implicitly.
+
+### `metro_style()`
+Defines colours, arrowheads, station sizing and legend text. Start from the
+`"publication"`, `"monochrome"` or `"metro"` preset and override only what the
+figure needs.
+
+### `as_metro_grob()`
+Converts a figure to a grid grob that places its labels at the size it is
+given, for composition with other plots.
+
+### `layout_metrics()` and `count_crossings()`
+Quantify a drawing: crossings, bends, shared track, area and node-edge
+collisions.
 
 ## One graph, several analyses
 
@@ -94,11 +173,11 @@ by side need 190 mm; `ncol = 1` stacks them within 180 mm.
 ![One fixed DAG with unadjusted and adjusted views](inst/benchmarks/figures/adjustment_views.png)
 
 `estimand` is a descriptive label, not an identification check. With the
-optional `dagitty` package, `check_metro_adjustment(p)` tests whether the
+optional dagitty package, `check_metro_adjustment(p)` tests whether the
 selected set meets the adjustment criterion for a total effect under the
 assumed graph.
 
-## Usually, these are the only adjustments you need
+## Common Adjustments
 
 | Need | Argument / function |
 |:---|:---|
@@ -127,13 +206,9 @@ assumed graph.
 | Draft in a small preview without errors | `on_error = "warn"` |
 | Check the figure at its printed size and format | `diagnose_metro_dag(p, width = 85, device = "svg")` |
 
-Fonts, markers and line widths are specified in physical units. Labels are
+Fonts, markers and line widths are specified in physical units, and labels are
 placed when the plot is drawn, so always inspect the exported file at its final
-size. If the requested dimensions cannot fit every arrow and station, export
-stops with an informative error rather than silently omitting edges;
-`diagnose_metro_dag()` lists the affected nodes, edges and labels. Diagnose on
-the device you export to: text is measured on that device, so a PDF check can
-pass where an SVG or PNG export of the same size warns.
+size.
 
 ## Gallery
 
@@ -144,12 +219,87 @@ or regenerate them with `Rscript data-raw/annotated_gallery.R`.
 
 [![DAG 4: Statin therapy and vascular events](inst/benchmarks/figures/annotated_04_statin_events.png)](inst/benchmarks/figures/annotated_04_statin_events.svg)
 
-## Cite metrodag
+## Documentation
 
-Run `citation("metrodag")` in R, or use [CITATION.cff](CITATION.cff).
+The rendered guides and function reference are on the
+[documentation site](https://hdbt.github.io/metrodag/).
+
+| Guide | What you will learn |
+|:--|:--|
+| [Getting started](vignettes/metrodag.Rmd) | Build a DAG from an edge table, add labels, inspect it, and export it |
+| [Variables and analysis views](vignettes/analysis-views.Rmd) | Observability, adjustment, custom groups and research targets; compare analyses and run DAGitty checks |
+| [Publication figures](vignettes/publication.Rmd) | Styles, fonts, labels, temporal ranks, alignment, and output dimensions |
+| [Algorithm and constraints](vignettes/algorithm.Rmd) | How the layout heuristic works and where it stops |
+
+Locally, install with `build_vignettes = TRUE` and run:
+
+```r
+browseVignettes("metrodag")
+```
+
+## Dependencies
+
+**Required:**
+
+- R (>= 4.1.0)
+- igraph
+- ggplot2 (>= 3.4.0)
+- gtable, grid, grDevices, stats, tools, utils
+
+**Optional:**
+
+- dagitty - for DAGitty input, adjustment checks and path highlighting
+- ggdag (>= 0.2.13) - for ggdag `tidy_dagitty` input
+- tidygraph - for tidygraph input
+- svglite - for SVG export
+- patchwork - for composing figures with other plots
+- knitr, rmarkdown - for building vignettes
+- testthat (>= 3.1.7) - for the test suite
+
+## References
+
+- Sugiyama, K., Tagawa, S., & Toda, M. (1981). Methods for visual understanding
+  of hierarchical system structures. *IEEE Transactions on Systems, Man, and
+  Cybernetics*, 11(2), 109-125. doi:10.1109/TSMC.1981.4308636
+
+- Textor, J., van der Zander, B., Gilthorpe, M. S., Liśkiewicz, M., & Ellison,
+  G. T. H. (2016). Robust causal inference using directed acyclic graphs: the R
+  package 'dagitty'. *International Journal of Epidemiology*, 45(6),
+  1887-1894. doi:10.1093/ije/dyw341
+
+- Greenland, S., Pearl, J., & Robins, J. M. (1999). Causal diagrams for
+  epidemiologic research. *Epidemiology*, 10(1), 37-48.
+  doi:10.1097/00001648-199901000-00008
 
 ## Contributing
 
-Bug reports and pull requests are welcome; see [CONTRIBUTING.md](CONTRIBUTING.md).
-Development notes live in [DEVELOPMENT.md](DEVELOPMENT.md) and open work in
-[ROADMAP.md](ROADMAP.md).
+Contributions are welcome! Please feel free to open an issue or submit a pull
+request; see [CONTRIBUTING.md](CONTRIBUTING.md). Development notes live in
+[DEVELOPMENT.md](DEVELOPMENT.md) and open work in [ROADMAP.md](ROADMAP.md).
+
+## License
+
+This project is licensed under the MIT License - see the [LICENSE.md](LICENSE.md)
+file for details.
+
+## Citation
+
+If you use this package in your research, please cite:
+
+```text
+Bulut H (2026). metrodag: Monotone Schematic Layouts for Directed Acyclic Graphs. R package version 0.3.0, https://github.com/hdbt/metrodag.
+```
+
+A BibTeX entry for LaTeX users is:
+
+```bibtex
+@Manual{Bulut2026metrodag,
+  title  = {metrodag: Monotone Schematic Layouts for Directed Acyclic Graphs},
+  author = {Hamid Bulut},
+  year   = {2026},
+  note   = {R package version 0.3.0},
+  url    = {https://github.com/hdbt/metrodag}
+}
+```
+
+You can also run `citation("metrodag")` in R, or use [CITATION.cff](CITATION.cff).
