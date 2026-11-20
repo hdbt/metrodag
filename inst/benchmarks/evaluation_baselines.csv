@@ -1,0 +1,210 @@
+"graph","family","method","nodes","edges","crossings","bends","length","area","seconds"
+"M-bias","dagitty example","metrodag",5,5,0,5,7.53553390593274,2.8125,0.222
+"M-bias","dagitty example","igraph Sugiyama",5,5,1,1,7.70820393249937,4,0.0110000000000001
+"M-bias","dagitty example","Graphviz dot",5,5,0,NA,10.6535449591421,5.44620757998376,0.376
+"M-bias","dagitty example","stress (graphlayouts)",5,5,0,0,5.00094652391625,2.49440696446635,0.114
+"M-bias","dagitty example","Fruchterman-Reingold",5,5,0,0,5.01625216070448,2.55959551400975,0
+"confounding","dagitty example","metrodag",5,7,0,7,13.3461940777126,3.65625,0.364
+"confounding","dagitty example","igraph Sugiyama",5,7,0,3,12.7147766421189,6,0.00099999999999989
+"confounding","dagitty example","Graphviz dot",5,7,0,NA,16.2450670185802,4.8509387755102,0.012
+"confounding","dagitty example","stress (graphlayouts)",5,7,0,0,7.15410635378436,1.87108036620242,0
+"confounding","dagitty example","Fruchterman-Reingold",5,7,0,0,7.75384632166165,3.16420069639761,0
+"confounding","dagitty example","DAGitty author coordinates",5,7,0,0,8.82449268694025,2.36121818778655,0
+"mediator","dagitty example","metrodag",4,5,0,4,7.41421356237309,1.5,0.147
+"mediator","dagitty example","igraph Sugiyama",4,5,0,2,7.05376544606718,2.4,0.00100000000000033
+"mediator","dagitty example","Graphviz dot",4,5,0,NA,6.99510341495792,1.4393374419863,0.0110000000000001
+"mediator","dagitty example","stress (graphlayouts)",4,5,0,0,5.21801283004941,1.85352931321745,0.00100000000000033
+"mediator","dagitty example","Fruchterman-Reingold",4,5,0,0,5.73375379115676,2.26688024310637,0.00100000000000033
+"mediator","dagitty example","DAGitty author coordinates",4,5,0,0,8.02107435942125,3.8368693332066,0
+"paths","dagitty example","metrodag",17,19,0,6,50.0355339059327,20.3125,0.676
+"paths","dagitty example","igraph Sugiyama",17,19,0,5,51.1421823327096,48,0.00199999999999978
+"paths","dagitty example","Graphviz dot",17,19,0,NA,49.0972898433192,22.7481072000001,0.0120000000000005
+"paths","dagitty example","stress (graphlayouts)",17,19,0,0,19.4532414091606,18.680425718801,0.00199999999999978
+"paths","dagitty example","Fruchterman-Reingold",17,19,0,0,23.2098659262499,36.3137782035557,0.00100000000000033
+"paths","dagitty example","DAGitty author coordinates",17,19,0,0,27.097845088429,35.2456635915476,0
+"Sebastiani","dagitty example","metrodag",36,60,91,91,749.470869120796,630,3.812
+"Sebastiani","dagitty example","igraph Sugiyama",36,60,89,36,289.477644203403,165,0.00300000000000011
+"Sebastiani","dagitty example","Graphviz dot",36,60,40,NA,217.713338526817,186.092443911111,0.016
+"Sebastiani","dagitty example","stress (graphlayouts)",36,60,16,0,172.836920760801,237.213703928807,0.00600000000000023
+"Sebastiani","dagitty example","Fruchterman-Reingold",36,60,15,0,166.184498896633,258.722187069217,0.000999999999999446
+"Sebastiani","dagitty example","DAGitty author coordinates",36,60,1,0,369.983207147871,348.662037551383,0
+"Polzer","dagitty example","metrodag",14,69,397,466,786.313775799766,198.28125,25.651
+"Polzer","dagitty example","igraph Sugiyama",14,69,294,122,1166.07932531006,349.2,0.00400000000000489
+"Polzer","dagitty example","Graphviz dot",14,69,228,NA,403.349117062238,106.952401294867,0.017000000000003
+"Polzer","dagitty example","stress (graphlayouts)",14,69,282,0,315.760588025265,94.5656954608998,0.00100000000000477
+"Polzer","dagitty example","Fruchterman-Reingold",14,69,284,0,176.486785290768,36.6337257435597,0.00100000000000477
+"Polzer","dagitty example","DAGitty author coordinates",14,69,383,0,261.808915075886,36.5219409269579,0
+"Schipf","dagitty example","metrodag",7,14,5,19,51.1776695296637,17.5,3.45200000000001
+"Schipf","dagitty example","igraph Sugiyama",7,14,8,14,58.0408073784042,30,0.00200000000000244
+"Schipf","dagitty example","Graphviz dot",7,14,4,NA,38.2231340045589,16.6123653659459,0.0159999999999982
+"Schipf","dagitty example","stress (graphlayouts)",7,14,5,0,24.9249007659277,10.5928900096048,0.00100000000000477
+"Schipf","dagitty example","Fruchterman-Reingold",7,14,5,0,22.1710812610572,7.20607581622601,0
+"Schipf","dagitty example","DAGitty author coordinates",7,14,1,0,31.8975915557579,9.32506760161919,0
+"Shrier","dagitty example","metrodag",13,19,0,11,36.2279220613579,15.125,5.341
+"Shrier","dagitty example","igraph Sugiyama",13,19,6,8,47.3731521857119,35,0.000999999999997669
+"Shrier","dagitty example","Graphviz dot",13,19,0,NA,49.3547030756303,36.3946892108772,0.0139999999999958
+"Shrier","dagitty example","stress (graphlayouts)",13,19,1,0,28.7038135430783,21.7083930352546,0.000999999999997669
+"Shrier","dagitty example","Fruchterman-Reingold",13,19,1,0,31.1454346342368,29.2002711075621,0.00100000000000477
+"Shrier","dagitty example","DAGitty author coordinates",13,19,1,0,38.2009216056167,20.013478355088,0
+"Thoemmes","dagitty example","metrodag",13,14,1,9,33.917261889578,23.25,3.288
+"Thoemmes","dagitty example","igraph Sugiyama",13,14,4,8,42.2951263143134,36,0.000999999999997669
+"Thoemmes","dagitty example","Graphviz dot",13,14,0,NA,36.2384729780767,45.8591217765505,0.0119999999999933
+"Thoemmes","dagitty example","stress (graphlayouts)",13,14,0,0,20.4230847094609,27.9177026747858,0.00100000000000477
+"Thoemmes","dagitty example","Fruchterman-Reingold",13,14,0,0,19.6096742161329,26.5597339202797,0.000999999999997669
+"Thoemmes","dagitty example","DAGitty author coordinates",13,14,1,0,35.7699715245291,31.6314031180401,0
+"Kampen","dagitty example","metrodag",12,24,5,33,121.633513652379,86.25,3.133
+"Kampen","dagitty example","igraph Sugiyama",12,24,7,16,78.5510749213851,52.5,0.00200000000000244
+"Kampen","dagitty example","Graphviz dot",12,24,3,NA,52.2017935489856,22.5173317875621,0.0150000000000006
+"Kampen","dagitty example","stress (graphlayouts)",12,24,7,0,48.5898903577427,34.3185234326933,0.000999999999997669
+"Kampen","dagitty example","Fruchterman-Reingold",12,24,6,0,58.9369144551373,52.6926511543125,0.000999999999997669
+"Kampen","dagitty example","DAGitty author coordinates",12,24,10,0,58.5607502217769,26.9065547506269,0
+"random n=10 p=1.5/n seed=1","random n=10, p=1.5/n","metrodag",10,4,0,2,4.41421356237309,8,0.102000000000004
+"random n=10 p=1.5/n seed=1","random n=10, p=1.5/n","igraph Sugiyama",10,4,0,0,4.23606797749979,6,0.00100000000000477
+"random n=10 p=1.5/n seed=1","random n=10, p=1.5/n","Graphviz dot",10,4,0,NA,6.92941653596878,10.1776,0.0120000000000005
+"random n=10 p=1.5/n seed=1","random n=10, p=1.5/n","stress (graphlayouts)",10,4,0,0,4.0003999162423,0.46048955605782,0.00500000000000256
+"random n=10 p=1.5/n seed=1","random n=10, p=1.5/n","Fruchterman-Reingold",10,4,0,0,4.25115612018549,22.1201010386457,0.000999999999997669
+"random n=10 p=1.5/n seed=2","random n=10, p=1.5/n","metrodag",10,6,0,2,6.41421356237309,15,0.110000000000007
+"random n=10 p=1.5/n seed=2","random n=10, p=1.5/n","igraph Sugiyama",10,6,0,0,6.23606797749979,12,0.000999999999997669
+"random n=10 p=1.5/n seed=2","random n=10, p=1.5/n","Graphviz dot",10,6,0,NA,10.2069026878073,21.32952768,0.0129999999999981
+"random n=10 p=1.5/n seed=2","random n=10, p=1.5/n","stress (graphlayouts)",10,6,0,0,6.00186949974687,0.792018607014769,0.00400000000000489
+"random n=10 p=1.5/n seed=2","random n=10, p=1.5/n","Fruchterman-Reingold",10,6,0,0,6.38853019218214,20.5456150457719,0.00100000000000477
+"random n=10 p=1.5/n seed=3","random n=10, p=1.5/n","metrodag",10,5,1,3,8.34619407771256,12,0.408999999999999
+"random n=10 p=1.5/n seed=3","random n=10, p=1.5/n","igraph Sugiyama",10,5,1,0,6.65028153987288,6,0.000999999999997669
+"random n=10 p=1.5/n seed=3","random n=10, p=1.5/n","Graphviz dot",10,5,0,NA,9.02721168518809,10.17768,0.0180000000000007
+"random n=10 p=1.5/n seed=3","random n=10, p=1.5/n","stress (graphlayouts)",10,5,0,0,5.3058417943431,16.1243426916698,0.00300000000000011
+"random n=10 p=1.5/n seed=3","random n=10, p=1.5/n","Fruchterman-Reingold",10,5,0,0,5.35975624458442,19.1393970522234,0.000999999999997669
+"random n=10 p=1.5/n seed=4","random n=10, p=1.5/n","metrodag",10,4,0,2,4.41421356237309,12,0.0910000000000011
+"random n=10 p=1.5/n seed=4","random n=10, p=1.5/n","igraph Sugiyama",10,4,0,0,4.23606797749979,12,0.00200000000000244
+"random n=10 p=1.5/n seed=4","random n=10, p=1.5/n","Graphviz dot",10,4,0,NA,6.92941631298795,16.9626666666667,0.0120000000000005
+"random n=10 p=1.5/n seed=4","random n=10, p=1.5/n","stress (graphlayouts)",10,4,0,0,4.00022814528902,0.53096963515007,0.00900000000000034
+"random n=10 p=1.5/n seed=4","random n=10, p=1.5/n","Fruchterman-Reingold",10,4,0,0,4.06987582556481,22.9825058166624,0.000999999999997669
+"random n=10 p=1.5/n seed=5","random n=10, p=1.5/n","metrodag",10,7,0,4,11.5533008588991,10.5,2.229
+"random n=10 p=1.5/n seed=5","random n=10, p=1.5/n","igraph Sugiyama",10,7,0,3,12.2558328153369,12,0.000999999999997669
+"random n=10 p=1.5/n seed=5","random n=10, p=1.5/n","Graphviz dot",10,7,0,NA,13.2243010767753,12.5801108906667,0.0129999999999981
+"random n=10 p=1.5/n seed=5","random n=10, p=1.5/n","stress (graphlayouts)",10,7,0,0,7.97230284424192,12.1167948599756,0.00300000000000011
+"random n=10 p=1.5/n seed=5","random n=10, p=1.5/n","Fruchterman-Reingold",10,7,0,0,7.40201879234873,11.6239523517209,0.00100000000000477
+"random n=10 p=3.0/n seed=1","random n=10, p=3.0/n","metrodag",10,11,2,12,30.3314754519511,20.625,3.82100000000001
+"random n=10 p=3.0/n seed=1","random n=10, p=3.0/n","igraph Sugiyama",10,11,1,3,20.9872588341359,15,0.00100000000000477
+"random n=10 p=3.0/n seed=1","random n=10, p=3.0/n","Graphviz dot",10,11,1,NA,27.9318319607376,18.76693376,0.01400000000001
+"random n=10 p=3.0/n seed=1","random n=10, p=3.0/n","stress (graphlayouts)",10,11,0,0,17.106221960585,40.8269279117074,0.00199999999999534
+"random n=10 p=3.0/n seed=1","random n=10, p=3.0/n","Fruchterman-Reingold",10,11,2,0,17.9724728856661,30.4984223724508,0
+"random n=10 p=3.0/n seed=2","random n=10, p=3.0/n","metrodag",10,17,5,14,54.5845237791561,29.75,3.52799999999999
+"random n=10 p=3.0/n seed=2","random n=10, p=3.0/n","igraph Sugiyama",10,17,6,6,42.8450366458099,24,0.00199999999999534
+"random n=10 p=3.0/n seed=2","random n=10, p=3.0/n","Graphviz dot",10,17,5,NA,45.7343404681385,28.3969049049942,0.0139999999999958
+"random n=10 p=3.0/n seed=2","random n=10, p=3.0/n","stress (graphlayouts)",10,17,6,0,39.7279476319437,25.8887431519851,0.000999999999990564
+"random n=10 p=3.0/n seed=2","random n=10, p=3.0/n","Fruchterman-Reingold",10,17,6,0,37.3039488013483,24.9606174411908,0
+"random n=10 p=3.0/n seed=3","random n=10, p=3.0/n","metrodag",10,16,2,18,48.1880771697493,24.375,7.959
+"random n=10 p=3.0/n seed=3","random n=10, p=3.0/n","igraph Sugiyama",10,16,5,10,43.0788678133265,26,0.00200000000000955
+"random n=10 p=3.0/n seed=3","random n=10, p=3.0/n","Graphviz dot",10,16,1,NA,40.8531711428505,20.9540123167347,0.0130000000000052
+"random n=10 p=3.0/n seed=3","random n=10, p=3.0/n","stress (graphlayouts)",10,16,1,0,20.843773165721,12.6318802984626,0.00100000000000477
+"random n=10 p=3.0/n seed=3","random n=10, p=3.0/n","Fruchterman-Reingold",10,16,1,0,22.7982172262416,20.5582651727668,0.000999999999990564
+"random n=10 p=3.0/n seed=4","random n=10, p=3.0/n","metrodag",10,11,0,8,18.6317279836453,11.375,0.742999999999995
+"random n=10 p=3.0/n seed=4","random n=10, p=3.0/n","igraph Sugiyama",10,11,0,3,18.1678338197237,13.5,0.00100000000000477
+"random n=10 p=3.0/n seed=4","random n=10, p=3.0/n","Graphviz dot",10,11,0,NA,22.9861858393154,15.9270666666667,0.019999999999996
+"random n=10 p=3.0/n seed=4","random n=10, p=3.0/n","stress (graphlayouts)",10,11,0,0,12.9668963415952,12.9878591975428,0.00300000000000011
+"random n=10 p=3.0/n seed=4","random n=10, p=3.0/n","Fruchterman-Reingold",10,11,0,0,13.3494536325931,17.0095359377481,0.000999999999990564
+"random n=10 p=3.0/n seed=5","random n=10, p=3.0/n","metrodag",10,16,6,16,65.0165042944955,32.375,3.937
+"random n=10 p=3.0/n seed=5","random n=10, p=3.0/n","igraph Sugiyama",10,16,5,14,55.009181265353,37.5,0.00199999999999534
+"random n=10 p=3.0/n seed=5","random n=10, p=3.0/n","Graphviz dot",10,16,0,NA,56.9842615668332,34.8697523093333,0.01400000000001
+"random n=10 p=3.0/n seed=5","random n=10, p=3.0/n","stress (graphlayouts)",10,16,1,0,24.963856644061,23.7715546638608,0.000999999999990564
+"random n=10 p=3.0/n seed=5","random n=10, p=3.0/n","Fruchterman-Reingold",10,16,1,0,29.5003899941216,34.7868765326661,0
+"random n=20 p=1.5/n seed=1","random n=20, p=1.5/n","metrodag",20,8,0,2,8.4142135623731,36,0.156000000000006
+"random n=20 p=1.5/n seed=1","random n=20, p=1.5/n","igraph Sugiyama",20,8,0,0,8.23606797749979,24,0.00200000000000955
+"random n=20 p=1.5/n seed=1","random n=20, p=1.5/n","Graphviz dot",20,8,0,NA,13.9785654657171,42.2505084906667,0.0169999999999959
+"random n=20 p=1.5/n seed=1","random n=20, p=1.5/n","stress (graphlayouts)",20,8,0,0,8.19890109459612,28.7451968183431,0.007000000000005
+"random n=20 p=1.5/n seed=1","random n=20, p=1.5/n","Fruchterman-Reingold",20,8,1,0,9.90834740304272,62.2990369367175,0.00100000000000477
+"random n=20 p=1.5/n seed=2","random n=20, p=1.5/n","metrodag",20,13,0,9,16.4852813742386,35,2.56099999999999
+"random n=20 p=1.5/n seed=2","random n=20, p=1.5/n","igraph Sugiyama",20,13,0,4,20.5754746724773,36,0.00100000000000477
+"random n=20 p=1.5/n seed=2","random n=20, p=1.5/n","Graphviz dot",20,13,0,NA,23.7950710199249,41.41984,0.0169999999999959
+"random n=20 p=1.5/n seed=2","random n=20, p=1.5/n","stress (graphlayouts)",20,13,0,0,13.9036709952166,71.8143098128444,0.00499999999999545
+"random n=20 p=1.5/n seed=2","random n=20, p=1.5/n","Fruchterman-Reingold",20,13,0,0,16.1618233282434,62.4026125775003,0.00100000000000477
+"random n=20 p=1.5/n seed=3","random n=20, p=1.5/n","metrodag",20,7,0,6,8.24264068711929,24,0.198999999999998
+"random n=20 p=1.5/n seed=3","random n=20, p=1.5/n","igraph Sugiyama",20,7,0,0,7.70820393249937,15,0.00100000000000477
+"random n=20 p=1.5/n seed=3","random n=20, p=1.5/n","Graphviz dot",20,7,0,NA,12.6339629394124,23.29938,0.012999999999991
+"random n=20 p=1.5/n seed=3","random n=20, p=1.5/n","stress (graphlayouts)",20,7,0,0,7.00127317653966,3.17780246840326,0.00799999999999557
+"random n=20 p=1.5/n seed=3","random n=20, p=1.5/n","Fruchterman-Reingold",20,7,0,0,7.45577490750666,65.4602434873122,0.000999999999990564
+"random n=20 p=1.5/n seed=4","random n=20, p=1.5/n","metrodag",20,14,0,7,18.6923881554251,30,1.13
+"random n=20 p=1.5/n seed=4","random n=20, p=1.5/n","igraph Sugiyama",20,14,6,2,24.9609878933542,33,0.00200000000000955
+"random n=20 p=1.5/n seed=4","random n=20, p=1.5/n","Graphviz dot",20,14,0,NA,25.2523497629764,65.5817933333333,0.0130000000000052
+"random n=20 p=1.5/n seed=4","random n=20, p=1.5/n","stress (graphlayouts)",20,14,0,0,14.8473538813867,53.5205152421773,0.00399999999999068
+"random n=20 p=1.5/n seed=4","random n=20, p=1.5/n","Fruchterman-Reingold",20,14,0,0,16.6690186659721,56.1137690190793,0.00100000000000477
+"random n=20 p=1.5/n seed=5","random n=20, p=1.5/n","metrodag",20,12,0,2,19.3994949366117,42,0.963999999999999
+"random n=20 p=1.5/n seed=5","random n=20, p=1.5/n","igraph Sugiyama",20,12,3,2,22.8098366945753,39,0.00100000000000477
+"random n=20 p=1.5/n seed=5","random n=20, p=1.5/n","Graphviz dot",20,12,0,NA,26.3233815174799,56.95228,0.0180000000000007
+"random n=20 p=1.5/n seed=5","random n=20, p=1.5/n","stress (graphlayouts)",20,12,0,0,13.0733346157455,58.7570289184095,0.00500000000000966
+"random n=20 p=1.5/n seed=5","random n=20, p=1.5/n","Fruchterman-Reingold",20,12,0,0,15.1214066868715,66.0758926811231,0.000999999999990564
+"random n=20 p=3.0/n seed=1","random n=20, p=3.0/n","metrodag",20,20,5,21,63.8700576850888,58.125,3.17500000000001
+"random n=20 p=3.0/n seed=1","random n=20, p=3.0/n","igraph Sugiyama",20,20,16,6,52.3649114879119,36,0.00300000000000011
+"random n=20 p=3.0/n seed=1","random n=20, p=3.0/n","Graphviz dot",20,20,3,NA,49.0280766262737,40.6528826293334,0.012999999999991
+"random n=20 p=3.0/n seed=1","random n=20, p=3.0/n","stress (graphlayouts)",20,20,1,0,33.7014801928035,140.621374946393,0.0029999999999859
+"random n=20 p=3.0/n seed=1","random n=20, p=3.0/n","Fruchterman-Reingold",20,20,1,0,32.7629054285206,91.254749206933,0.00199999999999534
+"random n=20 p=3.0/n seed=2","random n=20, p=3.0/n","metrodag",20,29,22,42,251.28174593052,279.3125,1.67100000000001
+"random n=20 p=3.0/n seed=2","random n=20, p=3.0/n","igraph Sugiyama",20,29,24,23,175.588883647824,111,0.00199999999999534
+"random n=20 p=3.0/n seed=2","random n=20, p=3.0/n","Graphviz dot",20,29,7,NA,124.475059452603,121.612440845333,0.0170000000000101
+"random n=20 p=3.0/n seed=2","random n=20, p=3.0/n","stress (graphlayouts)",20,29,11,0,74.3847073051448,133.980731662829,0.00399999999999068
+"random n=20 p=3.0/n seed=2","random n=20, p=3.0/n","Fruchterman-Reingold",20,29,11,0,65.5550373043715,98.9611513050785,0.00100000000000477
+"random n=20 p=3.0/n seed=3","random n=20, p=3.0/n","metrodag",20,24,21,24,147.200270478569,143,1.27499999999999
+"random n=20 p=3.0/n seed=3","random n=20, p=3.0/n","igraph Sugiyama",20,24,42,10,86.8300142270697,45,0.00100000000000477
+"random n=20 p=3.0/n seed=3","random n=20, p=3.0/n","Graphviz dot",20,24,7,NA,74.3481504010391,50.4397004906667,0.0150000000000006
+"random n=20 p=3.0/n seed=3","random n=20, p=3.0/n","stress (graphlayouts)",20,24,2,0,46.5820052226753,115.074980756712,0.00400000000000489
+"random n=20 p=3.0/n seed=3","random n=20, p=3.0/n","Fruchterman-Reingold",20,24,2,0,36.7091173024657,52.2845661725017,0.00200000000000955
+"random n=20 p=3.0/n seed=4","random n=20, p=3.0/n","metrodag",20,24,6,25,113.429455198398,147,2.629
+"random n=20 p=3.0/n seed=4","random n=20, p=3.0/n","igraph Sugiyama",20,24,23,12,85.8679580416358,65,0.00200000000000955
+"random n=20 p=3.0/n seed=4","random n=20, p=3.0/n","Graphviz dot",20,24,6,NA,65.9996100000851,78.3515289066667,0.0130000000000052
+"random n=20 p=3.0/n seed=4","random n=20, p=3.0/n","stress (graphlayouts)",20,24,1,0,32.9373493706899,58.7764713260862,0.00300000000000011
+"random n=20 p=3.0/n seed=4","random n=20, p=3.0/n","Fruchterman-Reingold",20,24,1,0,48.2598067465335,96.5010577329495,0.00100000000000477
+"random n=20 p=3.0/n seed=5","random n=20, p=3.0/n","metrodag",20,25,15,30,183.929455198398,179.71875,1.43899999999999
+"random n=20 p=3.0/n seed=5","random n=20, p=3.0/n","igraph Sugiyama",20,25,30,17,112.971281254911,65,0.00199999999999534
+"random n=20 p=3.0/n seed=5","random n=20, p=3.0/n","Graphviz dot",20,25,4,NA,71.2404232718902,84.7911496533334,0.0150000000000006
+"random n=20 p=3.0/n seed=5","random n=20, p=3.0/n","stress (graphlayouts)",20,25,1,0,36.2863533959007,40.5034454910053,0.00100000000000477
+"random n=20 p=3.0/n seed=5","random n=20, p=3.0/n","Fruchterman-Reingold",20,25,1,0,39.1081831150007,64.7889203486396,0.00100000000000477
+"random n=40 p=1.5/n seed=1","random n=40, p=1.5/n","metrodag",40,19,0,8,21.4852813742386,81,0.812000000000012
+"random n=40 p=1.5/n seed=1","random n=40, p=1.5/n","igraph Sugiyama",40,19,0,2,24.1421823327095,52,0.00199999999999534
+"random n=40 p=1.5/n seed=1","random n=40, p=1.5/n","Graphviz dot",40,19,0,NA,34.9058986437051,80.2200960177778,0.0170000000000101
+"random n=40 p=1.5/n seed=1","random n=40, p=1.5/n","stress (graphlayouts)",40,19,0,0,19.7643748346437,98.4664138657037,0.0120000000000005
+"random n=40 p=1.5/n seed=1","random n=40, p=1.5/n","Fruchterman-Reingold",40,19,0,0,22.3030799555425,150.012806254547,0.00200000000000955
+"random n=40 p=1.5/n seed=2","random n=40, p=1.5/n","metrodag",40,39,18,40,176.78174593052,210.1875,2.32100000000001
+"random n=40 p=1.5/n seed=2","random n=40, p=1.5/n","igraph Sugiyama",40,39,51,21,185.860081281958,165,0.00199999999999534
+"random n=40 p=1.5/n seed=2","random n=40, p=1.5/n","Graphviz dot",40,39,5,NA,89.7457466036922,152.259135786667,0.0170000000000101
+"random n=40 p=1.5/n seed=2","random n=40, p=1.5/n","stress (graphlayouts)",40,39,3,0,83.955285130558,617.595564403077,0.007000000000005
+"random n=40 p=1.5/n seed=2","random n=40, p=1.5/n","Fruchterman-Reingold",40,39,5,0,69.7501348778713,166.473311735417,0.00300000000000011
+"random n=40 p=1.5/n seed=3","random n=40, p=1.5/n","metrodag",40,25,1,13,41.9632034355964,87.875,6.25500000000001
+"random n=40 p=1.5/n seed=3","random n=40, p=1.5/n","igraph Sugiyama",40,25,9,6,100.582513993428,348,0.00300000000000011
+"random n=40 p=1.5/n seed=3","random n=40, p=1.5/n","Graphviz dot",40,25,0,NA,48.5236740863722,170.798000995556,0.01400000000001
+"random n=40 p=1.5/n seed=3","random n=40, p=1.5/n","stress (graphlayouts)",40,25,0,0,26.9268216309929,161.791616569778,0.00900000000000034
+"random n=40 p=1.5/n seed=3","random n=40, p=1.5/n","Fruchterman-Reingold",40,25,0,0,30.3378463523205,141.234270798862,0.00199999999999534
+"random n=40 p=1.5/n seed=4","random n=40, p=1.5/n","metrodag",40,38,29,40,250.985804384502,264.0625,1.54799999999999
+"random n=40 p=1.5/n seed=4","random n=40, p=1.5/n","igraph Sugiyama",40,38,66,13,134.240992851976,98,0.00199999999999534
+"random n=40 p=1.5/n seed=4","random n=40, p=1.5/n","Graphviz dot",40,38,12,NA,89.4574617999309,192.339682684445,0.0159999999999911
+"random n=40 p=1.5/n seed=4","random n=40, p=1.5/n","stress (graphlayouts)",40,38,7,0,95.1451322293096,764.933937909324,0.00599999999998602
+"random n=40 p=1.5/n seed=4","random n=40, p=1.5/n","Fruchterman-Reingold",40,38,4,0,60.3784199118933,158.357838102081,0.00200000000000955
+"random n=40 p=1.5/n seed=5","random n=40, p=1.5/n","metrodag",40,30,11,21,160.747474683058,234,1.44
+"random n=40 p=1.5/n seed=5","random n=40, p=1.5/n","igraph Sugiyama",40,30,19,13,87.5947696423696,106,0.00199999999999534
+"random n=40 p=1.5/n seed=5","random n=40, p=1.5/n","Graphviz dot",40,30,6,NA,69.0586464384887,123.238544693333,0.0130000000000052
+"random n=40 p=1.5/n seed=5","random n=40, p=1.5/n","stress (graphlayouts)",40,30,0,0,50.7736852352366,351.491315092788,0.00699999999999079
+"random n=40 p=1.5/n seed=5","random n=40, p=1.5/n","Fruchterman-Reingold",40,30,0,0,45.4697698643522,150.752985690411,0.00300000000000011
+"random n=40 p=3.0/n seed=1","random n=40, p=3.0/n","metrodag",40,47,28,64,456.492424049175,582,3.13500000000001
+"random n=40 p=3.0/n seed=1","random n=40, p=3.0/n","igraph Sugiyama",40,47,95,37,364.020822936185,182.5,0.00300000000000011
+"random n=40 p=3.0/n seed=1","random n=40, p=3.0/n","Graphviz dot",40,47,20,NA,128.273174900057,123.557258868013,0.0180000000000007
+"random n=40 p=3.0/n seed=1","random n=40, p=3.0/n","stress (graphlayouts)",40,47,5,0,127.717680657693,520.010517805876,0.00400000000000489
+"random n=40 p=3.0/n seed=1","random n=40, p=3.0/n","Fruchterman-Reingold",40,47,10,0,136.669558086645,395.854807927944,0.00199999999999534
+"random n=40 p=3.0/n seed=2","random n=40, p=3.0/n","metrodag",40,67,149,163,1075.87802974261,1340.625,3.744
+"random n=40 p=3.0/n seed=2","random n=40, p=3.0/n","igraph Sugiyama",40,67,212,62,674.760742104957,304.5,0.00300000000001432
+"random n=40 p=3.0/n seed=2","random n=40, p=3.0/n","Graphviz dot",40,67,109,NA,303.848265214856,232.112693511112,0.021000000000015
+"random n=40 p=3.0/n seed=2","random n=40, p=3.0/n","stress (graphlayouts)",40,67,60,0,228.58707160473,452.371741830482,0.00499999999999545
+"random n=40 p=3.0/n seed=2","random n=40, p=3.0/n","Fruchterman-Reingold",40,67,49,0,186.53357990925,279.026612805069,0.00200000000000955
+"random n=40 p=3.0/n seed=3","random n=40, p=3.0/n","metrodag",40,50,75,64,630.964772466386,776.25,2.792
+"random n=40 p=3.0/n seed=3","random n=40, p=3.0/n","igraph Sugiyama",40,50,154,22,310.357711831446,152.5,0.00200000000000955
+"random n=40 p=3.0/n seed=3","random n=40, p=3.0/n","Graphviz dot",40,50,42,NA,170.613206402451,192.28439426329,0.0160000000000196
+"random n=40 p=3.0/n seed=3","random n=40, p=3.0/n","stress (graphlayouts)",40,50,12,0,144.298310942922,440.456710145622,0.0029999999999859
+"random n=40 p=3.0/n seed=3","random n=40, p=3.0/n","Fruchterman-Reingold",40,50,9,0,113.17546424621,211.943294503369,0.00199999999998113
+"random n=40 p=3.0/n seed=4","random n=40, p=3.0/n","metrodag",40,68,183,167,1545.84249583667,1616.5,7.52600000000001
+"random n=40 p=3.0/n seed=4","random n=40, p=3.0/n","igraph Sugiyama",40,68,283,59,878.078650157339,276,0.00300000000001432
+"random n=40 p=3.0/n seed=4","random n=40, p=3.0/n","Graphviz dot",40,68,90,NA,279.243388304393,187.152525155556,0.0160000000000196
+"random n=40 p=3.0/n seed=4","random n=40, p=3.0/n","stress (graphlayouts)",40,68,61,0,227.498205138315,379.911896157651,0.0029999999999859
+"random n=40 p=3.0/n seed=4","random n=40, p=3.0/n","Fruchterman-Reingold",40,68,50,0,225.315256999662,358.156551322429,0.00300000000001432
+"random n=40 p=3.0/n seed=5","random n=40, p=3.0/n","metrodag",40,62,151,131,1201.28867196751,1137.6875,3.465
+"random n=40 p=3.0/n seed=5","random n=40, p=3.0/n","igraph Sugiyama",40,62,206,50,687.717578923473,178,0.00300000000001432
+"random n=40 p=3.0/n seed=5","random n=40, p=3.0/n","Graphviz dot",40,62,97,NA,251.798541827475,133.406980654075,0.0169999999999959
+"random n=40 p=3.0/n seed=5","random n=40, p=3.0/n","stress (graphlayouts)",40,62,38,0,213.395769208364,494.299051368388,0.00300000000001432
+"random n=40 p=3.0/n seed=5","random n=40, p=3.0/n","Fruchterman-Reingold",40,62,49,0,175.316836725856,258.514272807747,0.00300000000001432

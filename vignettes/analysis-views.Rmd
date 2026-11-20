@@ -1,0 +1,301 @@
+---
+title: "Variables, adjustment sets, and analysis views"
+description: "Keep causal structure, observability, display groups, and analysis choices distinct."
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Variables, adjustment sets, and analysis views}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(collapse = TRUE, comment = "#>", error = FALSE,
+  fig.width = 7, fig.height = 3.5, fig.align = "center",
+  dev = if (requireNamespace("svglite", quietly = TRUE)) "svglite" else "png",
+  fig.ext = if (requireNamespace("svglite", quietly = TRUE)) "svg" else "png",
+  dev.args = list(bg = "white"))
+library(metrodag)
+```
+
+## One graph can support several analysis views
+
+A DAG describes assumed causal relationships. The exposure, outcome, and
+adjustment set describe a particular analysis of that graph. Keeping those
+decisions separate helps a reader see exactly what changes between analyses.
+
+This guide uses the smoking example from [Getting started](metrodag.html).
+It is self-contained: run the code below even if you have not worked through
+that guide. The example is a teaching model, not an empirically established DAG.
+
+```{r graph}
+edges <- data.frame(
+  from = c("C", "C", "X", "X", "M"),
+  to   = c("X", "Y", "M", "Y", "Y")
+)
+display_labels <- c(C = "Socioeconomic background", X = "Cigarettes per day",
+  M = "Tar deposits", Y = "Lung cancer")
+g <- igraph::graph_from_data_frame(edges, directed = TRUE)
+fixed <- layout_metro_dag(g, direction = "right")
+```
+
+`layout_metro_dag()` computes geometry once. Pass that layout to subsequent
+plots to retain every variable, arrow, and route. When reusing it, omit layout
+arguments such as `direction`, `rank`, and `align`; those decisions have already
+been made.
+
+## Read the variable markers
+
+| Annotation | Appearance | Meaning in the displayed analysis |
+|:--|:--|:--|
+| `exposure = "X"` | Filled exposure marker | The chosen exposure |
+| `outcome = "Y"` | Filled outcome marker | The chosen outcome |
+| `adjusted = "C"` | Filled square | A variable chosen for adjustment |
+| `unobserved = "U"` | Dashed circle and outgoing arrows | A variable treated as unobserved |
+| `selected = "P"` | Double-outlined square | A variable conditioned on by selection, such as hospital admission |
+| No explicit role | Hollow circle | An observed variable without another role |
+
+These five explicit roles must be disjoint: for example, an unobserved variable
+cannot also be marked as adjusted, and a selected variable cannot also be an
+adjustment covariate. Observed does not mean adjusted, and
+unadjusted does not mean unobserved. A variable can also have an independent
+display category, introduced below.
+
+The package does not infer that a variable is a confounder, mediator, or collider
+from its name. Such descriptions depend on the graph and the question. The
+graphical basis for choosing adjustment sets is discussed by
+[Textor et al. (2016)](https://doi.org/10.1093/ije/dyw341).
+
+## Compare an unadjusted and an adjusted analysis
+
+```{r views}
+crude <- metro_dag(fixed, labels = display_labels,
+  exposure = "X", outcome = "Y", unadjusted = TRUE,
+  estimand = "Unadjusted X-Y association")
+
+adjusted <- metro_dag(fixed, labels = display_labels,
+  exposure = "X", outcome = "Y", adjusted = "C",
+  estimand = "Total effect of X on Y")
+```
+
+`unadjusted = TRUE` explicitly selects no adjustment variables. In contrast,
+omitting adjustment arguments leaves the set unspecified unless it is inherited
+from the input. An explicit empty set is useful for comparisons and causal
+checks; it prevents a reader from confusing "no adjustment" with "not reported".
+
+Use `compare_metro_dags()` to present both analyses at the same physical scale
+with one shared legend:
+
+```{r comparison, fig.height=3.8, fig.cap="The assumed graph remains fixed while the adjustment annotations change.", fig.alt="Two panels show identical nodes and arrows. The unadjusted panel has no adjusted variables; the total-effect panel marks socioeconomic background as adjusted."}
+comparison_labels <- display_labels
+comparison_labels["C"] <- "Socioeconomic\nbackground"
+comparison <- compare_metro_dags(fixed, labels = comparison_labels,
+  label_wrap = NULL, views = list(
+  Unadjusted = list(exposure = "X", outcome = "Y", unadjusted = TRUE,
+    estimand = "Unadjusted X-Y association"),
+  Adjusted = list(exposure = "X", outcome = "Y", adjusted = "C",
+    estimand = "Total effect of X on Y")
+))
+comparison
+```
+
+In this assumed graph, `C` blocks the back-door path from `X` to `Y`. Leaving
+`M` out of the adjustment set retains the pathway through tar deposits in the
+total-effect target. These interpretations depend on the assumed graph.
+
+`estimand` supplies a descriptive title. It does not estimate an effect or
+establish identification. Different adjustment sets can target the same effect,
+and adding a mediator to the controls does not by itself establish a direct
+effect. Use a suitable causal analysis for that question.
+
+Set `ncol = 1` to stack panels when each needs more horizontal space.
+`comparison$plots` contains the individual plots, and `comparison$layout`
+contains their shared geometry.
+
+## Check adjustment separately
+
+The optional dagitty package provides graphical adjustment criteria. Metrodag's
+`check_metro_adjustment()` delegates a **total-effect** check to DAGitty; plotting
+never runs it automatically. Install the dependency once if needed:
+
+```{r install-dagitty, eval=FALSE}
+install.packages("dagitty")
+```
+
+```{r adjustment-check}
+if (requireNamespace("dagitty", quietly = TRUE)) {
+  print(check_metro_adjustment(crude))
+  print(check_metro_adjustment(adjusted))
+}
+```
+
+For this graph, the empty set fails the criterion and adjusting for `C` passes.
+The returned object's `valid` field records the result. A passing result concerns
+graphical identification by adjustment under the specified DAG; it does not
+validate the graph, measurements, positivity, or statistical estimator, and does
+not check direct or indirect effects. See
+[Textor et al. (2016)](https://doi.org/10.1093/ije/dyw341) for the DAGitty methods.
+
+## Reuse annotations deliberately
+
+A plot stores its annotated layout in `attr(p, "metrodag_layout")`. Reusing
+that layout inherits its roles. A supplied vector replaces the old
+set rather than adding to it:
+
+```{r inheritance}
+annotated_layout <- attr(adjusted, "metrodag_layout")
+cleared <- metro_dag(annotated_layout, labels = display_labels,
+  unadjusted = TRUE, estimand = "Unadjusted X-Y association")
+attr(cleared, "metrodag_analysis")$adjusted
+```
+
+| Intention | Argument |
+|:--|:--|
+| Inherit an existing role | Omit the role or supply `NULL` |
+| Replace an adjustment set | `adjusted = c("C", "Z")`, when both nodes exist |
+| Clear a role | For example, `unobserved = character(0)` or `selected = character(0)` |
+| Explicitly select no adjustment | `unadjusted = TRUE` or `adjusted = character(0)` |
+| Clear an inherited target title | `estimand = NULL` |
+
+An omitted estimand title is inherited only when exposure and outcome stay the
+same. If you change either target, the omitted title is cleared. Supply a new
+title when the analysis question changes.
+
+## Show unobserved variables and custom categories
+
+Suppose we expand the teaching graph to include two unmeasured influences.
+`U1` affects smoking and lung cancer; `U2` affects tar deposits and lung cancer.
+Neither can be marked as adjusted. The example illustrates how to display these
+assumptions, not how to recover a causal effect in their presence.
+
+```{r groups, fig.height=5.5, fig.cap="Dashed markers describe observability; numbered categories add an independent description.", fig.alt="A six-node graph with dashed U1 and U2 nodes. Numbered groups distinguish exposure factors from mediator factors, while X and Y retain their exposure and outcome markers."}
+expanded_edges <- rbind(edges, data.frame(
+  from = c("U1", "U1", "U2", "U2"),
+  to = c("X", "Y", "M", "Y")
+))
+grouped <- metro_dag(expanded_edges,
+  labels = c(display_labels, U1 = "Smoking-related genes",
+    U2 = "Airway clearance genes"),
+  exposure = "X", outcome = "Y", unobserved = c("U1", "U2"),
+  node_groups = list(
+    "Exposure factors" = c("X", "U1"),
+    "Mediator factors" = c("M", "U2")
+  ),
+  node_group_colours = c("Exposure factors" = "#006D5B",
+    "Mediator factors" = "#7A5195"),
+  style = "monochrome")
+grouped
+```
+
+Each node can belong to one display group alongside its analysis role. Numbered
+marks and matching legend entries identify the groups in every style; numbers
+follow category names in UTF-8 byte order. Optional outline colours appear in
+publication or metro style. Monochrome retains the numbers but ignores those
+colours. Groups do not change node positions, routes, or the causal checks.
+
+Use `node_groups = list()` to clear inherited categories. To clear only colour
+overrides, use `node_group_colours = character(0)`. For a comparison, pass groups
+to `compare_metro_dags()` itself so every panel shares one category mapping.
+
+A group named "Selection factors" is only a display category. It does not
+encode conditioning on hospital admission. Use the `selected` role, described
+next, when the analysis is restricted to selected patients.
+
+## Show selection and highlight open paths
+
+Restricting an analysis to hospitalised patients conditions on admission.
+Mark such variables with `selected`: they are drawn as squares with a double
+outline and listed as "Selected (conditioned on)" in the legend. Selection is
+not an adjustment choice, and `check_metro_adjustment()` refuses graphs with
+selected variables rather than silently ignoring them.
+
+`highlight_paths()` asks DAGitty for the paths between exposure and outcome
+and emphasises the arrows on paths that remain open given the adjustment set
+and any selected variables. It changes only arrow appearance; the layout and
+roles are unchanged, and `attr(p, "metrodag_paths")` lists every path with its
+status.
+
+```{r selection-graph}
+sel_edges <- data.frame(
+  from = c("C", "C", "X", "M", "X", "X", "Y"),
+  to   = c("X", "Y", "M", "Y", "Y", "P", "P"))
+sel_labels <- c(C = "Socioeconomic background", X = "Cigarettes per day",
+  M = "Tar deposits", Y = "Lung cancer", P = "Hospital admission")
+```
+
+```{r selection-paths, fig.height=3.6, fig.cap="Conditioning on hospital admission opens a path through it; adjustment for C closes the confounding path.", fig.alt="A DAG with exposure X, outcome Y, adjusted C and selected admission P. Arrows on the open paths X to M to Y, X to Y and X to P from Y are drawn thicker in red; the paths through C are grey."}
+if (requireNamespace("dagitty", quietly = TRUE)) {
+  selected_plot <- metro_dag(sel_edges, labels = sel_labels, exposure = "X",
+    outcome = "Y", adjusted = "C", selected = "P")
+  highlighted <- highlight_paths(selected_plot)
+  highlighted
+  attr(highlighted, "metrodag_paths")[, c("path", "open")]
+}
+```
+
+Use `paths = "biasing"` to emphasise only the open non-causal paths that an
+adjustment set should close (with several exposures, paths through another
+exposure are left out, as in DAGitty's adjustment criterion), `paths = "causal"` for open directed paths, or
+`paths = "all"` for every path; the `causal` column of the path table says
+which is which. Describe the colour convention in the figure caption.
+
+## Mark assumptions about individual arrows
+
+`edge_style` changes the linetype, colour or width of named arrows, and
+`edge_legend` explains a linetype in the legend. A dotted arrow is a common way
+to show a relationship that is assumed but uncertain:
+
+```{r edge-legend, fig.height=3.4, fig.cap="A dotted arrow marks an uncertain assumption, explained in the legend.", fig.alt="The smoking DAG with a dotted arrow from socioeconomic background to lung cancer and a legend entry reading Assumed, uncertain."}
+metro_dag(sel_edges[1:5, ], labels = sel_labels[c("C", "X", "M", "Y")], exposure = "X", outcome = "Y",
+  adjusted = "C", edge_style = list("C->Y" = list(linetype = "dotted")),
+  edge_legend = c(dotted = "Assumed, uncertain"))
+```
+
+## Starting from DAGitty
+
+Directed DAGitty DAGs can be passed directly to `metro_dag()`. Node identifiers,
+isolated nodes, and exposure, outcome, adjusted, and latent statuses are retained.
+Positions are recomputed by metrodag.
+
+```{r dagitty-import, fig.cap="A directed DAGitty graph imported with its analysis roles.", fig.alt="DAGitty's X exposure, Y outcome, C adjustment marker, and latent U are retained in the metrodag drawing."}
+if (requireNamespace("dagitty", quietly = TRUE)) {
+  dag <- dagitty::dagitty("dag {
+    X [exposure]; Y [outcome]; C [adjusted]; U [latent]
+    C -> X; C -> Y; X -> M; M -> Y; X -> Y; U -> C
+  }")
+  metro_dag(dag)
+}
+```
+
+The imported roles must be disjoint. DAGitty `[selected]` nodes are imported
+with the `selected` role. Undirected and partially directed edges are
+unsupported.
+
+A bidirected arc `A <-> B` states that A and B share an unobserved common
+cause. By default such graphs are rejected so the assumption is never dropped
+silently. With `bidirected = "latent"`, each arc is drawn as an unlabelled,
+dashed unobserved variable with arrows into both endpoints. That expanded DAG
+encodes the same assumption for adjustment checks:
+
+```{r dagitty-bidirected, fig.height=3, fig.cap="A bidirected arc drawn as an unlabelled unobserved common cause.", fig.alt="X and Y joined by a direct arrow and by dashed arrows from an unlabelled dashed station, with C adjusted."}
+if (requireNamespace("dagitty", quietly = TRUE)) {
+  confounded <- dagitty::dagitty("dag {
+    X [exposure]; Y [outcome]; C [adjusted]
+    C -> X; C -> Y; X -> Y; X <-> Y
+  }")
+  metro_dag(confounded, bidirected = "latent")
+}
+```
+
+## Next steps
+
+Use [Preparing figures for publication](publication.html) to export comparisons,
+choose readable dimensions, and inspect the final result. The
+[algorithm guide](algorithm.html) explains the distinction between stored
+geometry and labels placed at rendering time.
+
+### Reference
+
+Textor, J., van der Zander, B., Gilthorpe, M. S., Liśkiewicz, M., & Ellison,
+G. T. H. (2016). Robust causal inference using directed acyclic graphs: the R
+package 'dagitty'. *International Journal of Epidemiology*, 45(6), 1887–1894.
+<https://doi.org/10.1093/ije/dyw341>.

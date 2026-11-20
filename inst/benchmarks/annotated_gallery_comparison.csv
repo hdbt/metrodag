@@ -1,0 +1,7 @@
+"id","crossings_before","crossings_after","total_bends_before","total_bends_after","total_edge_length_before","total_edge_length_after","area_before","area_after","overlap_segments_before","overlap_segments_after","shared_track_length_before","shared_track_length_after","node_edge_collisions_before","node_edge_collisions_after"
+"01_alcohol_heart",3,3,10,10,100.254833995939,100.254833995939,153,153,2,2,1.9142135623731,1.9142135623731,0,0
+"02_air_pollution",2,2,7,7,130.639610306789,130.639610306789,228,228,1,1,1.4142135623731,1.4142135623731,0,0
+"03_sugary_drinks",6,6,10,10,152.953318805774,150.468037431535,425,350,4,4,3.82842712474619,3.82842712474619,0,0
+"04_statin_events",4,4,13,13,190.02438661764,190.02438661764,418.5,418.5,1,1,0.5,0.5,0,0
+"05_obesity_admission",5,5,10,10,110.840620433566,110.840620433566,171,171,3,3,2.41421356237309,2.41421356237309,0,0
+"06_longitudinal",8,8,15,15,144.982756057297,144.982756057297,207,207,0,0,0,0,0,0

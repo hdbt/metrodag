@@ -1,0 +1,328 @@
+---
+title: "Preparing figures for publication"
+description: "Choose labels, styles, temporal constraints, and export dimensions, then inspect the result."
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Preparing figures for publication}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(collapse = TRUE, comment = "#>", error = FALSE,
+  fig.width = 7, fig.height = 3.2, fig.align = "center",
+  dev = if (requireNamespace("svglite", quietly = TRUE)) "svglite" else "png",
+  fig.ext = if (requireNamespace("svglite", quietly = TRUE)) "svg" else "png",
+  dev.args = list(bg = "white"))
+library(metrodag)
+```
+
+## Start with the space the figure must occupy
+
+The same DAG may need to fit a manuscript column, a slide, or a supplementary
+page. Decide the intended width, output format, and font early. Metrodag places
+labels when the figure is drawn, so a clear RStudio preview is not a substitute
+for checking the exported file.
+
+This guide is self-contained and continues the illustrative smoking example
+from [Getting started](metrodag.html). See the [analysis guide](analysis-views.html)
+for the meaning of its role markers and adjustment annotations.
+
+```{r graph}
+edges <- data.frame(
+  from = c("C", "C", "X", "X", "M"),
+  to   = c("X", "Y", "M", "Y", "Y")
+)
+display_labels <- c(C = "Socioeconomic background", X = "Cigarettes per day",
+  M = "Tar deposits", Y = "Lung cancer")
+p <- metro_dag(edges, labels = display_labels,
+  exposure = "X", outcome = "Y", adjusted = "C")
+fixed <- attr(p, "metrodag_layout")
+```
+
+## Choose a visual style
+
+The default `style = "publication"` uses restrained lines on white. Monochrome
+retains distinctions through shapes, fills, and dashes. Metro style colours
+visual paths through the drawing; those colours do not encode effect magnitude,
+statistical significance, or valid adjustment sets.
+
+```{r monochrome, fig.cap="Monochrome preserves the exposure, outcome, and adjustment markers.", fig.alt="The four-node smoking DAG in black and white, with C shown as an adjusted square and X and Y shown as filled markers."}
+mono <- metro_dag(fixed, labels = display_labels,
+  style = "monochrome", family = "sans")
+mono
+```
+
+```{r metro-style, fig.cap="Metro colours describe visual paths rather than causal quantities.", fig.alt="The identical graph in metro style, with coloured routes and unchanged causal arrows and role markers."}
+metro_dag(fixed, labels = display_labels, style = "metro")
+```
+
+Use `family` to choose a font installed on the machine that will render the
+figure. Generic `"sans"` and `"serif"` are portable choices, but their actual
+fonts can differ between systems. Check the saved PDF or SVG with your intended
+font, particularly when another computer will display it.
+
+### Adjust a style
+
+The named styles are presets of `metro_style()`. Start from one and change only
+what the journal or the figure needs: role colours, the arrowhead, the width of
+the background casing at crossings, how stations grow with their degree, the
+legend wording and its position. A style object is passed to `style`:
+
+```{r custom-style, fig.cap="A custom style keeps the geometry and changes only colours, arrowheads and legend text.", fig.alt="The smoking DAG with green exposure and purple outcome markers, a legend on the right that reads Treatment and Response, and uniform station sizes."}
+journal <- metro_style(
+  exposure_fill = "#1B9E77", outcome_fill = "#7570B3",
+  legend_labels = c(exposure = "Treatment", outcome = "Response"),
+  legend_position = "right", station_scaling = "none", arrow_length = 1.6
+)
+metro_dag(fixed, labels = display_labels, style = journal)
+```
+
+By default, stations with many arrows grow a little so their arrow tips stay
+distinct (`station_scaling = "capped"`, at most 1.5 times `node_size`). Use
+`"none"` for uniform stations or `"degree"` for the unbounded growth of earlier
+versions. `casing_width = 0` removes the background gap painted under each
+route at crossings; keep it when arrows cross.
+
+### Style individual arrows
+
+`edge_style` changes the linetype, colour or width of named arrows without
+touching the layout, roles or any check. Dotted arrows are a common way to mark
+relationships that are assumed but uncertain:
+
+```{r edge-style, fig.cap="Per-arrow styles mark an uncertain relationship and emphasise the pathway of interest.", fig.alt="The smoking DAG with a dotted arrow from socioeconomic background to lung cancer and a thicker arrow from cigarettes per day to tar deposits."}
+metro_dag(fixed, labels = display_labels,
+  edge_style = list("C->Y" = list(linetype = "dotted"),
+    "X->M" = list(width = 0.8)))
+```
+
+Add `edge_legend = c(dotted = "Assumed, uncertain")` to explain a linetype in
+the legend, or describe the convention in the figure caption.
+
+### Distinguish roles without colour
+
+In greyscale print, exposure and outcome should differ by shape as well as
+colour. `metro_style(outcome_marker = "ring")` draws the outcome as a hollow
+ring with a filled centre; the monochrome preset uses it by default.
+
+## Make labels readable
+
+Labels wrap automatically. The `label_wrap` argument is an approximate character
+limit, and physical space on the device also affects wrapping. Keep identifiers
+short and use the `labels` vector for the full text.
+
+When you need an intentional break, use `\n`. Explicit breaks are retained;
+`label_wrap = NULL` disables additional automatic wrapping:
+
+```{r manual-labels, fig.cap="Manual line breaks provide consistent wording across a small figure.", fig.alt="The graph uses two-line labels for socioeconomic background, cigarettes per day, and tar deposits."}
+short_labels <- c(C = "Socioeconomic\nbackground", X = "Cigarettes\nper day",
+  M = "Tar\ndeposits", Y = "Lung cancer")
+compact <- metro_dag(fixed, labels = short_labels, label_wrap = NULL,
+  style = "monochrome")
+compact
+```
+
+Use labels that a reader can understand without consulting the R code. If one
+label still needs a small adjustment after choosing the final size, use a named
+nudge. Positive values move right and up, in millimetres:
+
+```{r nudge}
+nudged <- metro_dag(fixed, labels = short_labels, label_wrap = NULL,
+  style = "monochrome", label_nudge = list(C = c(0, 2)))
+nudge_report <- diagnose_metro_dag(nudged, width = 180, device = "svg")
+nudge_report$issues
+```
+
+A nudge moves only the label. It may introduce a new conflict, so diagnose and
+inspect the result. The original `compact` plot remains available. Avoid using
+many nudges to compensate for a figure that is simply too small.
+
+## Add a title or caption
+
+Standard ggplot annotations work. Metrodag wraps them using the output device's
+font metrics:
+
+```{r title, fig.height=3.8, fig.cap="Titles and captions are part of the figure's available physical space.", fig.alt="The smoking DAG with a title describing the assumed pathways and a caption identifying it as a teaching example."}
+captioned <- mono + ggplot2::labs(
+  title = "Assumed pathways from cigarettes per day to lung cancer",
+  caption = "Illustrative teaching model; arrows represent assumed relationships."
+)
+captioned
+```
+
+Leave enough height for titles, the legend, and any adjustment subtitle. If a
+journal puts captions outside the image, supply the explanatory text in the
+manuscript instead. Keep a legend when the role markers would otherwise be
+ambiguous.
+
+## Change orientation or impose temporal structure
+
+Choose `direction = "right"` (the default), `"left"`, `"down"`, or `"up"`
+when constructing the layout. To change orientation, rebuild from
+the graph rather than passing `direction` alongside an existing layout:
+
+```{r orientation, fig.height=5.5, fig.cap="A downward layout can suit a taller page region.", fig.alt="The same four-variable graph laid out with causal arrows progressing downward."}
+metro_dag(edges, direction = "down", labels = short_labels, label_wrap = NULL,
+  exposure = "X", outcome = "Y", adjusted = "C")
+```
+
+For longitudinal graphs, explicit `rank` values can represent survey waves.
+Ranks must strictly increase along every arrow. Their order and ties matter;
+the numerical gaps do not set physical distances. Nodes linked by a same-wave
+arrow need different ranks, even if both were measured in the same survey wave.
+
+The following example assumes arrows between successive waves and a background
+factor `C` measured before wave 1:
+
+```{r longitudinal-input}
+wave_edges <- data.frame(
+  from = c("C", "C", "X1", "X2", "Y1", "Y2", "X1", "Y1", "X2", "Y2"),
+  to   = c("X1", "Y1", "X2", "X3", "Y2", "Y3", "Y2", "X2", "Y3", "X3")
+)
+wave_labels <- c(C = "Background",
+  X1 = "Smoking: wave 1", X2 = "Smoking: wave 2", X3 = "Smoking: wave 3",
+  Y1 = "Lung function: wave 1", Y2 = "Lung function: wave 2", Y3 = "Lung function: wave 3")
+wave_ranks <- c(C = 0, X1 = 1, Y1 = 1, X2 = 2, Y2 = 2, X3 = 3, Y3 = 3)
+```
+
+`align` explicitly names repeated variables that should occupy one row in a
+horizontal drawing, or one column in a vertical drawing. The package does not
+infer repeated-measure identity from similar node names.
+
+```{r longitudinal, fig.height=5.5, fig.cap="Explicit ranks order the waves; alignment keeps repeated variables on consistent rows.", fig.alt="A background variable precedes two aligned three-wave chains: smoking and lung function. Cross-lagged arrows join the chains between waves."}
+longitudinal <- metro_dag(wave_edges,
+  labels = wave_labels, rank = wave_ranks,
+  align = list(c("X1", "X2", "X3"), c("Y1", "Y2", "Y3")),
+  exposure = "X1", outcome = "Y3", adjusted = "C")
+longitudinal
+```
+
+`rank_labels` names each rank, for example the survey waves, above a
+horizontal drawing or beside a vertical one:
+
+```{r rank-labels, fig.height=3.6, fig.cap="Rank headers name the survey waves.", fig.alt="The longitudinal DAG with bold headers Baseline, Wave 1, Wave 2 and Wave 3 above its ranks."}
+metro_dag(wave_edges, labels = wave_labels, rank = wave_ranks,
+  align = list(c("X1", "X2", "X3"), c("Y1", "Y2", "Y3")),
+  exposure = "X1", outcome = "Y3", adjusted = "C",
+  rank_labels = c("Baseline", "Wave 1", "Wave 2", "Wave 3"))
+```
+
+Alignment is a readability choice and can increase crossings, bends, or space.
+To assess that trade-off, compare with the same graph and ranks but without
+`align`. Avoid deleting substantively necessary arrows just to simplify a
+drawing. The larger longitudinal DAG in the
+[six-example gallery](https://github.com/hdbt/metrodag/blob/main/inst/benchmarks/REPORT.md)
+includes both aligned and rank-only exports.
+
+## Export at the intended dimensions
+
+The widths below are examples; follow the target journal's requirements.
+`save_metro_dag()` defaults to millimetres, with `units = "cm"` or `"in"`
+also available.
+
+| Output | Example | Why use it? |
+|:--|:--|:--|
+| PDF | `save_metro_dag("dag.pdf", p, width = "double")` | Vector output for manuscripts |
+| EPS | `save_metro_dag("dag.eps", p, width = "single")` | Vector output for journals that still require PostScript |
+| SVG | `save_metro_dag("dag.svg", p, width = 180)` | Vector output for the web or an editor |
+| PNG | `save_metro_dag("dag.png", p, width = 180, dpi = 600)` | Raster output when requested |
+| TIFF | `save_metro_dag("dag.tiff", p, width = 180, dpi = 600)` | LZW-compressed raster submission format |
+
+The width presets `"single"` (85 mm), `"1.5"` (120 mm) and `"double"`
+(180 mm) stand for common journal column widths; a number in `units` works
+just as well. PDF and EPS use Cairo devices, which embed fonts; if Cairo is
+unavailable, a warning reports the fallback to the base devices.
+
+When omitted, height is calculated automatically, within 45–220 mm. Supply
+`height` when the figure needs a different size. Text and station sizes are
+physical dimensions, so reducing width does not simply shrink every element.
+Increasing raster `dpi` improves pixel resolution but does not create more
+physical space for labels.
+
+This example checks a candidate 85 mm single-column figure before saving it.
+The temporary directory keeps the executed examples separate from your files.
+
+```{r final-check}
+final_report <- diagnose_metro_dag(compact, width = 85, device = "pdf")
+final_report
+final_report$issues
+```
+
+```{r export}
+figure_dir <- tempdir()
+save_metro_dag("smoking-column.pdf", compact,
+  path = figure_dir, width = 85)
+save_metro_dag("smoking-wide.svg", captioned,
+  path = figure_dir, width = 180)
+save_metro_dag("smoking-wide.png", captioned,
+  path = figure_dir, width = 180, dpi = 300)
+```
+
+The directory supplied as `path` must already exist. If rendering fails, an
+existing destination file is preserved. `ggplot2::ggsave()` also supports these
+plots, but `save_metro_dag()` additionally provides automatic height and the
+publication-oriented export defaults used here.
+
+## Combine figures
+
+MetroDAG plots are ggplots, so patchwork and `ggplot2::ggplotGrob()` work and
+labels keep the plot's own margins. Titles are wrapped to the final width only
+when the figure is drawn through MetroDAG, so wrap a titled figure with
+`as_metro_grob()` before composing it:
+
+```{r combine, eval = FALSE}
+library(patchwork)
+combined <- wrap_elements(full = as_metro_grob(captioned)) + compact
+save_metro_dag("combined.pdf", combined, width = 180, height = 90)
+```
+
+`save_metro_dag()` and `diagnose_metro_dag()` check every MetroDAG panel of a
+composition as strictly as a single figure; give them the composition's
+height, since automatic height applies only to single figures and comparisons.
+
+While drafting in a small preview pane, `on_error = "warn"` draws what fits and
+reports the problems once instead of stopping. `save_metro_dag()` still refuses
+to write such a figure unless it is also given `on_error = "warn"`.
+
+## Diagnose problems systematically
+
+`diagnose_metro_dag()` renders privately using the requested output format. Its
+`issues` table identifies affected nodes or arrows and, for comparisons, panel
+numbers. Use the same width, height, font, and format as the final export.
+
+| Symptom | First response |
+|:--|:--|
+| Labels overlap | Increase the width, use concise labels, or allow automatic wrapping |
+| One label touches an arrow | Inspect a small `label_nudge` at the final size |
+| Arrow or station clearance fails | Give the complete graph more physical space |
+| A long comparison title squeezes a panel | Use `ncol = 1`, shorten the title, or increase dimensions |
+| A temporal rank is rejected | Check that every arrow goes to a strictly higher rank |
+| A custom layout has a collapsed or incomplete route | Recompute the layout from the graph |
+| The figure differs from the preview | Check the export device, dimensions, and installed font |
+
+Warnings do not set `report$ok` to `FALSE`; read `report$issues` even when the
+overall status passes. An empty issues table means no implemented conflict was
+detected, not that the figure is optimal. Inspect arrowheads, dashed routes,
+label-to-node associations, and the legend in the actual file.
+
+Use `layout_metrics()` for geometric comparisons such as crossings and bends.
+Those metrics complement device diagnostics: they do not measure readability
+of the final text or correctness of the causal assumptions.
+
+```{r metrics}
+layout_metrics(attr(longitudinal, "metrodag_layout"))
+```
+
+## Keep the figure reproducible
+
+Save the edge table or source graph, labels, role arguments, explicit constraints,
+and export call in your analysis script. Record `packageVersion("metrodag")`
+and `sessionInfo()` with the project. Layouts are deterministic for a given
+input and package implementation, but algorithm updates can change geometry;
+font and device differences can also change label placement.
+
+For more complex examples, inspect the
+[six annotated DAGs](https://github.com/hdbt/metrodag/blob/main/inst/benchmarks/REPORT.md)
+and their [complete generation script](https://github.com/hdbt/metrodag/blob/main/data-raw/annotated_gallery.R).
+For the layout search and its limitations, read
+[Algorithm and constraints](algorithm.html).

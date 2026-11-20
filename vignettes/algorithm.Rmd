@@ -1,0 +1,521 @@
+---
+title: "MetroDAG algorithm and constraints"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{MetroDAG algorithm and constraints}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(collapse = TRUE, comment = "#>", fig.width = 7,
+  fig.height = 5, fig.align = "center",
+  dev = if (requireNamespace("svglite", quietly = TRUE)) "svglite" else "png",
+  fig.ext = if (requireNamespace("svglite", quietly = TRUE)) "svg" else "png",
+  dev.args = list(bg = "white"))
+```
+
+## Reading this guide
+
+This is the technical companion to the workflow guides. Start with
+[Getting started](metrodag.html) to create a graph,
+[Variables and analysis views](analysis-views.html) to annotate it, or
+[Preparing figures for publication](publication.html) to choose output settings.
+The sections below document the implementation and its constraints in detail.
+
+## From a graph to a figure
+
+Weakly connected components are laid out independently and packed by their
+routed extents. Explicit user ranks retain alignment across components.
+Route refinement caches unchanged obstacles and compares numeric unit-grid
+keys, reducing repeated work without changing its acceptance criteria.
+
+```{r causal-example, fig.cap="Publication defaults with explicitly supplied variable roles."}
+library(metrodag)
+g <- metrodag_examples("causal")
+p <- metro_dag(g, exposure = "X", outcome = "Y", unobserved = "U")
+p
+```
+
+```{r export, eval=FALSE}
+save_metro_dag("dag.pdf", p)       # 180 mm wide; automatic height
+save_metro_dag("dag.svg", p)       # vector artwork
+save_metro_dag("dag.png", p)       # 600 dpi
+```
+
+Node names remain the graph identifiers. A named `labels` vector or the igraph
+`label` attribute supplies readable display text. Roles are display annotations
+provided by the analyst; plotting does not identify adjustment sets.
+
+### Graph input compatibility
+
+`metro_graph(nodes, edges)` constructs a graph from explicit node and edge
+tables. `nodes$name` defines all variables, including isolates; `edges$from`
+and `edges$to` must refer to those identifiers. Labels and explicit `role`
+attributes are retained. `metro_graph_from_adjacency()` accepts a named dense
+binary matrix: row A, column B equal to 1 means A -> B. Rows and columns can
+be ordered independently. Direct two-column matrix inputs remain edge lists.
+
+```{r table-input, eval=FALSE}
+nodes <- data.frame(name = c("X", "Y", "I"),
+  label = c("Exposure", "Outcome", "Additional variable"),
+  role = c("exposure", "outcome", "observed"))
+graph <- metro_graph(nodes, data.frame(from = "X", to = "Y"))
+metro_dag(graph)
+```
+
+igraph subclasses from tidygraph and ggdag's `dagify()`/`tidy_dagitty()`
+workflows are supported. ggdag is required only for its tidy objects; a plain
+DAGitty graph retains its named labels without loading ggdag. The embedded
+DAGitty graph defines the model and roles, while tidy-table labels take
+precedence over matching graph labels. Inconsistent node/edge/status data is
+rejected. Imports preserve identities, directed edges, labels and explicit
+roles, then compute MetroDAG coordinates. DAGitty `[selected]` nodes import
+with the `selected` role. Bidirected arcs are rejected unless
+`bidirected = "latent"` draws each as an unlabelled unobserved common cause;
+undirected and partially directed edges are not supported.
+
+Check the chosen device size without writing a publication file:
+
+```{r diagnose}
+report <- diagnose_metro_dag(p, width = 180, device = "pdf")
+report
+```
+
+`report$issues` identifies node, edge and label conflicts, with panel numbers
+for comparisons. An error sets `report$ok` to FALSE; warnings still call for
+visual inspection. Use the intended output format and fonts when diagnosing.
+Overlapping station outlines are rejected during ordinary rendering, including
+graphs without edges. Reversed ggplot position scales transform nodes and
+routes together; nonlinear scales are not supported.
+
+DAGitty selection nodes keep their role: they are drawn as double-outlined
+squares, `highlight_paths()` conditions on them, and `check_metro_adjustment()`
+refuses graphs with selection rather than ignoring it.
+
+## Keep the graph fixed across analysis views
+
+An adjustment set describes the analysis, while the DAG describes the assumed
+causal relationships. Reuse one layout to show several analyses without moving
+nodes, rerouting arrows, or removing unadjusted variables.
+
+An omitted estimand label inherits from the layout when exposure and outcome
+stay the same. A string replaces it and explicit NULL clears it. Changing the
+exposure or outcome clears an omitted label.
+
+```{r adjustment-views, fig.width=7, fig.height=5}
+theory <- igraph::graph_from_edgelist(rbind(
+  c("C", "X"), c("C", "Y"), c("X", "M"), c("M", "Y"), c("X", "Y")
+), directed = TRUE)
+fixed <- layout_metro_dag(theory, direction = "right")
+crude <- metro_dag(fixed, exposure = "X", outcome = "Y", unadjusted = TRUE,
+  estimand = "Unadjusted X-Y association")
+adjusted <- metro_dag(fixed, exposure = "X", outcome = "Y", adjusted = "C",
+  estimand = "Total effect of X on Y")
+crude
+adjusted
+```
+
+Squares mark adjusted variables; hollow circles mark observed variables not
+adjusted for. Dashed circles still mean unobserved, which is a separate concept.
+The legend and adjustment subtitle remain readable in monochrome. The input
+graph and layout are not modified; each plot stores its selections in
+`attr(p, "metrodag_analysis")`.
+
+The estimand label is supplied by the analyst. Merely changing controls need not
+change the target effect, and a mediator-adjusted model does not automatically
+identify a direct effect. Plotting does not certify the sufficiency of a set or
+mark open and blocked paths. The optional `check_metro_adjustment()` function
+delegates total-effect checks to DAGitty separately. For a different
+target on this same graph, for example the total effect of M on Y:
+
+```{r another-target, eval=FALSE}
+metro_dag(fixed, exposure = "M", outcome = "Y", adjusted = c("C", "X"),
+  estimand = "Total effect of M on Y")
+```
+
+NULL role arguments inherit existing annotations. A supplied vector replaces
+that role's previous set; `character(0)` clears it. `unadjusted = TRUE` clears
+all inherited adjustment markers while retaining exposure, outcome and
+unobserved status. Omit layout-computation arguments when reusing a layout.
+Use `legend = FALSE` to suppress the legend or `ggplot2::labs()` to customize
+the analysis title and subtitle.
+
+Custom display categories are separate from these analysis annotations:
+
+```{r node-groups, fig.width=7, fig.height=4.8}
+grouped <- metro_dag(attr(p, "metrodag_layout"),
+  node_groups = list("Background factors" = c("C", "S"),
+    "Unmeasured influences" = "U"),
+  node_group_colours = c("Background factors" = "#006D5B"))
+grouped
+```
+
+Numbered marks stay inside the existing stations and identify categories in
+every drawing style, including monochrome. Group numbers follow category names
+in UTF-8 byte order. Outline colours are optional; analysis fills, adjustment
+squares and unobserved dashes remain. Node identities, variable label text and
+stored positions/routes do not change. Each node may belong to one group, irrespective of its
+analysis role. Category names have no causal meaning and never infer selection
+assumptions or adjustment recommendations; mark selection with `selected`.
+
+NULL inherits groups from a reused layout; a new list replaces them and
+`node_groups = list()` clears them. NULL colour overrides inherit matching
+groups, while `node_group_colours = character(0)` clears only colour overrides.
+These display annotations are stored in the layout's `node_groups` and
+`node_group_colours`, separately from its `analysis` metadata. Legend text is
+reflowed from the original category labels on each output device.
+
+For a single figure with aligned panels and a shared legend:
+
+```{r comparison, fig.width=7, fig.height=4}
+compare_metro_dags(fixed, list(
+  Unadjusted = list(exposure = "X", outcome = "Y", unadjusted = TRUE),
+  Adjusted = list(exposure = "X", outcome = "Y", adjusted = "C",
+    estimand = "Total effect of X on Y")
+))
+```
+
+Every panel uses the same physical scale, including when titles differ in
+length. Use `save_metro_dag()` to export the result at journal dimensions.
+Nudge an individual label without changing geometry using, for example,
+`label_nudge = list(C = c(0, 2))` to move it 2 mm upwards.
+Supply `node_groups` and `node_group_colours` as shared comparison arguments,
+rather than inside individual views. Every panel then keeps the same category
+numbers and one combined legend.
+
+With the optional DAGitty package installed, directed DAGitty DAGs can be passed
+directly to `metro_dag()`. Isolates and exposure/outcome/adjusted/latent statuses
+are retained. Other edge types are rejected explicitly.
+
+```{r adjustment-check, eval=FALSE}
+check_metro_adjustment(adjusted) # Valid total-effect adjustment for this DAG
+check_metro_adjustment(crude)   # Invalid: C confounds X and Y
+```
+
+These checks concern graphical identification of a total effect by adjustment;
+they do not validate the assumed graph, positivity or the statistical estimator.
+
+## Layout algorithm
+
+1. Validate a non-empty, simple directed acyclic graph and assign strict ranks.
+   Longest-path layering initializes the default; supplied numeric ranks retain their
+   order, including fractional ranks. Sink-aligned ranks are available through
+   `layering = "sinks"`. The deprecated `"shortest"` option now uses sink-aligned
+   ranks because shortest-path ranks are not generally monotone along edges.
+2. Expand each long edge into private waypoints, one at each intermediate rank.
+   Crossing reduction can now account for each occupied rank. Waypoints are
+   excluded from the public node table and from the original graph.
+3. Use alternating barycenter or median sweeps, retain the best crossing count,
+   and perform local swaps that strictly improve it.
+4. Align neighbouring ranks with isotonic compaction, preserving order and
+   station separation. Choose each rank gap independently.
+5. Route through the waypoints with vertical and 45-degree segments, penalising
+   occupied tracks, intersections, and bends. Short edges are routed first,
+   with deterministic ties. Leave shared sources early and approach shared sinks
+   late to avoid crossing simple fans. This is a heuristic, not a global optimum.
+6. Simplify complete arrows using straight, one-bend, and two-bend candidates.
+   A candidate must improve conflicts, bends or length, avoid unrelated stations,
+   and not increase crossings or shared track length. This removes avoidable staircases at
+   waypoint boundaries; detours needed for a clear route are retained. The
+   bounded candidate search does not claim a global minimum bend count.
+7. Balance fans and their middle through-routes where station spacing permits.
+   Accept more symmetric node positions only when crossings, pairwise shared
+   track length, bends and total edge length do not increase and every route
+   remains clear of unrelated stations.
+8. Consider crossing arrows in pairs, keeping node positions fixed. A joint
+   move must strictly reduce crossings without increasing pairwise shared track
+   length or total edge length, and may add at most one bend. Routes must stay
+   clear of unrelated stations. Try at most 24 crossing pairs (48 when `align`
+   groups are given), with at most 24 shortlisted candidates per arrow, per
+   component. This can escape a local dead end in which either arrow alone
+   would overlap the other. The annotated U/C example
+   has zero crossings and eight bends, versus one crossing and seven bends
+   before this step. Outer bend alignment and the straight central chain remain.
+9. Try to straighten the outer arrows of balanced fans.
+   Align their endpoints and compact the gap, or move only the outer endpoints
+   when compaction is blocked. Try at most 24 placements per component. Accept
+   a placement only when total bends decrease, crossings, pairwise shared-track
+   length and total line length do not increase, station spacing and clearance
+   remain safe, and already straight arrows stay straight. All edges must retain
+   their causal direction. With explicit user ranks a placement must keep
+   every node in its rank, so only complete ranks move; alignment groups skip
+   this placement step.
+   The annotated example now has straight C-to-X and S-to-X arrows, four bends,
+   and zero crossings. Its middle chain and aligned outer bends remain.
+10. Simplify sections of remaining bent arrows while keeping their endpoints and
+    all stations fixed. Short source/destination stubs and points near existing
+    bends let a simple section replace a staircase even when the complete arrow
+    still needs more than two bends. Accept only strictly fewer bends without
+    increasing crossings, pairwise shared-track length or total line length,
+    and retain clearance from unrelated stations: at least four grid units or
+    the previous distance if smaller, with a floor of 0.8. Over at most two passes,
+    attempt 24 routes per component, considering 24 sections and checking at
+    most 128 shortlisted candidates per attempt. Explicit ranks are preserved.
+    This is a bounded local search, not a guarantee of minimum bend count.
+11. Compact gaps between whole ranks by removing the same number of vertical
+    steps from every route spanning a gap. Preserve rank order and ties,
+    including explicit ranks, four-unit station spacing, and existing route
+    clearance up to four units with a 0.8-unit floor. Protect existing final
+    approaches up to three steps. Try at most 24 candidates over two passes,
+    accepting no increase in crossings, shared-track length, bends or length.
+12. Lengthen final approaches shorter than three steps when an earlier run in
+    the same direction can donate steps. This moves bends upstream without
+    moving stations, adding bends or changing total length. Keep the same
+    geometry and clearance safeguards; check at most 24 candidates per component.
+    Some short approaches remain when neighbouring routes block the change.
+13. Compact the transverse node arrangement. Connected straight arrows impose
+    relative offsets when a rank gap shrinks. Move their components towards
+    scaled or grid-aligned positions while preserving rank membership, ties,
+    within-rank order and four-unit node spacing. Try at most eight feasible
+    placements per component, with short-first and long-first routing orders.
+    A route-step work budget reduces attempts for larger components and can skip
+    this refinement entirely.
+    Resize original route shapes and consider simple routes, then straighten
+    and lengthen approaches. Accept only a smaller transverse extent with no
+    increase in causal extent, crossings, shared-track length, bends or length.
+    Already straight arrows stay straight; unrelated stations retain at least
+    0.8 grid units of route clearance. Previous whitespace may shrink. After
+    accepting a placement, repeat the bounded gap and approach refinements.
+    Labels are placed later, so geometric improvement can still leave label warnings.
+14. Reconsider automatic rank assignments. Move a node towards its neighbours
+    when doing so reduces total incident rank span, or try equal-span moves for
+    one-parent, one-child intermediates. Keep every edge strictly forward.
+    Prioritize per-edge span savings, then lower degree and node name.
+    Try at most three component rebuilds, further limited to
+    floor(12,000 / (route steps × arrows)); larger components may skip this step.
+    Trial ranks stay fixed during rebuilding, preventing recursive searches.
+    Continue from accepted moves within the shared rebuild budget. Require
+    smaller area without extra crossings or bends. A strict crossing reduction
+    may spend 5% more total line length and 10% of either extent relative to the
+    search input. Otherwise neither extent nor line length may grow. A longer
+    shared diagonal requires strictly fewer crossings and no extra pairwise
+    shared grid steps. Retain four-unit station spacing and 0.8-unit clearance.
+    Individual routes, within-rank orders and metro path colours can change.
+    Explicit ranks skip reassignment and retain their order and ties.
+    This bounded search does not guarantee minimum area or label clearance.
+15. For small components, compare child-directed coordinates and a
+    reversed initial ordering with the established drawing. Rebuild each through
+    the same pipeline, including rank refinement for automatic ranks, without
+    recursively searching starting points; explicit ranks stay fixed in every
+    start. Try at most two alternatives, further limited to
+    floor(4,000 / (route steps × arrows)). Alignment groups,
+    `ordering = "none"` and zero sweeps skip this search. Crossings and pairwise
+    shared-track length cannot increase. Strictly fewer crossings can spend one
+    bend per removed crossing (at most two overall), 5% extra line length and
+    10% of either extent relative to the original drawing. At equal crossings,
+    neither extent nor line length can grow. Up to two extra bends require at
+    least 15% less area and a lower `bends + length / 20 + sqrt(area) / 4` score.
+    Shared-length gains take priority within these guards. Require four-unit
+    station spacing and 0.8-unit route clearance. The gallery's accepted variants
+    reduce bends or length and area without worsening these metrics.
+16. Relax source positions towards their children, using the child
+    median and nearby transverse positions and, with automatic ranks, feasible
+    later causal positions; explicit ranks admit transverse moves only.
+    Reroute incident and newly obstructed arrows together. Compare at most 64
+    candidates over four passes, further limited to floor(120,000 / (route steps
+    × arrows)). Alignment groups, disabled ordering and zero sweeps skip
+    this pass. Do not increase crossings, pairwise shared length, bends, line
+    length or either extent. Preserve straight arrows, four-unit station spacing
+    and 0.8-unit route clearance. Do not add transverse direction reversals,
+    including in subsequent gap/arrangement compaction. Automatic source ranks
+    and within-rank orders can change; the graph and analysis roles do not.
+17. Place low-degree intermediates between their parents and children, within
+    their rank when ranks are explicit.
+    Protect collinear straight through-chains, or the straight arrow with the greatest causal span
+    when no through-chain exists. An isolated side arrow may gain a bend while
+    its neighbour straightens. Try at most 24 placements, further limited to
+    floor(60,000 / (route steps × arrows)), and accept one best move. Alignment
+    groups, disabled ordering and zero sweeps skip this pass. Evaluate
+    final half-grid routes, requiring smaller area without more crossings,
+    shared length, line length, either extent or any arrow's transverse reversals.
+    One extra bend requires at least 15% less area, two at least 25%, and a lower
+    score: area ratio + 0.5 × length ratio + 0.1 × extra bends. Crossings then
+    shared length take priority within those guards. Preserve four-unit station
+    spacing and 0.8-unit unrelated-station clearance. Automatic ranks and
+    within-rank orders reflect the new geometry; labels and roles stay unchanged.
+    Apply the same bounds to unit-grid routes, since the half-grid pass may skip
+    a packed drawing under its work limit.
+18. For automatic ranks, start again from other automatic layerings: the
+    minimum-span layering, which moves each node to the end of its legal rank
+    interval on the side with more arrows until the total rank span stops
+    falling, and the other of the source- and sink-aligned layerings. Skip a
+    layering whose rank order equals one already tried. Try at most two, further
+    limited to floor(8,000 / (route steps × arrows)). Each trial runs steps
+    2-13 and is screened against the best drawing before step 16 under the
+    step 15 rule. The best trial then receives steps 14, 16 and 17, and is kept
+    only when the step 15 rule still prefers it to the relaxed drawing from the
+    requested layering: relaxation can recover the gain the screen saw. Bends,
+    shared length and line length count from the relaxed drawing; a crossing
+    reduction keeps its 10% extent allowance over the drawing the search
+    started from, since relaxation compacts that drawing first.
+    Explicit ranks/alignment, `ordering = "none"` and zero sweeps skip this step.
+19. After placement and component packing, try the same routing grammars on a
+    doubled integer grid, then rescale to half-unit steps. Stations, ranks,
+    explicit alignment and straight arrows stay fixed. Accept a strict geometry
+    improvement without more crossings, shared length, bends, line length,
+    routed extent or transverse reversals on any arrow. Scale the required
+    station clearance too: 1.6 on the doubled grid retains 0.8 layout units.
+    Skip drawings with 2 × route steps × arrows > 400,000. Earlier passes route
+    one arrow at a time, so a bending sibling can take the straight track between
+    two stations on one line and push the arrow that joins them onto a parallel
+    lane with a hook at each end, as in a five-mediator fan. The pass therefore
+    also gives such arrows their straight track, reroutes (crossings first) the
+    bending arrows that then share that track, and keeps that result when it
+    meets the same guards with no more crossings or bends than the plain search.
+    This attempt roughly doubles the pass, so it is made only up to
+    2 × route steps × arrows = 250,000.
+    Only geometrically
+    changed arrows receive half-unit rows; unchanged arrows keep their rows.
+    This pass runs after every earlier unit-grid search, including rank rebuilds.
+20. Rotate the geometry to the requested direction. The stored geometry remains
+   monotone and preserves every original edge and its endpoints.
+
+Refinement and metro path-cover ties use node names, and path colour indices
+follow the path-source name order. Reordering equivalent graph inputs therefore
+retains default geometry and styling. `ordering = "none"` deliberately retains
+the supplied vertex order. Explicit ranks can be named by node or supplied in
+vertex order; only their ordering and ties determine layers, not numeric gaps.
+Every node keeps its supplied rank. The gaps between layers and the order and
+transverse positions within a layer remain free, so the placement refinements
+above still run with moves restricted to those freedoms, while rank reassignment
+is skipped.
+Automatic layers, within-layer orders and gap metadata reflect the refined
+positions. Source- and sink-aligned layering specify starting ranks rather than
+fixed final positions; use explicit `rank` values when those ties must remain.
+
+For repeated measures, `align = list(c("X1", "X2", "X3"))` explicitly names
+stations that share a row in a horizontal drawing, or a column in a vertical
+drawing. Supply `rank` separately for wave ordering. The algorithm never infers
+repeated-variable identity or adjustment recommendations from names. Alignment
+can add crossings, bends and space: in README DAG 6 it gives eight crossings
+instead of five, and area 207 instead of 180, while keeping both repeated chains
+straight. The separately rendered rank-only example makes that choice visible.
+
+Station fan placement preserves one complete straight arrow's bearing when
+possible. Displaced incoming attachments blend tangentially into their radial
+arrow shafts if the final device-space strokes, heads, station outlines and
+figure bounds remain clear. Otherwise the previous attachment is retained.
+Tied bearings follow the first geometric divergence looking out from the station;
+endpoint names break only geometric ties. A source port can join a nearby branch
+after it diverges, rather than return to the shared track. Its cubic control
+points must be monotone in the original bearing and outward transverse direction.
+The join is limited to 12 mm of the original shaft and goes through the same
+final ink-clearance checks. These attachment changes do not alter stored routes.
+The stored grid routes and causal topology are unchanged by rendering.
+
+`layout_metrics()` reports `shared_track_length` in layout units alongside
+`overlap_segments`. The former sums each overlapping pair's actual shared
+length, including partial overlaps; a track shared by three arrows contributes
+three times its length. Device diagnostics remain necessary because labels,
+station sizes and fanned attachments are added after geometry is measured.
+
+Reused layouts are checked before plotting and computing `layout_metrics()`.
+They must contain exactly one node row per graph vertex and one continuous
+route per graph edge. Coordinates must be finite real numbers, with unique
+numeric `segment` ordering values within each edge. Adjacent segments must
+share endpoints exactly; the route must join the coordinates of its named
+source and destination. Incomplete routes are rejected, so exports cannot
+silently bridge a deleted step or reconnect a moved station. Row permutations
+and opaque route IDs remain supported without modifying the stored tables.
+Empty string IDs and distinct numeric IDs with identical printed forms remain
+separate during metrics and attachment placement. `count_crossings()` counts
+the places where one arrow passes to the other side of another, so arrows that
+fork from or merge into a station, or share a section and leave it on the
+sides they entered, are not crossings; the refinement passes above compare
+contact points, which also count such forks. On a standalone segment table it
+still permits gaps and compares a route with gaps piece by piece.
+Redundant zero-length steps are ignored for drawing, attachment bearings and
+straight-run overlap metrics. A route with no nonzero segment instead reports
+an `edge_zero_length` error at draw time, identifying its source and destination.
+Recompute such geometry or give its endpoints distinct positions; changing the
+output size cannot make a collapsed route visible. Stored rows remain unchanged.
+
+The regular grid and separated waypoints prevent a long route from running
+through unrelated nodes. Shared tracks and crossings can remain in dense
+examples. There is no hidden bundling or causal edge deletion.
+The bounded joint search is an additional runtime cost and does not establish
+that any remaining crossing is unavoidable.
+
+## Rendering at the actual output size
+
+The renderer uses millimetres on the active graphics device. It trims routes to
+station rims and fans incident attachments apart where several edges approach
+from the same direction. These short physical attachments need not be exactly
+45 degrees; the stored layout remains octilinear. High-degree stations grow
+slightly to accommodate the arrows. A straight final approach keeps each
+arrowhead aligned with its shaft and directed toward the destination rim.
+
+Labels are wrapped, including identifiers without spaces (after `_`, `.`,
+`-` and `/`, and at camelCase boundaries),
+measured with the selected font, and placed among compass
+positions using node, route, label, and boundary collision costs. A label
+also costs more when another arrow runs between it and its station, cutting
+it off, and when it passes within 1.5 mm of a route without touching it;
+farther rings cost more, so that clearance moves a label only a little.
+`diagnose_metro_dag()` reports labels left cut off more than 7 mm from their
+station as `label_association`.
+Placement is
+checked against the final trimmed routes, their stroke widths and filled
+arrowheads, and recomputed on resizing and export. Some crowded figures cannot fit all labels;
+warnings identify remaining collisions so the analyst can increase the output
+size or abbreviate labels. Custom `fontface`, `lineheight`, and text `colour`
+are supported; arbitrary `geom_text()` arguments are not used by this renderer.
+Wrapping uses character limits and the available physical width; set
+`label_wrap = NULL` to keep manual line breaks without automatic wrapping.
+Joint pair reconsideration can free a station's nearby slot when another label
+has occupied it. Up to 24 pair attempts over two passes compare 16 shortlisted
+positions plus the current choice per label; sets above 32 nonempty labels skip
+the pair search. Association costs discourage labels closer to another station.
+If conflicts remain, up to two placements try physical reflows at 75% and 50%
+of the original label width for up to six affected labels. Accept only fewer
+conflicts without increasing any of station, route, label or boundary
+obstructions. Words and intentional newlines are retained; unresolved conflicts
+still produce diagnostics. These bounded searches do not guarantee clearance.
+Within each original line, automatic wrapping moves a preceding word onto a
+solitary numeric line when the pair fits. This keeps short word/number groups
+together without changing words, exceeding the wrap width or overriding
+intentional line breaks. It does not identify repeated variables.
+Manual label nudges are applied afterwards and included in collision checks.
+Placement respects the final theme's plot margins, including zero margins.
+Titles, subtitles and captions are measured and wrapped on the drawing device,
+including ordinary printing and `ggplot2::ggsave()`. If station and arrow
+clearance would consume an edge or a route would overlap an unrelated station,
+rendering stops and identifies the conflict. Attachments entering their own
+source or destination station are also rejected. Arrowheads are drawn after
+route casings to preserve their visibility at crossings. Route and station
+outline widths use physical millimetres. Automatic export height follows the
+displayed panel proportions, including fixed coordinate ratios, theme aspect
+ratios and flipped comparison panels. `save_metro_dag()` preserves an
+existing output file if rendering fails and accepts an existing output
+directory through `path`.
+Exporting a layout and failed comparison construction preserve ggplot2's
+previous last plot. Comparisons accept `newpage` and `vp` during printing for
+composition in grid viewports. Adjustment subtitles fall back to node
+identifiers when a selected covariate's display label is blank.
+
+The default publication style uses fine charcoal routes and a white background.
+`style = "metro"` uses path-cover colours; `style = "monochrome"` keeps roles
+usable without colour. Path colours have no automatic causal interpretation.
+
+## Diagnostics and limitations
+
+```{r causal-metrics}
+layout_metrics(attr(p, "metrodag_layout"))
+```
+
+Metrics describe the stored geometry before device-dependent arrow attachments
+and labels. A crossing is counted where one arrow passes from one side of
+another to the other side (see `?count_crossings`). Arrows that fork from or
+merge into a station, touch at a point, or share a section and leave it on the
+sides they entered are not crossings; an arrow that runs through a shared
+section and leaves on the other side crosses once. The refinement passes
+still compare contact points between routes, which also count forks and
+touches, so the two counts can differ on the same drawing. Overlaps are
+counted after straight runs are merged. Node–edge collisions count unrelated
+node/edge pairs less than half a grid unit apart.
+
+These diagnostics support engineering checks. They do not establish perceptual
+superiority, global optimality, or causal validity. Dense DAGs can have unavoidable
+crossings and shared tracks; large graphs may need multiple figures. A controlled
+readability study and broader algorithm comparison remain future work.

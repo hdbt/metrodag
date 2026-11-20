@@ -1,0 +1,145 @@
+"label","figure","width","device","ok","nodes","labels","label_association","reported_association","label_cut_off","reported_cut_off","label_route"
+"before","gallery 01_alcohol_heart",85,"png 300 dpi",TRUE,7,7,2,0,NA,NA,0
+"before","gallery 01_alcohol_heart",120,"png 300 dpi",TRUE,7,7,0,0,NA,NA,0
+"before","gallery 01_alcohol_heart",180,"png 300 dpi",TRUE,7,7,0,0,NA,NA,0
+"before","gallery 02_air_pollution",85,"png 300 dpi",TRUE,9,9,5,0,NA,NA,4
+"before","gallery 02_air_pollution",120,"png 300 dpi",TRUE,9,9,1,0,NA,NA,0
+"before","gallery 02_air_pollution",180,"png 300 dpi",TRUE,9,9,1,0,NA,NA,0
+"before","gallery 03_sugary_drinks",85,"png 300 dpi",FALSE,9,9,4,0,NA,NA,1
+"before","gallery 03_sugary_drinks",120,"png 300 dpi",TRUE,9,9,0,0,NA,NA,0
+"before","gallery 03_sugary_drinks",180,"png 300 dpi",TRUE,9,9,0,0,NA,NA,0
+"before","gallery 04_statin_events",85,"png 300 dpi",TRUE,11,11,4,0,NA,NA,1
+"before","gallery 04_statin_events",120,"png 300 dpi",TRUE,11,11,2,0,NA,NA,1
+"before","gallery 04_statin_events",180,"png 300 dpi",TRUE,11,11,1,0,NA,NA,0
+"before","gallery 05_obesity_admission",85,"png 300 dpi",TRUE,7,7,1,0,NA,NA,0
+"before","gallery 05_obesity_admission",120,"png 300 dpi",TRUE,7,7,1,0,NA,NA,0
+"before","gallery 05_obesity_admission",180,"png 300 dpi",TRUE,7,7,0,0,NA,NA,0
+"before","gallery 06_longitudinal",85,"png 300 dpi",TRUE,9,9,3,0,NA,NA,4
+"before","gallery 06_longitudinal",120,"png 300 dpi",TRUE,9,9,2,0,NA,NA,0
+"before","gallery 06_longitudinal",180,"png 300 dpi",TRUE,9,9,0,0,NA,NA,0
+"before","dagitty confounding",85,"png 300 dpi",TRUE,5,5,0,0,NA,NA,0
+"before","dagitty confounding",120,"png 300 dpi",TRUE,5,5,0,0,NA,NA,0
+"before","dagitty confounding",180,"png 300 dpi",TRUE,5,5,0,0,NA,NA,0
+"before","dagitty Schipf",85,"png 300 dpi",TRUE,7,7,0,0,NA,NA,0
+"before","dagitty Schipf",120,"png 300 dpi",TRUE,7,7,0,0,NA,NA,0
+"before","dagitty Schipf",180,"png 300 dpi",TRUE,7,7,0,0,NA,NA,0
+"before","dagitty Shrier",85,"png 300 dpi",TRUE,13,13,5,0,NA,NA,3
+"before","dagitty Shrier",120,"png 300 dpi",TRUE,13,13,3,0,NA,NA,1
+"before","dagitty Shrier",180,"png 300 dpi",TRUE,13,13,0,0,NA,NA,0
+"before","dagitty Thoemmes",85,"png 300 dpi",FALSE,13,13,1,0,NA,NA,0
+"before","dagitty Thoemmes",120,"png 300 dpi",TRUE,13,13,0,0,NA,NA,0
+"before","dagitty Thoemmes",180,"png 300 dpi",TRUE,13,13,0,0,NA,NA,0
+"before","dagitty Kampen",85,"png 300 dpi",FALSE,12,12,1,0,NA,NA,0
+"before","dagitty Kampen",120,"png 300 dpi",FALSE,12,12,0,0,NA,NA,0
+"before","dagitty Kampen",180,"png 300 dpi",TRUE,12,12,0,0,NA,NA,0
+"before","mediator fan",85,"png 300 dpi",TRUE,8,8,5,0,NA,NA,0
+"before","mediator fan",120,"png 300 dpi",TRUE,8,8,0,0,NA,NA,0
+"before","mediator fan",180,"png 300 dpi",TRUE,8,8,0,0,NA,NA,0
+"after","gallery 01_alcohol_heart",85,"png 300 dpi",TRUE,7,7,0,0,NA,NA,1
+"after","gallery 01_alcohol_heart",120,"png 300 dpi",TRUE,7,7,0,0,NA,NA,0
+"after","gallery 01_alcohol_heart",180,"png 300 dpi",TRUE,7,7,0,0,NA,NA,0
+"after","gallery 02_air_pollution",85,"png 300 dpi",TRUE,9,9,1,1,NA,NA,4
+"after","gallery 02_air_pollution",120,"png 300 dpi",TRUE,9,9,0,0,NA,NA,1
+"after","gallery 02_air_pollution",180,"png 300 dpi",TRUE,9,9,0,0,NA,NA,0
+"after","gallery 03_sugary_drinks",85,"png 300 dpi",FALSE,9,9,0,0,NA,NA,2
+"after","gallery 03_sugary_drinks",120,"png 300 dpi",TRUE,9,9,0,0,NA,NA,0
+"after","gallery 03_sugary_drinks",180,"png 300 dpi",TRUE,9,9,0,0,NA,NA,0
+"after","gallery 04_statin_events",85,"png 300 dpi",TRUE,11,11,6,6,NA,NA,4
+"after","gallery 04_statin_events",120,"png 300 dpi",TRUE,11,11,0,0,NA,NA,3
+"after","gallery 04_statin_events",180,"png 300 dpi",TRUE,11,11,0,0,NA,NA,0
+"after","gallery 05_obesity_admission",85,"png 300 dpi",TRUE,7,7,0,0,NA,NA,0
+"after","gallery 05_obesity_admission",120,"png 300 dpi",TRUE,7,7,0,0,NA,NA,0
+"after","gallery 05_obesity_admission",180,"png 300 dpi",TRUE,7,7,0,0,NA,NA,0
+"after","gallery 06_longitudinal",85,"png 300 dpi",TRUE,9,9,0,0,NA,NA,5
+"after","gallery 06_longitudinal",120,"png 300 dpi",TRUE,9,9,0,0,NA,NA,1
+"after","gallery 06_longitudinal",180,"png 300 dpi",TRUE,9,9,0,0,NA,NA,0
+"after","dagitty confounding",85,"png 300 dpi",TRUE,5,5,0,0,NA,NA,0
+"after","dagitty confounding",120,"png 300 dpi",TRUE,5,5,0,0,NA,NA,0
+"after","dagitty confounding",180,"png 300 dpi",TRUE,5,5,0,0,NA,NA,0
+"after","dagitty Schipf",85,"png 300 dpi",TRUE,7,7,0,0,NA,NA,0
+"after","dagitty Schipf",120,"png 300 dpi",TRUE,7,7,0,0,NA,NA,0
+"after","dagitty Schipf",180,"png 300 dpi",TRUE,7,7,0,0,NA,NA,0
+"after","dagitty Shrier",85,"png 300 dpi",TRUE,13,13,0,0,NA,NA,5
+"after","dagitty Shrier",120,"png 300 dpi",TRUE,13,13,0,0,NA,NA,2
+"after","dagitty Shrier",180,"png 300 dpi",TRUE,13,13,0,0,NA,NA,0
+"after","dagitty Thoemmes",85,"png 300 dpi",FALSE,13,13,0,0,NA,NA,0
+"after","dagitty Thoemmes",120,"png 300 dpi",TRUE,13,13,0,0,NA,NA,0
+"after","dagitty Thoemmes",180,"png 300 dpi",TRUE,13,13,0,0,NA,NA,0
+"after","dagitty Kampen",85,"png 300 dpi",FALSE,12,12,0,0,NA,NA,1
+"after","dagitty Kampen",120,"png 300 dpi",FALSE,12,12,0,0,NA,NA,0
+"after","dagitty Kampen",180,"png 300 dpi",TRUE,12,12,0,0,NA,NA,0
+"after","mediator fan",85,"png 300 dpi",TRUE,8,8,0,0,NA,NA,2
+"after","mediator fan",120,"png 300 dpi",TRUE,8,8,0,0,NA,NA,0
+"after","mediator fan",180,"png 300 dpi",TRUE,8,8,0,0,NA,NA,0
+"round2 before","gallery 01_alcohol_heart",85,"png 300 dpi",TRUE,7,7,0,0,0,0,1
+"round2 before","gallery 01_alcohol_heart",120,"png 300 dpi",TRUE,7,7,0,0,0,0,0
+"round2 before","gallery 01_alcohol_heart",180,"png 300 dpi",TRUE,7,7,0,0,0,0,0
+"round2 before","gallery 02_air_pollution",85,"png 300 dpi",TRUE,9,9,1,1,0,0,4
+"round2 before","gallery 02_air_pollution",120,"png 300 dpi",TRUE,9,9,0,0,0,0,1
+"round2 before","gallery 02_air_pollution",180,"png 300 dpi",TRUE,9,9,0,0,0,0,0
+"round2 before","gallery 03_sugary_drinks",85,"png 300 dpi",FALSE,9,9,0,0,0,0,2
+"round2 before","gallery 03_sugary_drinks",120,"png 300 dpi",TRUE,9,9,0,0,0,0,0
+"round2 before","gallery 03_sugary_drinks",180,"png 300 dpi",TRUE,9,9,0,0,0,0,0
+"round2 before","gallery 04_statin_events",85,"png 300 dpi",TRUE,11,11,6,6,1,0,4
+"round2 before","gallery 04_statin_events",120,"png 300 dpi",TRUE,11,11,0,0,1,0,3
+"round2 before","gallery 04_statin_events",180,"png 300 dpi",TRUE,11,11,0,0,1,0,0
+"round2 before","gallery 05_obesity_admission",85,"png 300 dpi",TRUE,7,7,0,0,1,0,0
+"round2 before","gallery 05_obesity_admission",120,"png 300 dpi",TRUE,7,7,0,0,0,0,0
+"round2 before","gallery 05_obesity_admission",180,"png 300 dpi",TRUE,7,7,0,0,1,0,0
+"round2 before","gallery 06_longitudinal",85,"png 300 dpi",TRUE,9,9,0,0,0,0,5
+"round2 before","gallery 06_longitudinal",120,"png 300 dpi",TRUE,9,9,0,0,0,0,1
+"round2 before","gallery 06_longitudinal",180,"png 300 dpi",TRUE,9,9,0,0,0,0,0
+"round2 before","dagitty confounding",85,"png 300 dpi",TRUE,5,5,0,0,0,0,0
+"round2 before","dagitty confounding",120,"png 300 dpi",TRUE,5,5,0,0,0,0,0
+"round2 before","dagitty confounding",180,"png 300 dpi",TRUE,5,5,0,0,0,0,0
+"round2 before","dagitty Schipf",85,"png 300 dpi",TRUE,7,7,0,0,0,0,0
+"round2 before","dagitty Schipf",120,"png 300 dpi",TRUE,7,7,0,0,0,0,0
+"round2 before","dagitty Schipf",180,"png 300 dpi",TRUE,7,7,0,0,0,0,0
+"round2 before","dagitty Shrier",85,"png 300 dpi",TRUE,13,13,0,0,0,0,5
+"round2 before","dagitty Shrier",120,"png 300 dpi",TRUE,13,13,0,0,0,0,2
+"round2 before","dagitty Shrier",180,"png 300 dpi",TRUE,13,13,0,0,0,0,0
+"round2 before","dagitty Thoemmes",85,"png 300 dpi",FALSE,13,13,0,0,0,0,0
+"round2 before","dagitty Thoemmes",120,"png 300 dpi",TRUE,13,13,0,0,0,0,0
+"round2 before","dagitty Thoemmes",180,"png 300 dpi",TRUE,13,13,0,0,0,0,0
+"round2 before","dagitty Kampen",85,"png 300 dpi",FALSE,12,12,0,0,0,0,1
+"round2 before","dagitty Kampen",120,"png 300 dpi",FALSE,12,12,0,0,0,0,0
+"round2 before","dagitty Kampen",180,"png 300 dpi",TRUE,12,12,0,0,0,0,0
+"round2 before","mediator fan",85,"png 300 dpi",TRUE,8,8,0,0,0,0,2
+"round2 before","mediator fan",120,"png 300 dpi",TRUE,8,8,0,0,0,0,0
+"round2 before","mediator fan",180,"png 300 dpi",TRUE,8,8,0,0,0,0,0
+"round2 after","gallery 01_alcohol_heart",85,"png 300 dpi",TRUE,7,7,0,0,0,0,1
+"round2 after","gallery 01_alcohol_heart",120,"png 300 dpi",TRUE,7,7,0,0,0,0,0
+"round2 after","gallery 01_alcohol_heart",180,"png 300 dpi",TRUE,7,7,0,0,0,0,0
+"round2 after","gallery 02_air_pollution",85,"png 300 dpi",TRUE,9,9,1,1,0,0,4
+"round2 after","gallery 02_air_pollution",120,"png 300 dpi",TRUE,9,9,0,0,0,0,1
+"round2 after","gallery 02_air_pollution",180,"png 300 dpi",TRUE,9,9,0,0,0,0,0
+"round2 after","gallery 03_sugary_drinks",85,"png 300 dpi",FALSE,9,9,0,0,0,0,2
+"round2 after","gallery 03_sugary_drinks",120,"png 300 dpi",TRUE,9,9,0,0,0,0,0
+"round2 after","gallery 03_sugary_drinks",180,"png 300 dpi",TRUE,9,9,0,0,0,0,0
+"round2 after","gallery 04_statin_events",85,"png 300 dpi",TRUE,11,11,0,0,0,0,5
+"round2 after","gallery 04_statin_events",120,"png 300 dpi",TRUE,11,11,0,0,1,1,3
+"round2 after","gallery 04_statin_events",180,"png 300 dpi",TRUE,11,11,0,0,1,1,0
+"round2 after","gallery 05_obesity_admission",85,"png 300 dpi",TRUE,7,7,0,0,0,0,0
+"round2 after","gallery 05_obesity_admission",120,"png 300 dpi",TRUE,7,7,0,0,0,0,0
+"round2 after","gallery 05_obesity_admission",180,"png 300 dpi",TRUE,7,7,0,0,1,1,0
+"round2 after","gallery 06_longitudinal",85,"png 300 dpi",TRUE,9,9,0,0,0,0,5
+"round2 after","gallery 06_longitudinal",120,"png 300 dpi",TRUE,9,9,0,0,0,0,1
+"round2 after","gallery 06_longitudinal",180,"png 300 dpi",TRUE,9,9,0,0,0,0,0
+"round2 after","dagitty confounding",85,"png 300 dpi",TRUE,5,5,0,0,0,0,0
+"round2 after","dagitty confounding",120,"png 300 dpi",TRUE,5,5,0,0,0,0,0
+"round2 after","dagitty confounding",180,"png 300 dpi",TRUE,5,5,0,0,0,0,0
+"round2 after","dagitty Schipf",85,"png 300 dpi",TRUE,7,7,0,0,0,0,0
+"round2 after","dagitty Schipf",120,"png 300 dpi",TRUE,7,7,0,0,0,0,0
+"round2 after","dagitty Schipf",180,"png 300 dpi",TRUE,7,7,0,0,0,0,0
+"round2 after","dagitty Shrier",85,"png 300 dpi",TRUE,13,13,0,0,0,0,4
+"round2 after","dagitty Shrier",120,"png 300 dpi",TRUE,13,13,0,0,0,0,2
+"round2 after","dagitty Shrier",180,"png 300 dpi",TRUE,13,13,0,0,0,0,0
+"round2 after","dagitty Thoemmes",85,"png 300 dpi",FALSE,13,13,0,0,0,0,0
+"round2 after","dagitty Thoemmes",120,"png 300 dpi",TRUE,13,13,0,0,0,0,0
+"round2 after","dagitty Thoemmes",180,"png 300 dpi",TRUE,13,13,0,0,0,0,0
+"round2 after","dagitty Kampen",85,"png 300 dpi",FALSE,12,12,0,0,0,0,1
+"round2 after","dagitty Kampen",120,"png 300 dpi",FALSE,12,12,0,0,0,0,0
+"round2 after","dagitty Kampen",180,"png 300 dpi",TRUE,12,12,0,0,0,0,0
+"round2 after","mediator fan",85,"png 300 dpi",TRUE,8,8,0,0,0,0,2
+"round2 after","mediator fan",120,"png 300 dpi",TRUE,8,8,0,0,0,0,0
+"round2 after","mediator fan",180,"png 300 dpi",TRUE,8,8,0,0,0,0,0

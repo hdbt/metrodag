@@ -1,0 +1,53 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<svg xmlns='http://www.w3.org/2000/svg' xmlns:xlink='http://www.w3.org/1999/xlink' width='510.24pt' height='242.52pt' viewBox='0 0 510.24 242.52'>
+<g class='svglite'>
+<defs>
+  <style type='text/css'><![CDATA[
+    .svglite line, .svglite polyline, .svglite polygon, .svglite path, .svglite rect, .svglite circle {
+      fill: none;
+      stroke: #000000;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      stroke-miterlimit: 10.00;
+    }
+    .svglite text {
+      white-space: pre;
+    }
+    .svglite g.glyphgroup path {
+      fill: inherit;
+      stroke: none;
+    }
+  ]]></style>
+</defs>
+<rect width='100%' height='100%' style='stroke: none; fill: #FFFFFF;'/>
+<defs>
+  <clipPath id='cpMC4wMHw1MTAuMjR8MC4wMHwyNDIuNTI='>
+    <rect x='0.00' y='0.00' width='510.24' height='242.52' />
+  </clipPath>
+</defs>
+<g clip-path='url(#cpMC4wMHw1MTAuMjR8MC4wMHwyNDIuNTI=)'>
+<rect x='0.000000000000064' y='0.000000000000028' width='510.24' height='242.52' style='stroke-width: 0.00; stroke: none; fill: #FFFFFF;' />
+<rect x='14.17' y='14.17' width='481.89' height='214.17' style='stroke-width: 0.00; stroke: none; fill: #FFFFFF;' />
+<polyline points='152.10,125.33 174.80,148.03 201.57,174.80 228.35,174.80 243.69,174.80 249.36,174.80 ' style='stroke-width: 3.54; stroke: #FFFFFF;' />
+<polyline points='152.10,125.33 174.80,148.03 201.57,174.80 228.35,174.80 243.69,174.80 249.36,174.80 ' style='stroke-width: 1.28; stroke: #58636D;' />
+<polyline points='152.10,117.19 174.80,94.49 201.57,67.72 228.35,67.72 243.69,67.72 249.36,67.72 ' style='stroke-width: 3.54; stroke: #FFFFFF;' />
+<polyline points='152.10,117.19 174.80,94.49 201.57,67.72 228.35,67.72 243.69,67.72 249.36,67.72 ' style='stroke-width: 1.28; stroke: #58636D;' />
+<polyline points='260.87,174.80 281.89,174.80 308.66,174.80 335.43,148.03 354.13,129.34 358.14,125.33 ' style='stroke-width: 3.54; stroke: #FFFFFF;' />
+<polyline points='260.87,174.80 281.89,174.80 308.66,174.80 335.43,148.03 354.13,129.34 358.14,125.33 ' style='stroke-width: 1.28; stroke: #58636D;' />
+<polyline points='260.87,67.72 281.89,67.72 308.66,67.72 335.43,94.49 354.13,113.18 358.14,117.19 ' style='stroke-width: 3.54; stroke: #FFFFFF;' />
+<polyline points='260.87,67.72 281.89,67.72 308.66,67.72 335.43,94.49 354.13,113.18 358.14,117.19 ' style='stroke-width: 1.28; stroke: #58636D;' />
+<polygon points='249.36,174.80 244.23,172.41 244.23,177.20 ' style='stroke-width: 1.28; stroke: #58636D; fill: #58636D;' />
+<polygon points='249.36,67.72 244.23,65.32 244.23,70.11 ' style='stroke-width: 1.28; stroke: #58636D; fill: #58636D;' />
+<polygon points='358.14,125.33 352.81,127.27 356.20,130.66 ' style='stroke-width: 1.28; stroke: #58636D; fill: #58636D;' />
+<polygon points='358.14,117.19 356.20,111.86 352.81,115.25 ' style='stroke-width: 1.28; stroke: #58636D; fill: #58636D;' />
+<circle cx='148.03' cy='121.26' r='4.25' style='stroke-width: 1.02; stroke: #34424D; fill: #FFFFFF;' />
+<circle cx='255.12' cy='174.80' r='4.25' style='stroke-width: 1.02; stroke: #34424D; fill: #FFFFFF;' />
+<circle cx='255.12' cy='67.72' r='4.25' style='stroke-width: 1.02; stroke: #34424D; fill: #FFFFFF;' />
+<circle cx='362.20' cy='121.26' r='4.25' style='stroke-width: 1.02; stroke: #34424D; fill: #FFFFFF;' />
+<text x='136.84' y='124.39' text-anchor='middle' style='font-size: 9.10px;fill: #24292E; font-family: "Liberation Sans";' textLength='6.06px' lengthAdjust='spacingAndGlyphs'>A</text>
+<text x='255.12' y='166.64' text-anchor='middle' style='font-size: 9.10px;fill: #24292E; font-family: "Liberation Sans";' textLength='6.06px' lengthAdjust='spacingAndGlyphs'>B</text>
+<text x='255.12' y='59.55' text-anchor='middle' style='font-size: 9.10px;fill: #24292E; font-family: "Liberation Sans";' textLength='6.56px' lengthAdjust='spacingAndGlyphs'>C</text>
+<text x='373.65' y='124.39' text-anchor='middle' style='font-size: 9.10px;fill: #24292E; font-family: "Liberation Sans";' textLength='6.56px' lengthAdjust='spacingAndGlyphs'>D</text>
+</g>
+</g>
+</svg>

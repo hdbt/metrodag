@@ -1,0 +1,9 @@
+"input","device","nodes","edges","isolated_nodes","same_render","comparison","svg_arrowheads","errors","warnings"
+"tables","png",5,5,1,TRUE,"byte-identical",NA,0,0
+"tables","svg",5,5,1,TRUE,"SVG primitives; disjoint node/text order ignored",5,0,0
+"adjacency","png",5,5,1,TRUE,"byte-identical",NA,0,0
+"adjacency","svg",5,5,1,TRUE,"SVG primitives; disjoint node/text order ignored",5,0,0
+"ggdag","png",5,5,1,TRUE,"byte-identical",NA,0,0
+"ggdag","svg",5,5,1,TRUE,"SVG primitives; disjoint node/text order ignored",5,0,0
+"tidygraph","png",5,5,1,TRUE,"byte-identical",NA,0,0
+"tidygraph","svg",5,5,1,TRUE,"SVG primitives; disjoint node/text order ignored",5,0,0
