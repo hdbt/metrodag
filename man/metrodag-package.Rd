@@ -86,4 +86,9 @@ unlink(out)
 \author{
 \strong{Maintainer}: Hamid Bulut \email{me@hamidbulut.com} [copyright holder]
 
+Authors:
+\itemize{
+  \item Hamid Bulut \email{me@hamidbulut.com} [copyright holder]
+}
+
 }
