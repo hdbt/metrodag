@@ -53,3 +53,144 @@ box <- regmatches(readLines(frame("unadjusted"), n = 2L),
 height_mm <- ceiling(as.numeric(strsplit(sub("viewBox='([^']+)'", "\\1", box), " ")[[1L]][4L]) * 25.4 / 72)
 for (name in names(views))
   save_metro_dag(frame(name), views[[name]], width = 160, height = height_mm)
+
+# README: GitHub strips the page's HTML and CSS, so the same three frames are
+# combined into one SVG that animates itself, with the view names, captions and
+# legend drawn in. GitHub shows it through an <img>, which still runs the CSS
+# animation; reduced-motion readers see the first view. Text widths are
+# measured with Helvetica metrics and fixed with textLength, so the layout does
+# not depend on the reader's fonts.
+measure <- function(text, size, bold = FALSE) {
+  grDevices::pdf(NULL, family = "Helvetica")
+  on.exit(grDevices::dev.off())
+  graphics::par(ps = size)
+  graphics::strwidth(text, units = "inches", font = if (bold) 2L else 1L) * 72
+}
+fmt <- function(x) formatC(x, format = "f", digits = 2)
+txt <- function(label, x, y, size, class = NULL, anchor = "start",
+                bold = FALSE, fill = "#5B6775") {
+  sprintf(paste0("<text%s x='%s' y='%s' text-anchor='%s' textLength='%s'",
+    " lengthAdjust='spacingAndGlyphs' style='font-size: %spx;%s%s'>%s</text>"),
+    if (is.null(class)) "" else sprintf(" class='%s'", class),
+    fmt(x), fmt(y), anchor, fmt(measure(label, size, bold)), fmt(size),
+    if (bold) " font-weight: 700;" else "",
+    if (is.null(fill)) "" else sprintf(" fill: %s;", fill), label)
+}
+frame_body <- function(name, prefix) {
+  svg <- paste(readLines(frame(name), warn = FALSE), collapse = "\n")
+  svg <- sub("(?s)^.*?<svg[^>]*>", "", svg, perl = TRUE)
+  svg <- sub("</svg>[[:space:]]*$", "", svg)
+  svg <- gsub("id='", paste0("id='", prefix), svg, fixed = TRUE)
+  gsub("url(#", paste0("url(#", prefix), svg, fixed = TRUE)
+}
+
+box <- as.numeric(strsplit(sub(".*viewBox='([^']+)'.*", "\\1",
+  grep("viewBox=", readLines(frame("unadjusted"), n = 2L), value = TRUE)), " ")[[1L]])
+W <- box[3L]
+pad <- 16
+navy <- "#1F2A36"
+soft <- "#5B6775"
+# Trim the blank canvas the layout padding leaves above and below the drawing,
+# as the homepage does.
+crop_top <- 27
+crop_bottom <- 12
+stage_y <- 30
+stage_h <- box[4L] - crop_top - crop_bottom
+
+# Header: kicker on the left, the three view names on the right.
+names_lab <- c("Unadjusted", "Adjusted", "Unobserved confounder")
+names_w <- measure(names_lab, 8, bold = TRUE)
+gap <- 12
+names_x <- W - pad - sum(names_w) - 2 * gap + c(0, cumsum(names_w[-3L] + gap))
+header <- c(
+  txt("ONE LAYOUT, THREE ANALYSES", pad, 19, 7.5, bold = TRUE, fill = "#1F5F99"),
+  vapply(1:3, function(i) txt(names_lab[i], names_x[i], 19, 8,
+    class = sprintf("t t%d", i), bold = TRUE, fill = NULL), character(1)),
+  vapply(1:3, function(i) sprintf(
+    "<rect class='u u%d' x='%s' y='23' width='%s' height='1.6' rx='0.8' style='fill: %s;'/>",
+    i, fmt(names_x[i]), fmt(names_w[i]), navy), character(1)))
+
+stage <- vapply(seq_along(views), function(i) sprintf(
+  "<g class='v v%d'><svg x='0' y='%s' width='%s' height='%s' viewBox='0 %s %s %s'>%s</svg></g>",
+  i, fmt(stage_y), fmt(W), fmt(stage_h), fmt(crop_top), fmt(W), fmt(stage_h),
+  frame_body(names(views)[i], sprintf("v%d", i))), character(1))
+
+captions_lab <- c(
+  "No adjustment: three backdoor paths from alcohol use to coronary events stay open.",
+  "Adjusting for income, baseline health and smoking blocks every backdoor path.",
+  "Baseline health is unobserved, so its backdoor path cannot be blocked.")
+caption_y <- stage_y + stage_h + 12
+captions <- vapply(1:3, function(i) txt(captions_lab[i], W / 2, caption_y, 9.2,
+  class = sprintf("c c%d", i), anchor = "middle", fill = navy), character(1))
+stopifnot(all(measure(captions_lab, 9.2) < W - 2 * pad))
+
+# Legend, one row if it fits, otherwise two.
+key_lab <- c("Exposure", "Outcome", "Adjusted", "Observed, not adjusted",
+  "Unobserved", "Open backdoor path")
+key_w <- measure(key_lab, 7.5)
+mark_w <- c(rep(7, 5), 11) + 4
+item_w <- mark_w + key_w
+rows <- if (sum(item_w) + 5 * gap <= W - 2 * pad) list(1:6) else list(1:3, 4:6)
+rule_y <- caption_y + 10
+key_mark <- function(i, x, y) {
+  circle <- "<circle cx='%s' cy='%s' r='3.5' style='stroke-width: 1.1; stroke: %s; fill: %s;%s'/>"
+  switch(i,
+    sprintf(circle, fmt(x + 3.5), fmt(y), "#0072B2", "#0072B2", ""),
+    sprintf(circle, fmt(x + 3.5), fmt(y), "#D55E00", "#D55E00", ""),
+    sprintf("<rect x='%s' y='%s' width='7' height='7' rx='1' style='stroke-width: 1.1; stroke: #34424D; fill: #DDE2E6;'/>",
+      fmt(x), fmt(y - 3.5)),
+    sprintf(circle, fmt(x + 3.5), fmt(y), "#34424D", "#FFFFFF", ""),
+    sprintf(circle, fmt(x + 3.5), fmt(y), "#34424D", "#FFFFFF", " stroke-dasharray: 2.2,1.6;"),
+    sprintf("<line x1='%s' y1='%s' x2='%s' y2='%s' style='stroke-width: 2.4; stroke: #C0392B;'/>",
+      fmt(x), fmt(y), fmt(x + 11), fmt(y)))
+}
+legend <- character()
+for (r in seq_along(rows)) {
+  idx <- rows[[r]]
+  y <- rule_y + 14 + (r - 1) * 13
+  x <- (W - sum(item_w[idx]) - gap * (length(idx) - 1)) / 2
+  for (i in idx) {
+    legend <- c(legend, key_mark(i, x, y - 2.6), txt(key_lab[i], x + mark_w[i], y, 7.5, fill = soft))
+    x <- x + item_w[i] + gap
+  }
+}
+H <- rule_y + 14 + (length(rows) - 1) * 13 + 10
+
+style <- "<style type='text/css'><![CDATA[
+  text { font-family: Helvetica, Arial, 'Liberation Sans', sans-serif; white-space: pre; }
+  .v2, .v3, .c, .u { opacity: 0; }
+  .c1, .u1 { opacity: 1; }
+  .t { fill: #8A96A3; }
+  .t1 { fill: #1F2A36; }
+  .v2 { animation: view2 13.5s ease-in-out infinite; }
+  .v3 { animation: view3 13.5s ease-in-out infinite; }
+  .c, .u { animation: slot 13.5s ease-in-out infinite; }
+  .t { animation: name 13.5s ease-in-out infinite; }
+  .c2, .u2, .t2 { animation-delay: -9s; }
+  .c3, .u3, .t3 { animation-delay: -4.5s; }
+  @keyframes view2 { 0%, 28.15% { opacity: 0; } 33.33%, 66.67% { opacity: 1; } 66.68%, 100% { opacity: 0; } }
+  @keyframes view3 { 0%, 61.48% { opacity: 0; } 66.67%, 94.81% { opacity: 1; } 100% { opacity: 0; } }
+  @keyframes slot { 0%, 28.15% { opacity: 1; } 30.74%, 97.41% { opacity: 0; } 100% { opacity: 1; } }
+  @keyframes name { 0%, 28.15% { fill: #1F2A36; } 30.74%, 97.41% { fill: #8A96A3; } 100% { fill: #1F2A36; } }
+  @media (prefers-reduced-motion: reduce) { .v, .c, .t, .u { animation: none; } }
+]]></style>"
+desc <- paste("One DAG of alcohol use and coronary events, drawn three times on the same layout.",
+  "Unadjusted: three backdoor paths are open. Adjusted for household income, baseline health",
+  "and smoking: every backdoor path is blocked. Baseline health unobserved: its backdoor path",
+  "stays open. No variable moves between the views.")
+out <- c(
+  sprintf("<svg xmlns='http://www.w3.org/2000/svg' xmlns:xlink='http://www.w3.org/1999/xlink' width='%spt' height='%spt' viewBox='0 0 %s %s' role='img'>",
+    fmt(W), fmt(H), fmt(W), fmt(H)),
+  "<title>One layout, three analyses</title>", sprintf("<desc>%s</desc>", desc),
+  style,
+  sprintf("<rect x='0.5' y='0.5' width='%s' height='%s' rx='8' style='stroke: none; fill: #FFFFFF;'/>",
+    fmt(W - 1), fmt(H - 1)),
+  header, stage, captions,
+  sprintf("<line x1='%s' y1='%s' x2='%s' y2='%s' style='stroke-width: 0.8; stroke: #E3E8EE;'/>",
+    fmt(pad), fmt(rule_y), fmt(W - pad), fmt(rule_y)),
+  legend,
+  # The border goes last: the frames' white backgrounds would cover its sides.
+  sprintf("<rect x='0.5' y='0.5' width='%s' height='%s' rx='8' style='fill: none; stroke: #E3E8EE;'/>",
+    fmt(W - 1), fmt(H - 1)),
+  "</svg>")
+writeLines(out, "pkgdown/assets/views/alcohol-views.svg", useBytes = TRUE)
