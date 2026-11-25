@@ -23,7 +23,7 @@ annotations supplied by the analyst; nothing is inferred from the graph. They
 annotate one fixed geometry, so several analyses of the same causal model can
 be shown side by side.
 
-![One DAG of alcohol use and coronary events drawn on one fixed layout, cycling through three analyses: unadjusted with three open backdoor paths, adjusted for income, baseline health and smoking, and with baseline health unobserved](https://raw.githubusercontent.com/hdbt/metrodag/main/pkgdown/assets/views/alcohol-views.svg)
+<img src="https://raw.githubusercontent.com/hdbt/metrodag/main/pkgdown/assets/views/alcohol-views.svg" width="100%" alt="One DAG of alcohol use and coronary events drawn on one fixed layout, cycling through three analyses: unadjusted with three open backdoor paths, adjusted for income, baseline health and smoking, and with baseline health unobserved" />
 
 ## Key Features
 
