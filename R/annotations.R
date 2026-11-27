@@ -15,12 +15,19 @@
   role <- igraph::vertex_attr(layout$graph, "role")
   if (is.null(role)) role <- rep("observed", length(nm))
   # Factor attributes need their labels before adding the missing-value default,
-  # which may not be one of the factor's declared levels.
+  # which may not be one of the factor's declared levels. NA elements of a list
+  # attribute are missing too, although as.character() writes them as "NA".
+  absent <- is.na(role)
   role <- as.character(role)
-  role[is.na(role)] <- "observed"
+  role[absent] <- "observed"
   roles <- list(exposure = exposure, outcome = outcome, adjusted = adjusted,
     unobserved = unobserved, selected = selected)
   supplied <- !vapply(roles, is.null, logical(1))
+  # Check the attribute whenever a role is read from it; `unadjusted = TRUE`
+  # replaces the adjusted role as a supplied set would.
+  inherited <- !supplied
+  inherited[["adjusted"]] <- inherited[["adjusted"]] && !unadjusted
+  if (any(inherited)) .metro_check_role_attribute(role, nm)
   hidden <- .metro_hidden_nodes(layout$graph)
   for (key in names(roles)) {
     value <- roles[[key]]
@@ -77,6 +84,33 @@
     " Its %s role is inherited from the graph or a reused layout; clear it with ",
     "`%s = character(0)` or give `%s` without `%s`."), inherited[[1L]], inherited[[1L]],
     inherited[[1L]], node))
+  stop(message, call. = FALSE)
+}
+
+# An inherited `role` attribute must use the role names metro_graph() accepts
+# in `nodes$role`; `role` has NA already read as observed. Any other value
+# would be drawn as observed and drop its role from the analysis, so name the
+# nodes and values at fault. A value is never mapped to a role it resembles.
+.metro_check_role_attribute <- function(role, nm) {
+  valid <- c("observed", "exposure", "outcome", "adjusted", "unobserved", "selected")
+  bad <- !role %in% valid
+  if (!any(bad)) return(invisible(TRUE))
+  values <- unique(role[bad])
+  # Name the nodes of up to six values, or of five and count the rest.
+  shown <- values[seq_len(if (length(values) > 6L) 5L else length(values))]
+  found <- vapply(shown, function(value) {
+    nodes <- nm[role == value]
+    one <- length(nodes) == 1L
+    sprintf("%s %s %s \"%s\"", if (one) "node" else "nodes", .metro_quote_list(nodes),
+      if (one) "has" else "have", value)
+  }, character(1), USE.NAMES = FALSE)
+  if (length(values) > length(shown))
+    found <- c(found, sprintf("%d more values", length(values) - length(shown)))
+  message <- sprintf(paste("The graph's `role` vertex attribute must use observed, exposure, outcome,",
+    "adjusted, unobserved or selected (or NA), but %s."),
+    .metro_quote_list(found, max = 6L, quote = "", distinct = FALSE))
+  if (any(tolower(values) %in% valid)) message <- paste(message, "Role names are lower case.")
+  if (any(tolower(values) == "latent")) message <- paste(message, "Use \"unobserved\" for latent variables.")
   stop(message, call. = FALSE)
 }
 

@@ -113,7 +113,11 @@ NULL inherits each role from the graph; a supplied vector replaces that
 role, and \code{character(0)} clears it. Roles must be disjoint, including
 inherited roles. Adjusted variables use filled squares; observed variables
 not adjusted for use hollow circles. Unobserved variables are dashed.
-Inherited factor role attributes use their labels; missing roles are observed.}
+Inherited factor role attributes use their labels; missing roles are observed.
+When a role is inherited, every value of the graph's \code{role} vertex
+attribute must be \code{"observed"}, one of these role names in lower case, or
+NA; any other value, such as \code{"Exposure"} or \code{"latent"} (use
+\code{"unobserved"}), is an error.}
 
 \item{unadjusted}{TRUE explicitly selects an empty adjustment set, clearing
 inherited adjusted roles. Cannot be combined with a non-empty \code{adjusted}.}

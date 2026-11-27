@@ -52,6 +52,59 @@ test_that("table validation never invents nodes, collapses edges or changes last
   expect_identical(ggplot2::last_plot(), previous)
 })
 
+test_that("igraph role attributes use the role names metro_graph() accepts", {
+  g <- igraph::graph_from_data_frame(data.frame(from = c("C", "C", "X"), to = c("X", "Y", "Y")))
+  with_roles <- function(graph, role) igraph::set_vertex_attr(graph, "role",
+    value = unname(role[igraph::V(graph)$name]))
+  bad <- with_roles(g, c(C = "observed", X = "Exposure", Y = "outcom"))
+  original <- bad
+  accepted <- "must use observed, exposure, outcome, adjusted, unobserved or selected (or NA)"
+  expect_error(metro_graph(data.frame(name = c("C", "X", "Y"), role = c("observed", "Exposure", "outcom"))),
+    accepted, fixed = TRUE)
+  message <- paste0("The graph's `role` vertex attribute ", accepted,
+    ", but node `X` has \"Exposure\" and node `Y` has \"outcom\". Role names are lower case.")
+  expect_error(metro_dag(bad), message, fixed = TRUE)
+  expect_identical(bad, original)
+  # A layout ignores roles; drawing it reads them, in every view.
+  expect_s3_class(layout <- layout_metro_dag(bad), "metrodag_layout")
+  expect_error(plot_metro_dag(layout), message, fixed = TRUE)
+  expect_error(compare_metro_dags(layout, list(A = list(exposure = "X"))), message, fixed = TRUE)
+  draw <- function(role) {
+    layout$graph <- with_roles(layout$graph, role)
+    plot_metro_dag(layout)
+  }
+  # Factors are read by their labels; no value is taken for a role it resembles.
+  expect_error(draw(factor(c(C = "observed", X = "Exposure", Y = "outcom"))), message, fixed = TRUE)
+  expect_error(draw(c(C = "Outcome", X = "exposure", Y = "Outcome")),
+    "but nodes `C` and `Y` have \"Outcome\". Role names are lower case.", fixed = TRUE)
+  expect_error(draw(c(C = "latent", X = "exposure", Y = "outcome")),
+    "but node `C` has \"latent\". Use \"unobserved\" for latent variables.", fixed = TRUE)
+  # Up to six values are named; more are counted.
+  expect_error(.metro_check_role_attribute(letters[1:6], LETTERS[1:6]),
+    "node `E` has \"e\" and node `F` has \"f\".", fixed = TRUE)
+  expect_error(.metro_check_role_attribute(letters[1:8], LETTERS[1:8]),
+    "node `E` has \"e\" and 3 more values.", fixed = TRUE)
+  # Supplying every role reads nothing from the attribute; one inherited role reads it.
+  for (p in list(metro_dag(layout, exposure = "X", outcome = "Y", adjusted = character(0),
+      unobserved = character(0), selected = character(0)),
+    metro_dag(layout, exposure = "X", outcome = "Y", unadjusted = TRUE,
+      unobserved = character(0), selected = character(0)))) {
+    drawn <- p$layers[[2L]]$geom_params$nodes
+    expect_identical(drawn$role[match(c("C", "X", "Y"), drawn$node)], c("observed", "exposure", "outcome"))
+  }
+  expect_error(metro_dag(layout, exposure = "X", outcome = "Y", unobserved = character(0),
+    selected = character(0)), message, fixed = TRUE)
+  # Valid roles are inherited, and NA is observed, in a list attribute too.
+  p <- draw(c(C = NA, X = "exposure", Y = "outcome"))
+  drawn <- p$layers[[2L]]$geom_params$nodes
+  expect_identical(drawn$role[match(c("C", "X", "Y"), drawn$node)], c("observed", "exposure", "outcome"))
+  expect_identical(attr(draw(list(C = NA, X = "exposure", Y = "outcome")), "metrodag_analysis"),
+    attr(p, "metrodag_analysis"))
+  skip_if_not_installed("dagitty")
+  expect_error(check_metro_adjustment(bad, exposure = "X", outcome = "Y", unadjusted = TRUE),
+    message, fixed = TRUE)
+})
+
 test_that("named adjacency matrices preserve direction under independent permutations", {
   a <- matrix(0L, 3, 3, dimnames = list(c("X", "Y", "I"), c("X", "Y", "I")))
   a["X", "Y"] <- 1L; original <- a
