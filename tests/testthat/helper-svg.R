@@ -6,9 +6,31 @@
   svg[grepl(sprintf("<(%s) ", paste(kinds, collapse = "|")), svg)]
 }
 
-# Number of elements of one kind, such as "polygon" (arrowheads) or "circle".
+# Number of elements of one kind, such as "polygon" or "circle". Arrowheads
+# and dashed station outlines are both polygons; count them with
+# .svg_arrowheads() and .svg_dashed_outlines().
 .svg_count <- function(file, kind) {
   sum(grepl(paste0("<", kind), readLines(file, warn = FALSE), fixed = TRUE))
+}
+
+# Number of vertices of each polygon element in `lines`.
+.svg_vertices <- function(lines) {
+  lengths(strsplit(trimws(sub(".* points='([^']*)'.*", "\\1", lines)), " ", fixed = TRUE))
+}
+
+# Number of arrowheads: the triangles among the polygons.
+.svg_arrowheads <- function(file) {
+  svg <- readLines(file, warn = FALSE)
+  sum(.svg_vertices(svg[grepl("<polygon ", svg, fixed = TRUE)]) == 3L)
+}
+
+# Number of dashed station outlines, of stations and legend keys alike. They
+# are 72-sided polygons, not circles, which the Windows GDI device would draw
+# solid (see .metro_circle_grob()).
+.svg_dashed_outlines <- function(file) {
+  svg <- readLines(file, warn = FALSE)
+  dashed <- grepl("<polygon ", svg, fixed = TRUE) & grepl("stroke-dasharray", svg, fixed = TRUE)
+  sum(.svg_vertices(svg[dashed]) == 72L)
 }
 
 # The sorted distinct alphabetic text strings drawn in the figure.

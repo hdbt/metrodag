@@ -138,5 +138,5 @@ test_that("the first plot created inside a notebook embeds a complete figure", {
   expect_gt(nchar(sources[1L]), 100L)
   figures <- list.files(directory, pattern = "[.]svg$", recursive = TRUE, full.names = TRUE)
   expect_length(figures, 1L)
-  expect_equal(.svg_count(figures[1L], "polygon"), 8L)
+  expect_equal(.svg_arrowheads(figures[1L]), 8L)
 })

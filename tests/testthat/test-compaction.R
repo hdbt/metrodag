@@ -147,7 +147,7 @@ test_that("compact annotated examples render with clear labels at both review wi
       if (nrow(issues)) expect_warning(save_metro_dag(file, p, width = width),
         "The label of R (is cut off from its station by arrow U -> O|crosses arrow R -> A)") else
         expect_no_warning(save_metro_dag(file, p, width = width))
-      expect_equal(.svg_count(file, "polygon"), igraph::ecount(.test_compact_graph(which)))
+      expect_equal(.svg_arrowheads(file), igraph::ecount(.test_compact_graph(which)))
       unlink(file)
     }
   }

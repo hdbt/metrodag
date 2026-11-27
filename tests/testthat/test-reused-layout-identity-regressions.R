@@ -135,10 +135,12 @@ test_that("reordered layout exports retain the same station and label geometry",
       height = 85, device = "svg"))
     expect_true(report$ok)
     expect_equal(nrow(report$issues), 0L)
-    # Monochrome draws an outcome as a ring with a second circle at its centre.
+    # C's dashed outline is a polygon; A and D are circles. Monochrome draws an
+    # outcome as a ring with a second circle at its centre.
     rings <- sum(.metro_node_style(igraph::V(attr(b, "metrodag_layout")$graph)$role, "white", style)$marker == "ring")
-    expect_equal(.svg_count(files[2L], "circle"), 3L + rings)
-    expect_equal(.svg_count(files[2L], "polygon"), 3L)
+    expect_equal(.svg_count(files[2L], "circle"), 2L + rings)
+    expect_equal(.svg_dashed_outlines(files[2L]), 1L)
+    expect_equal(.svg_arrowheads(files[2L]), 3L)
     expect_identical(reordered, before)
   }
   views <- list(Unadjusted = list(unadjusted = TRUE), Adjusted = list(adjusted = "B"))

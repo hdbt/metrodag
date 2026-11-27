@@ -178,7 +178,7 @@ test_that("table and adjacency exports keep every causal arrow and isolated stat
     path <- tempfile(fileext = ".svg"); on.exit(unlink(path), add = TRUE)
     expect_no_warning(save_metro_dag(path, p, width = 180))
     svg <- readLines(path)
-    expect_equal(sum(grepl("<polygon", svg, fixed = TRUE)), 5L)
+    expect_equal(.svg_arrowheads(path), 5L)
     expect_true(any(grepl("Isolated", svg, fixed = TRUE)))
     expect_true(any(grepl("variable", svg, fixed = TRUE)))
     expect_equal(igraph::degree(attr(p, "metrodag_layout")$graph, "I"), c(I = 0))

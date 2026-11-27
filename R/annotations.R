@@ -181,14 +181,31 @@
     inner_gp <- gp; inner_gp$fill <- NA
     return(grid::grobTree(outer, grid::rectGrob(x, y, width = 1.2 * r, height = 1.2 * r, gp = inner_gp)))
   }
-  if (marker != "ring") return(grid::circleGrob(x, y, r = r, gp = gp))
+  if (marker != "ring") return(.metro_circle_grob(x, y, r, gp))
   ring_gp <- gp; ring_gp$fill <- background
   dot_gp <- gp; dot_gp$col <- NA
-  grid::grobTree(grid::circleGrob(x, y, r = r, gp = ring_gp),
+  grid::grobTree(.metro_circle_grob(x, y, r, ring_gp),
     grid::circleGrob(x, y, r = 0.5 * r, gp = dot_gp))
 }
 
-# A custom legend key preserves the square and dashed-circle station symbols.
+# A circle of radius `r` at (x, y), all grid units. The Windows GDI device
+# (windows(), and png(), bmp(), jpeg() or tiff() with type = "windows", their
+# default on Windows) ignores the line type of a circle and draws it solid, so
+# an unobserved station would look observed there. A dashed outline is drawn
+# instead as a 72-sided polygon on the same circle, which every device dashes.
+# Its vertices run clockwise from three o'clock, as Cairo and ragg draw a
+# circle, so the dashes fall where they did on those devices. Solid and blank
+# outlines stay circles. Clearances, label placement and diagnostics use the
+# station radius, not this grob, so nothing moves.
+.metro_circle_grob <- function(x, y, r, gp) {
+  lty <- if (is.null(gp$lty)) "solid" else as.character(gp$lty)[1L]
+  if (lty %in% c("solid", "1", "blank", "0")) return(grid::circleGrob(x, y, r = r, gp = gp))
+  angle <- -2 * pi * (seq_len(72L) - 1L) / 72L
+  grid::polygonGrob(x + r * cos(angle), y + r * sin(angle), gp = gp)
+}
+
+# A custom legend key preserves the square and dashed-circle station symbols,
+# drawn as the stations are.
 .draw_key_metro_node <- function(data, params, size) {
   gp <- grid::gpar(col = data$colour, fill = data$fill,
     lty = data$linetype, lwd = 0.8, linejoin = "round")
