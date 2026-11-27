@@ -381,8 +381,8 @@
       excess <- function(d) pmax(0, d[, i] - do.call(pmin, lapply(seq_len(n)[-i], function(k) d[, k])))
       association <- excess(rims$centre) + excess(center_distance)
       # A label nearer another station than its own reads as that station's.
-      # That costs more than touching a route, which the label casing keeps
-      # legible.
+      # That costs more than touching a route. Labels are drawn without a
+      # casing, so a route that touches one can still cross its text.
       ambiguous <- rowSums(.metro_nearer(rims$rim[, -i, drop = FALSE], rims$rim[, i])) > 0
     }
     # Route costs, weighed by drawing the gallery, DAGitty examples and random
@@ -591,9 +591,9 @@
 # Weights of those conflicts, in the order of the placement costs: labels
 # that overlap or leave the figure cannot be read at all, a label over a
 # station hides it, and a label read as another station's misleads. That
-# counts as much as four routes crossed, which the label casing keeps
-# legible: a reflow may add up to three crossings to take one label back to
-# its own station.
+# counts as much as four routes crossed: a reflow may add up to three
+# crossings to take one label back to its own station. Labels are drawn
+# without a casing, so a crossed route can run through the text.
 .label_conflict_weights <- c(station = 5, route = 1, overlap = 10, bounds = 10, association = 4)
 
 # Rewrap the labels that have conflicts and place every label again. Labels

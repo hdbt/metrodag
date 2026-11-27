@@ -143,7 +143,7 @@ Initial CRAN release.
 ## Rendering
 
 - Labels stay beside their own stations. Placement now prefers touching a
-  route (labels are drawn on a casing) over a slot nearer another station,
+  route over a slot nearer another station,
   and `diagnose_metro_dag()` reports any remaining `label_association`
   problems. Across the gallery, five DAGitty examples and a mediator fan,
   diagnosed as PNG at 300 dpi, labels that read as another station's fell
