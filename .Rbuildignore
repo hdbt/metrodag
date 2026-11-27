@@ -22,3 +22,4 @@
 ^\.claude$
 ^CLAUDE\.md$
 ^AGENTS\.md$
+^CRAN-SUBMISSION$
