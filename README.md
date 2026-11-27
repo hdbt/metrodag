@@ -239,10 +239,16 @@ size.
 
 Six annotated DAGs provide a stable evaluation set for the layout algorithm;
 their edges, labels and roles stay fixed across releases. Browse the images,
-metrics and diagnostics in [the benchmark report](https://github.com/hdbt/metrodag/blob/main/inst/benchmarks/REPORT.md),
+metrics and diagnostics in [the visual review](https://github.com/hdbt/metrodag/blob/main/inst/benchmarks/VISUAL_REFINEMENT.md),
 or regenerate them with `Rscript data-raw/annotated_gallery.R`.
 
 [![DAG 4: Statin therapy and vascular events](https://raw.githubusercontent.com/hdbt/metrodag/main/inst/benchmarks/figures/annotated_04_statin_events.png)](https://github.com/hdbt/metrodag/blob/main/inst/benchmarks/figures/annotated_04_statin_events.svg)
+
+The gallery shows layouts, not recommended analyses. In DAG 4, unmeasured
+health consciousness (dashed) affects both statin therapy and arterial plaques,
+so no set of measured variables meets the adjustment criterion for the total
+effect under this graph; `check_metro_adjustment()` reports this for the set
+drawn.
 
 ## Documentation
 
