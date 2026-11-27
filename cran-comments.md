@@ -26,7 +26,7 @@
 
 ## Tests
 
-On CRAN, `tests/testthat.R` runs a selection of 20 test files that covers
+On CRAN, `tests/testthat.R` runs a selection of test files that covers
 the public workflows (graph inputs, examples, analysis views, diagnostics,
 styles, compositions and export) and the main routing checks. The complete
 regression suite, which includes a geometry snapshot of the drawings, runs
