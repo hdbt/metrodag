@@ -70,6 +70,13 @@
 #' Graphs with selected (conditioned-on) nodes are rejected: this check
 #' covers covariate adjustment only, and selection must not be ignored.
 #'
+#' With several exposures or outcomes, the check concerns their joint total
+#' effect, the effect of setting all the exposures at once, and the printed
+#' result says so. Passing it does not make each exposure's coefficient in a
+#' model that adjusts the exposures for one another a total effect: when one
+#' exposure mediates part of another's effect, for example, adjusting for it
+#' removes that part. Check each exposure on its own for its total effect.
+#'
 #' @param graph Any input accepted by [metro_dag()], or a MetroDAG ggplot.
 #' @param exposure,outcome,adjusted,unobserved Character vectors of node names.
 #'   NULL inherits roles. Supply `adjusted = character(0)` or `unadjusted = TRUE`
@@ -114,8 +121,14 @@ check_metro_adjustment <- function(graph, exposure = NULL, outcome = NULL,
 
 #' @export
 print.metrodag_adjustment_check <- function(x, ...) {
-  cat(sprintf("<metrodag_adjustment_check> total effect: %s -> %s\n",
-    paste(x$exposure, collapse = ", "), paste(x$outcome, collapse = ", ")))
+  # Several exposures or outcomes are checked together, for their joint effect.
+  if (length(x$exposure) > 1L || length(x$outcome) > 1L) {
+    cat(sprintf("<metrodag_adjustment_check> joint total effect of {%s} on {%s}\n",
+      paste(x$exposure, collapse = ", "), paste(x$outcome, collapse = ", ")))
+  } else {
+    cat(sprintf("<metrodag_adjustment_check> total effect: %s -> %s\n",
+      paste(x$exposure, collapse = ", "), paste(x$outcome, collapse = ", ")))
+  }
   cat("Adjustment set: {", paste(x$adjusted, collapse = ", "), "}\n", sep = "")
   cat("Meets DAGitty's adjustment criterion: ", x$valid, "\n", sep = "")
   invisible(x)

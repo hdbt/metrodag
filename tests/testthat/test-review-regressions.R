@@ -104,8 +104,13 @@ test_that("highlight_paths reports truncation, limits and proper paths exactly",
   expect_false(attr(complete, "truncated"))
   expect_warning(cut <- highlight_paths(p, paths = "all", limit = 1), "stopped at `limit` = 1")
   expect_true(attr(attr(cut, "metrodag_paths"), "truncated"))
-  # A truncated biasing search says what it did not check.
-  expect_warning(highlight_paths(p, paths = "biasing", limit = 1), "found no open biasing paths among those listed")
+  # A truncated biasing search says what it did not check, unless the set
+  # meets the adjustment criterion and so leaves no biasing path open.
+  crude <- metro_dag(attr(p, "metrodag_layout"), unadjusted = TRUE)
+  expect_warning(highlight_paths(crude, paths = "biasing", limit = 1), "found no open biasing paths among those listed")
+  expect_warning(valid <- highlight_paths(p, paths = "biasing", limit = 1),
+    "^No open biasing paths found between X and Y\\.$")
+  expect_false(attr(attr(valid, "metrodag_paths"), "truncated"))
   expect_error(highlight_paths(p, limit = 0.5), "limit")
   expect_error(highlight_paths(p, limit = 2.5), "limit")
   # With several exposures, a path through another exposure is not biasing.

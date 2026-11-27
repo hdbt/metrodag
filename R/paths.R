@@ -21,28 +21,47 @@
 #' labels are unchanged; only the arrows' colour, width or linetype change,
 #' exactly as with `edge_style`. Requires the optional dagitty package.
 #'
+#' A valid adjustment set must close every biasing path, but closing them is
+#' not enough: adjusting for a mediator, or for a descendant of a mediator or
+#' of the outcome, can bias the total effect without opening any biasing
+#' path, so the biasing view does not show such over-adjustment. With
+#' `paths = "biasing"`, a warning names any such variable in the conditioning
+#' set and a causal path it lies on or descends from;
+#' [check_metro_adjustment()] checks the whole adjustment criterion.
+#'
+#' With several `from` or `to` nodes, the biasing view and that warning
+#' concern the joint effect of all `from` nodes on all `to` nodes, as in
+#' DAGitty's adjustment criterion: a path through another `from` node is not
+#' a biasing path. Closing every biasing path for the joint effect does not
+#' show that the set, with or without the other `from` nodes, identifies the
+#' total effect of each `from` node on its own; see
+#' [check_metro_adjustment()].
+#'
 #' @param plot A MetroDAG plot from [metro_dag()] or [plot_metro_dag()].
 #' @param from,to Node names; default to the plot's exposure and outcome.
 #' @param paths Which paths to highlight: `"open"` (the default), every path
 #'   that is open given the conditioning set; `"biasing"`, open paths that are
 #'   not directed from `from` to `to` and do not pass through another `from`
-#'   node (DAGitty's proper paths), usually the target when judging an
-#'   adjustment set; `"causal"`, open directed paths from `from` to `to`; or
-#'   `"all"`, every path whether open or not.
+#'   node (DAGitty's proper paths), which an adjustment set must close but
+#'   which do not show over-adjustment (see Details); `"causal"`, open
+#'   directed paths from `from` to `to`; or `"all"`, every path whether open
+#'   or not.
 #' @param colour,width,linetype Appearance of highlighted arrows. `width` in
 #'   millimetres defaults to twice the plot's line width; `colour = NULL`
 #'   keeps each arrow's colour and `linetype = NULL` its linetype.
 #' @param limit Maximum number of paths DAGitty lists between each pair of
 #'   nodes. Dense graphs can have very many paths; if the search stops at the
 #'   limit, a warning says so. For `"open"` and `"causal"`, whether any such
-#'   path exists is still decided exactly, so a truncated search is reported
-#'   only when it may have missed one.
+#'   path exists is still decided exactly, and for `"biasing"` a conditioning
+#'   set that meets DAGitty's adjustment criterion is known to leave none
+#'   open, so a truncated search is reported only when it may have missed one.
 #' @return The plot with highlighted arrows. The attribute
 #'   `metrodag_paths` holds a data frame of the paths found, whether each is
 #'   open, whether it is causal (directed from `from` to `to`) and whether it
 #'   was highlighted. Its attribute `truncated` is `TRUE` if the search
-#'   stopped at `limit` for some pair. Bidirected arcs drawn as hidden latent
-#'   variables appear as `<->` in the path text.
+#'   stopped at `limit` for some pair and may have missed a path to
+#'   highlight. Bidirected arcs drawn as hidden latent variables appear as
+#'   `<->` in the path text.
 #' @examples
 #' if (requireNamespace("dagitty", quietly = TRUE)) {
 #'   p <- metro_dag(metrodag_examples("causal"), exposure = "X", outcome = "Y",
@@ -89,20 +108,25 @@ highlight_paths <- function(plot, from = NULL, to = NULL, paths = "open",
   conditioned_names <- c(analysis$adjusted, analysis$selected)
   conditioned <- unname(ids[conditioned_names])
   names_of <- stats::setNames(names(ids), ids)
-  found <- list(); truncated <- character()
+  found <- list(); truncated <- character(); valid <- NULL; complete <- TRUE
   for (a in from) for (b in to) if (a != b) {
     # One path more than `limit` shows whether the search was cut off.
     result <- dagitty::paths(translated$dag, ids[[a]], ids[[b]], Z = conditioned,
       limit = limit + 1L, directed = kind == "causal")
     cut <- length(result$paths) > limit
+    complete <- complete && !cut
     keep <- seq_len(min(length(result$paths), limit))
     if (length(keep)) found[[length(found) + 1L]] <-
       data.frame(from = a, to = b, path = result$paths[keep], open = result$open[keep])
     # A complete search is exact. Otherwise ask whether a relevant path exists
-    # at all, so a truncated search never claims there is none.
+    # at all, so a truncated search never claims there is none. A set that
+    # meets the adjustment criterion leaves no biasing path open.
     if (cut) {
+      if (kind == "biasing" && is.null(valid))
+        valid <- .metro_meets_adjustment_criterion(translated, from, to, conditioned_names)
       relevant <- switch(kind,
-        open = , biasing = dagitty::dconnected(translated$dag, ids[[a]], ids[[b]], conditioned),
+        open = dagitty::dconnected(translated$dag, ids[[a]], ids[[b]], conditioned),
+        biasing = !valid && dagitty::dconnected(translated$dag, ids[[a]], ids[[b]], conditioned),
         causal = .metro_open_directed(graph, a, b, conditioned_names),
         all = TRUE)
       if (relevant) truncated <- c(truncated, paste(a, "and", b))
@@ -151,6 +175,13 @@ highlight_paths <- function(plot, from = NULL, to = NULL, paths = "open",
       "The path search stopped at `limit` = %d between %s and found no %spaths among those listed. Increase `limit` to check every path.",
       limit, paste(truncated, collapse = ", "), description), call. = FALSE)
   } else if (!nrow(arrows)) warning("No ", description, "paths found between ", between, ".", call. = FALSE)
+  # Over-adjustment need not open a biasing path, so the view cannot show it.
+  # A set known to meet the adjustment criterion has no node it forbids.
+  if (kind == "biasing" && !isTRUE(valid)) {
+    overadjusted <- .metro_overadjustment_warning(translated, from, to, conditioned_names,
+      tokens[table$causal & proper], complete, selection = length(analysis$selected) > 0L)
+    if (!is.null(overadjusted)) warning(overadjusted, call. = FALSE)
+  }
   if (nrow(arrows)) {
     styles <- arrows
     if (!is.null(colour)) styles$colour <- colour
@@ -174,4 +205,72 @@ highlight_paths <- function(plot, from = NULL, to = NULL, paths = "open",
   blocked <- setdiff(conditioned, c(from, to))
   if (length(blocked)) graph <- igraph::delete_vertices(graph, blocked)
   is.finite(igraph::distances(graph, from, to, mode = "out", weights = NA)[1L, 1L])
+}
+
+# Does the conditioning set meet DAGitty's adjustment criterion for the joint
+# effect of `from` on `to`? Such a set leaves no biasing path open. The
+# criterion needs disjoint sets, so overlapping ones are not called valid.
+.metro_meets_adjustment_criterion <- function(translated, from, to, conditioned) {
+  if (length(intersect(from, to)) || length(intersect(conditioned, c(from, to)))) return(FALSE)
+  ids <- translated$ids
+  isTRUE(dagitty::isAdjustmentSet(translated$dag, Z = unname(ids[conditioned]),
+    exposure = unname(ids[from]), outcome = unname(ids[to])))
+}
+
+# Conditioning on a node that lies on a proper causal path from `from` to
+# `to`, or descends from one, can bias the total effect even when it opens no
+# biasing path; DAGitty's adjustment criterion forbids such nodes. `causal`
+# holds the proper causal paths listed (as DAGitty tokens), all of them when
+# `complete`. Returns a warning that names each forbidden node in the
+# conditioning set with a causal path it lies on or descends from, or NULL.
+# check_metro_adjustment() refuses plots with `selection`, so the warning then
+# points to DAGitty instead.
+.metro_overadjustment_warning <- function(translated, from, to, conditioned, causal, complete,
+  selection = FALSE) {
+  conditioned <- setdiff(conditioned, c(from, to))
+  if (!length(conditioned) || length(intersect(from, to))) return(NULL)
+  ids <- translated$ids
+  dag <- translated$dag
+  from_ids <- unname(ids[from])
+  path_nodes <- lapply(causal, function(t) t[seq.int(1L, length(t), by = 2L)])
+  # The nodes on such paths are those after the first on each one, when all
+  # were listed. Otherwise they are the nodes reached from `from` that still
+  # reach `to` in the proper back-door graph, which lacks the first arrow of
+  # every proper causal path.
+  on_path <- if (complete) unique(as.character(unlist(lapply(path_nodes, `[`, -1L)))) else {
+    dagitty::exposures(dag) <- from_ids
+    dagitty::outcomes(dag) <- unname(ids[to])
+    setdiff(intersect(dagitty::descendants(dag, from_ids),
+      dagitty::ancestors(dagitty::backDoorGraph(dag), unname(ids[to]))), from_ids)
+  }
+  if (!length(on_path)) return(NULL)
+  forbidden <- conditioned[unname(ids[conditioned]) %in% dagitty::descendants(dag, on_path)]
+  if (!length(forbidden)) return(NULL)
+  names_of <- stats::setNames(names(ids), ids)
+  set_text <- function(x) if (length(x) > 1L) paste0("{", paste(x, collapse = ", "), "}") else x
+  shown <- forbidden[seq_len(min(length(forbidden), 5L))]
+  reasons <- vapply(shown, function(node) {
+    id <- ids[[node]]
+    on <- id %in% on_path
+    via <- if (on) id else intersect(dagitty::ancestors(dag, id), on_path)
+    # Name the shortest such path listed and, for a descendant, the last node
+    # on it that the descendant comes from. Only a search stopped at `limit`
+    # can have listed none of them.
+    hits <- which(vapply(path_nodes, function(n) any(n[-1L] %in% via), logical(1)))
+    if (length(hits)) {
+      nodes <- path_nodes[[hits[which.min(lengths(path_nodes[hits]))]]]
+      where <- paste("the causal path", paste(names_of[nodes], collapse = " -> "))
+      via <- utils::tail(intersect(nodes[-1L], via), 1L)
+    } else where <- sprintf("a causal path from %s to %s", set_text(from), set_text(to))
+    if (on) sprintf("%s lies on %s", node, where) else
+      sprintf("%s descends from %s, which lies on %s", node, names_of[[via[1L]]], where)
+  }, character(1), USE.NAMES = FALSE)
+  effect <- if (length(from) > 1L || length(to) > 1L)
+    sprintf("the joint total effect of {%s} on {%s}", paste(from, collapse = ", "), paste(to, collapse = ", ")) else
+    sprintf("the total effect of %s on %s", from, to)
+  advice <- if (selection)
+    "check_metro_adjustment() does not model selection, so check the conditioning set with DAGitty directly." else
+    "check the adjustment set with check_metro_adjustment()."
+  sprintf("Conditioning on %s can bias %s: %s. Biasing paths do not show this; %s",
+    .metro_quote_list(forbidden, quote = ""), effect, paste(reasons, collapse = "; "), advice)
 }

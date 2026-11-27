@@ -234,9 +234,15 @@ if (requireNamespace("dagitty", quietly = TRUE)) {
 
 Use `paths = "biasing"` to emphasise only the open non-causal paths that an
 adjustment set should close (with several exposures, paths through another
-exposure are left out, as in DAGitty's adjustment criterion), `paths = "causal"` for open directed paths, or
-`paths = "all"` for every path; the `causal` column of the path table says
-which is which. Describe the colour convention in the figure caption.
+exposure are left out, as in DAGitty's adjustment criterion for their joint
+effect), `paths = "causal"` for open directed paths, or `paths = "all"` for
+every path; the `causal` column of the path table says which is which.
+Describe the colour convention in the figure caption. Closing every biasing
+path is not a complete check: the biasing view does not show over-adjustment,
+such as adjusting for a mediator or for a descendant of a mediator or of the
+outcome. `highlight_paths()` warns when the conditioning set contains such a
+variable, and `check_metro_adjustment()` checks the whole adjustment
+criterion.
 
 ## Mark assumptions about individual arrows
 

@@ -159,6 +159,15 @@ test_that("highlight_paths never misses open paths because of the path limit", {
     messages <<- c(messages, conditionMessage(w)); invokeRestart("muffleWarning")
   })
   expect_identical(messages, "No open paths found between v1 and v10.")
+  # v1 has no parents, so the empty set meets the adjustment criterion and
+  # leaves no biasing path open: a truncated biasing search need not warn.
+  crude <- plot_metro_dag(l, exposure = "v1", outcome = "v10", unadjusted = TRUE)
+  messages <- character()
+  withCallingHandlers(biasing <- highlight_paths(crude, paths = "biasing", limit = 100), warning = function(w) {
+    messages <<- c(messages, conditionMessage(w)); invokeRestart("muffleWarning")
+  })
+  expect_identical(messages, "No open biasing paths found between v1 and v10.")
+  expect_false(attr(attr(biasing, "metrodag_paths"), "truncated"))
 })
 
 test_that("highlight_paths keeps data-frame edge styles", {
