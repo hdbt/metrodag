@@ -69,8 +69,26 @@ jobs:
           name: metrodag-documentation
           path: _site
           if-no-files-found: error
+      # Publish only release versions. After a release, use_dev_version() gives
+      # main a development version (x.y.z.9000), so pushes stop publishing and
+      # the site that CRAN links to keeps describing the release.
+      - name: Check for a release version
+        id: version
+        shell: bash
+        run: |
+          version=$(sed -n 's/^Version:[[:space:]]*//p' DESCRIPTION | tr -d '\r')
+          if [[ -z "$version" ]]; then
+            echo "::error::No Version field in DESCRIPTION"
+            exit 1
+          fi
+          echo "Package version: $version"
+          if [[ "$version" =~ \.9[0-9]{3,}$ ]]; then
+            echo "release=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "release=true" >> "$GITHUB_OUTPUT"
+          fi
       - name: Check GitHub Pages configuration
-        if: github.repository == 'hdbt/metrodag' && github.ref == 'refs/heads/main' && (github.event_name == 'push' || inputs.publish)
+        if: github.repository == 'hdbt/metrodag' && github.ref == 'refs/heads/main' && ((github.event_name == 'push' && steps.version.outputs.release == 'true') || inputs.publish)
         id: pages
         uses: actions/configure-pages@v5
         continue-on-error: ${{ github.event_name == 'push' }}
