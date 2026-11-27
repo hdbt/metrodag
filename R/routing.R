@@ -14,8 +14,9 @@
       }
     }
   }
-  # Number paths by their source names, independently of input vertex order.
+  # Number paths by their source names in C-locale (radix) order, independently
+  # of input vertex order and of the session's collation locale.
   sources <- names[path]
-  match(sources, sort(unique(sources)))
+  match(sources, sort(unique(sources), method = "radix"))
 }
 
