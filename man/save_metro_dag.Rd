@@ -55,7 +55,8 @@ cannot be edited or searched, and a warning says so.}
 \item{path}{Optional existing directory in which to save \code{filename}.}
 
 \item{on_error}{\code{"stop"} (the default) refuses to write a figure that cannot
-fit every arrow and station; \code{"warn"} writes what fits and warns.}
+fit every arrow and station; \code{"warn"} writes what fits, marked in one
+corner (for example "Incomplete: 2 arrows not drawn"), and warns.}
 }
 \value{
 Invisibly, the output filename.

@@ -163,7 +163,9 @@ explicit \code{rank} values in \code{\link[=layout_metro_dag]{layout_metro_dag()
 lines with \code{"\\n"}; \code{\link[=diagnose_metro_dag]{diagnose_metro_dag()}} reports headers that overlap.}
     \item{\code{on_error}}{What happens when the drawing device is too small to draw an
 arrow or keep stations apart: \code{"stop"} (the default) raises an error;
-\code{"warn"} draws what fits and warns, which suits small previews.
+\code{"warn"} draws what fits and warns, which suits small previews. Such a
+drawing is marked in one corner, for example "Incomplete: 2 arrows not
+drawn", so that it cannot pass for the complete figure.
 \code{\link[=save_metro_dag]{save_metro_dag()}} stops unless it is given \code{on_error = "warn"} too.}
   }}
 }

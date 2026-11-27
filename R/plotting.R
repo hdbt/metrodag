@@ -159,7 +159,9 @@
 #'   lines with `"\n"`; [diagnose_metro_dag()] reports headers that overlap.
 #' @param on_error What happens when the drawing device is too small to draw an
 #'   arrow or keep stations apart: `"stop"` (the default) raises an error;
-#'   `"warn"` draws what fits and warns, which suits small previews.
+#'   `"warn"` draws what fits and warns, which suits small previews. Such a
+#'   drawing is marked in one corner, for example "Incomplete: 2 arrows not
+#'   drawn", so that it cannot pass for the complete figure.
 #'   [save_metro_dag()] stops unless it is given `on_error = "warn"` too.
 #' @param ... Text options: `fontface`, `lineheight`, and `colour` (or `color`).
 #' @return A ggplot object, with geometry in `metrodag_layout` and selected

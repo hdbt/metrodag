@@ -114,3 +114,87 @@ test_that("on_error = 'warn' draws what fits while exports stay strict", {
   expect_false(diagnose_metro_dag(tolerant, width = 15, height = 15)$ok)
   expect_error(metro_dag(metrodag_examples("chain"), on_error = "ignore"), "on_error")
 })
+
+# The mark of an incomplete figure in an SVG file written by svglite, its
+# lines joined; "" when there is none. Figures without labels, titles or a
+# legend have no other text.
+.composition_mark <- function(file) paste(gsub("&quot;|&#34;", "\"",
+  sub("^<text .*>(.*)</text>$", "\\1", .svg_primitives(file, "text"))), collapse = " ")
+
+# Export `plot` to `file` with on_error = "warn" and count what its warning
+# reports: the arrows not drawn and the stations that overlap.
+.composition_tolerant <- function(file, plot, width, height) {
+  errors <- .empty_metro_issues()
+  withCallingHandlers(save_metro_dag(file, plot, width = width, height = height, on_error = "warn"),
+    warning = function(w) if (inherits(w, "metrodag_render_warning")) {
+      errors <<- rbind(errors, w$issues[w$issues$severity == "error", , drop = FALSE])
+      invokeRestart("muffleWarning")
+    })
+  overlap <- errors[errors$type == "station_overlap", , drop = FALSE]
+  c(arrows = nrow(unique(errors[startsWith(errors$type, "edge_"), c("from", "to")])),
+    stations = length(unique(c(overlap$node, overlap$other_node))))
+}
+
+test_that("an export drawn with on_error = 'warn' is marked as incomplete", {
+  skip_if_not_installed("svglite")
+  # Without labels, titles or a legend, neither the panel nor the arrows that
+  # fit in it depend on font metrics.
+  dense <- .composition_dense()
+  p <- metro_dag(dense, labels = FALSE, legend = FALSE)
+  file <- tempfile(fileext = ".svg")
+  on.exit(unlink(file), add = TRUE)
+  # A missing arrow would read as "no direct effect": the mark counts the
+  # arrows left out of the file.
+  found <- .composition_tolerant(file, p, 40, 40)
+  expect_gt(found[["arrows"]], 1L)
+  expect_identical(found[["stations"]], 0L)
+  expect_equal(.svg_count(file, "polygon"), igraph::ecount(dense$graph) - found[["arrows"]])
+  expect_identical(.composition_mark(file),
+    sprintf("Incomplete: %d arrows not drawn (on_error = \"warn\")", found[["arrows"]]))
+  # Where everything fits, nothing is marked.
+  expect_identical(.composition_tolerant(file, p, 120, 90), c(arrows = 0L, stations = 0L))
+  expect_identical(.composition_mark(file), "")
+  # Each kind of problem is counted, in the singular where it applies.
+  expect_identical(.metro_incomplete_text(1L, 1L, 2L), c(
+    "Incomplete: 1 arrow not drawn, 1 station cut off, 2 stations overlap", "(on_error = \"warn\")"))
+  expect_null(.metro_incomplete_text(0L, 0L, 0L))
+})
+
+test_that("tolerant previews are marked as exports are, and the mark moves nothing", {
+  skip_on_cran()
+  skip_if_not_installed("svglite")
+  dense <- .composition_dense()
+  p <- metro_dag(dense, labels = FALSE, legend = FALSE)
+  file <- tempfile(fileext = ".svg")
+  on.exit(unlink(file), add = TRUE)
+  # Stations that overlap are counted beside the arrows left out.
+  found <- .composition_tolerant(file, p, 30, 30)
+  expect_gt(found[["stations"]], 1L)
+  expect_identical(.composition_mark(file), sprintf(
+    "Incomplete: %d arrows not drawn, %d stations overlap (on_error = \"warn\")",
+    found[["arrows"]], found[["stations"]]))
+  # Strict figures are never marked: one that fits is written as it is, and
+  # one that does not fit raises an error after drawing what fits.
+  save_metro_dag(file, p, width = 120, height = 90)
+  expect_identical(.composition_mark(file), "")
+  draw <- function(plot) {
+    svglite::svglite(file, width = 40 / 25.4, height = 40 / 25.4)
+    device <- grDevices::dev.cur()
+    on.exit(grDevices::dev.off(device))
+    print(plot)
+  }
+  expect_error(draw(p), "drawing problems", class = "metrodag_render_error")
+  strict <- .svg_primitives(file)
+  expect_identical(.composition_mark(file), "")
+  # A printed preview is saved as often as an export (by knitr, or from the
+  # plot pane), so it is marked too. The mark is drawn over the same figure.
+  tolerant <- metro_dag(dense, labels = FALSE, legend = FALSE, on_error = "warn")
+  expect_warning(draw(tolerant), "drawn without the affected elements")
+  drawn <- .svg_primitives(file)
+  missing <- as.integer(igraph::ecount(dense$graph) - .svg_count(file, "polygon"))
+  expect_gt(missing, 1L)
+  expect_identical(.composition_mark(file),
+    sprintf("Incomplete: %d arrows not drawn (on_error = \"warn\")", missing))
+  expect_identical(drawn[drawn %in% strict], strict)
+  expect_true(all(grepl("^<(rect|text) ", drawn[!drawn %in% strict])))
+})

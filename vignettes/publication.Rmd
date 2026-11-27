@@ -288,7 +288,9 @@ height, since automatic height applies only to single figures and comparisons.
 
 While drafting in a small preview pane, `on_error = "warn"` draws what fits and
 reports the problems once instead of stopping. `save_metro_dag()` still refuses
-to write such a figure unless it is also given `on_error = "warn"`.
+to write such a figure unless it is also given `on_error = "warn"`. Either way,
+the figure is then marked in one corner, for example "Incomplete: 2 arrows not
+drawn", so that it cannot pass for the complete one.
 
 ## Diagnose problems systematically
 

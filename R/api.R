@@ -122,7 +122,8 @@ metro_dag <- function(graph, direction = "right", labels = TRUE,
 #' @param dpi Raster resolution, default 600.
 #' @param path Optional existing directory in which to save `filename`.
 #' @param on_error `"stop"` (the default) refuses to write a figure that cannot
-#'   fit every arrow and station; `"warn"` writes what fits and warns.
+#'   fit every arrow and station; `"warn"` writes what fits, marked in one
+#'   corner (for example "Incomplete: 2 arrows not drawn"), and warns.
 #' @param ... Extra device arguments passed to [ggplot2::ggsave()]. `scale`
 #'   multiplies the requested width and any explicit height. Automatic height
 #'   uses the scaled width and retains the 45--220 mm physical height limits.

@@ -1673,6 +1673,21 @@ makeContent.metrodag_grob <- function(x)
     center <- placement$centers[i, ]
     add(grid::editGrob(texts[[i]], x = mm(center[1L]), y = mm(center[2L])))
   }
+  # A drawing that on_error = "warn" let through says so in the figure itself,
+  # printed or exported: an arrow left out would otherwise read as "no direct
+  # effect", and no warning stays with a saved file, a knitr figure or a
+  # preview saved from the plot pane. A strict drawing with such problems
+  # raises an error instead, and its export writes nothing.
+  stamp <- if (identical(cfg$on_error, "warn")) .metro_incomplete_text(
+    length(edge_ids) - drawn_edges, sum(outside_nodes), length(unique(c(pairs))))
+  if (!is.null(stamp)) {
+    covers <- function(box) c(length(.metro_label_station_hits(n, box, radius, stroke / 2)),
+      sum(.box_overlap(box, boxes) > 0),
+      length(.metro_label_edge_hits(label_edges, box, cfg$line_width, label_heads)))
+    add(.metro_stamp_grob(stamp, bounds, covers, grid::gpar(fontsize = 7,
+      fontfamily = cfg$family, fontface = "bold", lineheight = cfg$text_options$lineheight,
+      col = cfg$text_options$colour), cfg$background))
+  }
   if (!is.null(cfg$warn_collector) && length(cfg$warn_collector$issues)) {
     issues <- do.call(rbind, cfg$warn_collector$issues)
     warning(structure(list(message = sprintf(
@@ -1695,4 +1710,48 @@ makeContent.metrodag_grob <- function(x)
     label_centers = placement$centers, label_bounds = bounds, nodes = n[, c("node", "x", "y")],
     routes = routes)
   grid::setChildren(x, do.call(grid::gList, children))
+}
+
+# The text that stamps a drawing made with on_error = "warn" which a strict
+# drawing would refuse: the arrows it left out and the stations it drew
+# beyond the visible figure or overlapping, as the two lines of a stamp too
+# wide for one (see .metro_stamp_grob()). NULL when nothing failed.
+.metro_incomplete_text <- function(arrows, cut_off, overlapping) {
+  count <- function(k, one, many) if (k > 0L) paste(k, if (k == 1L) one else many)
+  found <- c(count(arrows, "arrow not drawn", "arrows not drawn"),
+    count(cut_off, "station cut off", "stations cut off"),
+    count(overlapping, "station overlaps", "stations overlap"))
+  if (is.null(found)) return(NULL)
+  c(paste("Incomplete:", paste(found, collapse = ", ")), "(on_error = \"warn\")")
+}
+
+# Draw the stamp `text` from .metro_incomplete_text() in a box filled with the
+# background, inside a corner of the visible `bounds` (mm): of bottom left,
+# bottom right, top left and top right, the first that covers the fewest
+# stations, then labels, then routes, as `covers(box)` counts them. Its lines
+# are joined when they fit the width and wrapped at spaces otherwise. In a
+# figure too small for the box, it starts at the top left, so that the
+# beginning of the text stays in view. It is drawn over the finished figure
+# and moves nothing.
+.metro_stamp_grob <- function(text, bounds, covers, gp, background) {
+  pad <- 0.8; inset <- 0.5
+  mm <- function(z) grid::unit(z, "mm")
+  measure <- function(s) grid::convertWidth(grid::grobWidth(grid::textGrob(s, gp = gp)), "mm",
+    valueOnly = TRUE)
+  room <- max(1, bounds[2L] - bounds[1L] - 2 * (pad + inset))
+  joined <- paste(text, collapse = " ")
+  text <- if (measure(joined) <= room) joined else paste(vapply(text, .metro_wrap_text,
+    character(1), width = room, gp = gp, split_words = FALSE, USE.NAMES = FALSE), collapse = "\n")
+  label <- grid::textGrob(text, gp = gp)
+  w <- measure(text) + 2 * pad
+  h <- grid::convertHeight(grid::grobHeight(label), "mm", valueOnly = TRUE) + 2 * pad
+  x <- pmax(bounds[1L] + inset, c(bounds[1L] + inset, bounds[2L] - inset - w)[c(1L, 2L, 1L, 2L)])
+  y <- pmin(bounds[4L] - inset - h, c(bounds[3L] + inset, bounds[4L] - inset - h)[c(1L, 1L, 2L, 2L)])
+  cost <- vapply(1:4, function(k) as.numeric(covers(c(x[k], x[k] + w, y[k], y[k] + h))), numeric(3))
+  k <- order(cost[1L, ], cost[2L, ], cost[3L, ], method = "radix")[1L]
+  grid::grobTree(
+    grid::rectGrob(mm(x[k]), mm(y[k]), mm(w), mm(h), just = c("left", "bottom"),
+      gp = grid::gpar(col = gp$col, fill = background, lwd = .metro_lwd(0.25))),
+    grid::textGrob(text, mm(x[k] + pad), mm(y[k] + h / 2), just = c("left", "centre"), gp = gp),
+    name = "metrodag-incomplete")
 }
