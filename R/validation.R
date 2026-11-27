@@ -1,5 +1,5 @@
 #' Validate and normalize a DAG
-#' @keywords internal
+#' @noRd
 .as_dag <- function(graph, bidirected = "error", argument = "graph") {
   if (inherits(graph, "tidy_dagitty")) graph <- .from_ggdag(graph, bidirected)
   if (inherits(graph, "dagitty")) graph <- .from_dagitty(graph, bidirected)

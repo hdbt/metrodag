@@ -69,7 +69,10 @@
 #' @param legend_position `"bottom"`, `"top"`, `"left"`, or `"right"`.
 #' @param legend_columns Maximum number of legend keys per row.
 #' @param palette Colours for path-cover lines in the metro preset.
-#' @return A `metrodag_style` list.
+#' @return A `metrodag_style` list with one element for `preset` and one for
+#'   each setting above, holding the preset's value where an argument is
+#'   `NULL`. Pass it as `style` to [metro_dag()] or [plot_metro_dag()];
+#'   printing it lists the main settings.
 #' @examples
 #' journal <- metro_style(exposure_fill = "#1B9E77", outcome_fill = "#7570B3",
 #'   legend_labels = c(exposure = "Treatment", outcome = "Response"),

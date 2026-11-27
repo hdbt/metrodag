@@ -10,7 +10,9 @@ as_metro_grob(plot)
 \item{plot}{A MetroDAG plot, layout or result of \code{\link[=compare_metro_dags]{compare_metro_dags()}}.}
 }
 \value{
-A grid grob.
+A grid \code{gTree} of class \code{metrodag_plot_grob}, or
+\code{metrodag_comparison_grob} for a comparison. It holds the figure and lays
+it out each time it is drawn, at the size of the viewport it is drawn in.
 }
 \description{
 The returned grob wraps titles, places labels and checks clearances when it

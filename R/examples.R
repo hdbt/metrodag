@@ -1,5 +1,22 @@
 #' Canonical DAG examples
 #'
+#' Small fixed graphs for trying the package and writing reproducible
+#' examples, and random DAGs, reproducible with `seed`, for trying larger
+#' layouts. The graphs carry no roles: name the exposure, outcome and other
+#' roles in [metro_dag()].
+#'
+#' * `chain`: A -> B -> C -> D.
+#' * `fork`: A -> B, A -> C and A -> D.
+#' * `collider`: A -> D, B -> D and C -> D.
+#' * `diamond`: A -> B -> D and A -> C -> D.
+#' * `long_edge`: the chain A -> B -> C -> D -> E with the longer arrows
+#'   A -> D and A -> E.
+#' * `causal`: C -> X, C -> Y, X -> M, M -> Y, U -> C, U -> X, S -> X and
+#'   S -> Y.
+#' * `dense`: an arrow from each of A, B, C and D to each of E, F, G and H.
+#' * `random`: nodes `v1` to `vn`, with an arrow from each node to each later
+#'   node drawn independently with probability `probability`.
+#'
 #' @param name One of `chain`, `fork`, `collider`, `diamond`, `long_edge`,
 #'   `causal`, `dense`, or `random`.
 #' @param n Positive integer number of vertices for `random`.
@@ -7,7 +24,8 @@
 #'   (inclusive).
 #' @param seed Integer random seed for `random` only, or NULL for a fresh seed.
 #'   Example generation preserves the caller's random-number state.
-#' @return A directed `igraph` object.
+#' @return A directed acyclic `igraph` object with named nodes and no other
+#'   node or edge attributes.
 #' @examples
 #' metrodag_examples("causal")
 #' metro_dag(metrodag_examples("collider"))

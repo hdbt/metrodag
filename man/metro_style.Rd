@@ -83,7 +83,10 @@ tips remain distinct: \code{"capped"} (at most 1.5 times \code{node_size}),
 \item{palette}{Colours for path-cover lines in the metro preset.}
 }
 \value{
-A \code{metrodag_style} list.
+A \code{metrodag_style} list with one element for \code{preset} and one for
+each setting above, holding the preset's value where an argument is
+\code{NULL}. Pass it as \code{style} to \code{\link[=metro_dag]{metro_dag()}} or \code{\link[=plot_metro_dag]{plot_metro_dag()}};
+printing it lists the main settings.
 }
 \description{
 A style object collects the colours, arrowhead geometry, station sizing

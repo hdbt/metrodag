@@ -19,10 +19,29 @@ metrodag_examples(name = "diamond", n = 20L, probability = 0.12, seed = 1L)
 Example generation preserves the caller's random-number state.}
 }
 \value{
-A directed \code{igraph} object.
+A directed acyclic \code{igraph} object with named nodes and no other
+node or edge attributes.
 }
 \description{
-Canonical DAG examples
+Small fixed graphs for trying the package and writing reproducible
+examples, and random DAGs, reproducible with \code{seed}, for trying larger
+layouts. The graphs carry no roles: name the exposure, outcome and other
+roles in \code{\link[=metro_dag]{metro_dag()}}.
+}
+\details{
+\itemize{
+\item \code{chain}: A -> B -> C -> D.
+\item \code{fork}: A -> B, A -> C and A -> D.
+\item \code{collider}: A -> D, B -> D and C -> D.
+\item \code{diamond}: A -> B -> D and A -> C -> D.
+\item \code{long_edge}: the chain A -> B -> C -> D -> E with the longer arrows
+A -> D and A -> E.
+\item \code{causal}: C -> X, C -> Y, X -> M, M -> Y, U -> C, U -> X, S -> X and
+S -> Y.
+\item \code{dense}: an arrow from each of A, B, C and D to each of E, F, G and H.
+\item \code{random}: nodes \code{v1} to \code{vn}, with an arrow from each node to each later
+node drawn independently with probability \code{probability}.
+}
 }
 \examples{
 metrodag_examples("causal")
