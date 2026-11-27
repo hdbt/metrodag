@@ -45,7 +45,12 @@ uses the scaled width and retains the 45--220 mm physical height limits.
 TIFF files use LZW compression unless \code{compression} is supplied or the
 bitmap type is \code{"quartz"}, which does not support it. PDF and
 EPS use Cairo devices when available; a warning reports the fallback to
-the base devices, which do not embed fonts.}
+the base devices, which do not embed fonts and draw only the families
+listed by \code{\link[grDevices:postscriptFonts]{grDevices::pdfFonts()}} and \code{\link[grDevices:postscriptFonts]{grDevices::postscriptFonts()}},
+such as \code{"sans"}, \code{"serif"} and \code{"mono"}: text in another family then
+stops the export with an error naming it. SVG uses svglite when it is
+installed; otherwise \code{\link[grDevices:cairo]{grDevices::svg()}} draws text as outlines, which
+cannot be edited or searched, and a warning says so.}
 
 \item{path}{Optional existing directory in which to save \code{filename}.}
 

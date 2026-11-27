@@ -129,7 +129,12 @@ metro_dag <- function(graph, direction = "right", labels = TRUE,
 #'   TIFF files use LZW compression unless `compression` is supplied or the
 #'   bitmap type is `"quartz"`, which does not support it. PDF and
 #'   EPS use Cairo devices when available; a warning reports the fallback to
-#'   the base devices, which do not embed fonts.
+#'   the base devices, which do not embed fonts and draw only the families
+#'   listed by [grDevices::pdfFonts()] and [grDevices::postscriptFonts()],
+#'   such as `"sans"`, `"serif"` and `"mono"`: text in another family then
+#'   stops the export with an error naming it. SVG uses svglite when it is
+#'   installed; otherwise [grDevices::svg()] draws text as outlines, which
+#'   cannot be edited or searched, and a warning says so.
 #' @return Invisibly, the output filename.
 #' @examples
 #' p <- metro_dag(metrodag_examples("causal"), exposure = "X", outcome = "Y")
@@ -188,7 +193,7 @@ save_metro_dag <- function(filename, plot, width = 180, height = NULL,
   if (is.null(scale)) scale <- 1
   .assert_number(scale, "scale", strict = TRUE)
   ext <- tolower(tools::file_ext(filename))
-  device <- .metro_export_device(ext)
+  device <- .metro_export_device(ext, plot)
   if (is.null(device)) stop("Use a .pdf, .svg, .eps, .ps, .png or .tiff filename.", call. = FALSE)
   extra <- list(...)
   # Quartz bitmaps (the macOS default type) do not support compression.

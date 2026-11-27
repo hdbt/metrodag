@@ -6,6 +6,10 @@
     warning = function(w) FALSE, error = function(e) FALSE)
 }
 
+# svglite writes text as <text> elements; grDevices::svg() draws every glyph
+# as an outline, which cannot be edited or searched.
+.metro_svglite_available <- function() requireNamespace("svglite", quietly = TRUE)
+
 .metro_legend_grob <- function(table) {
   ids <- which(grepl("^guide-box", table$layout$name))
   for (id in ids) if (!inherits(table$grobs[[id]], "zeroGrob")) return(table$grobs[[id]])
@@ -491,20 +495,85 @@ makeContent.metrodag_measure_grob <- function(x) {
   width
 }
 
+# The font families that the text of a figure asks for: the `family` of each
+# MetroDAG panel, every family set in the themes of its plots, whether or not
+# that element is drawn, and every family given to a layer, as in
+# annotate("text", family = "serif"). The empty family is the device's
+# default.
+.metro_figure_families <- function(plot) {
+  families <- character()
+  add <- function(family) if (is.character(family)) families <<- c(families, family)
+  add_theme <- function(theme) for (name in names(theme)) {
+    element <- theme[[name]]
+    if (inherits(element, "element_text")) add(element$family)
+  }
+  visit <- function(x) {
+    if (inherits(x, "metrodag_comparison")) {
+      for (panel in c(x$plots, list(x$legend_plot))) visit(panel)
+      return(invisible(NULL))
+    }
+    if (inherits(x, "patchwork")) {
+      for (patch in x$patches$plots) visit(patch)
+      add_theme(x$patches$annotation$theme)
+    }
+    if (inherits(x, "wrapped_patch")) for (grob in attr(x, "grobs")) {
+      if (inherits(grob, "metrodag_plot_grob")) visit(grob$plot)
+      if (inherits(grob, "metrodag_comparison_grob")) visit(grob$comparison)
+      if (inherits(grob, c("ggplot", "patchwork"))) visit(grob)
+    }
+    if (inherits(x, "ggplot")) {
+      add_theme(ggplot2::theme_get() + x$theme)
+      for (layer in x$layers) {
+        add(layer$aes_params$family)
+        if (inherits(layer$geom, "GeomMetroDag")) add(layer$geom_params$config$family)
+      }
+    }
+    invisible(NULL)
+  }
+  visit(plot)
+  unique(families[!is.na(families) & nzchar(families)])
+}
+
 # Vector devices prefer Cairo for font embedding; warn once per fallback so
 # the user knows the PDF/EPS will reference fonts instead of embedding them.
-.metro_export_device <- function(ext) {
+# The base devices draw only the families in their font databases, and
+# postscript() only those it is opened with, so it is opened with R's
+# standard families and those of `plot`. Any other family stops the export:
+# pdf() would fail while drawing it, and postscript() would draw it in its
+# default font, measured with other metrics. Without svglite,
+# grDevices::svg() draws text as outlines; that is warned once per export too.
+.metro_export_device <- function(ext, plot = NULL) {
   cairo <- .metro_cairo_available()
-  fallback <- function(name) {
+  # Stop unless the base device `name` can draw every family of `plot`; then
+  # warn that it does not embed fonts, and return those families.
+  fallback <- function(name, database) {
+    families <- .metro_figure_families(plot)
+    unknown <- setdiff(families, names(database))
+    if (length(unknown)) stop(sprintf(paste0(
+      "Cairo is not available, and grDevices::%s() cannot draw font %s %s. Use R with Cairo ",
+      "support, save as SVG (with svglite) or PNG, or choose a family listed by ",
+      "grDevices::%sFonts(), such as \"sans\"."), name,
+      if (length(unknown) == 1L) "family" else "families",
+      paste0("\"", unknown, "\"", collapse = ", "), name), call. = FALSE)
     warning(sprintf("Cairo is not available; using grDevices::%s(), which does not embed fonts.", name), call. = FALSE)
+    families
   }
   switch(ext,
-    pdf = if (cairo) grDevices::cairo_pdf else { fallback("pdf"); grDevices::pdf },
-    svg = if (requireNamespace("svglite", quietly = TRUE)) svglite::svglite else grDevices::svg,
+    pdf = if (cairo) grDevices::cairo_pdf else { fallback("pdf", grDevices::pdfFonts()); grDevices::pdf },
+    svg = if (.metro_svglite_available()) svglite::svglite else {
+      warning("'svglite' is not installed; using grDevices::svg(), which draws text as outlines. ",
+        "Install the optional 'svglite' package for editable, searchable text.", call. = FALSE)
+      grDevices::svg
+    },
     eps = , ps = if (cairo) function(filename, width, height, ...)
       grDevices::cairo_ps(filename, width = width, height = height, ..., onefile = FALSE, fallback_resolution = 600)
-    else { fallback("postscript"); function(filename, width, height, ...)
-      grDevices::postscript(filename, width = width, height = height, ..., onefile = FALSE, horizontal = FALSE, paper = "special") },
+    else {
+      required <- unique(c("sans", "serif", "mono", fallback("postscript", grDevices::postscriptFonts())))
+      # Fonts given as a device argument are included too.
+      function(filename, width, height, ..., fonts = NULL)
+        grDevices::postscript(filename, width = width, height = height, ..., fonts = unique(c(required, fonts)),
+          onefile = FALSE, horizontal = FALSE, paper = "special")
+    },
     png = "png", tiff = "tiff", tif = "tiff", NULL)
 }
 
