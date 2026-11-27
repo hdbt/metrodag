@@ -47,7 +47,7 @@
 #' if (requireNamespace("dagitty", quietly = TRUE)) {
 #'   p <- metro_dag(metrodag_examples("causal"), exposure = "X", outcome = "Y",
 #'     unobserved = "U", adjusted = "C")
-#'   highlight_paths(p, paths = "biasing")
+#'   print(highlight_paths(p, paths = "biasing"))
 #'   attr(highlight_paths(p), "metrodag_paths")
 #' }
 #' @export
