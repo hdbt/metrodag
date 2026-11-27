@@ -1,5 +1,5 @@
 #' Assign layers to a DAG
-#' @keywords internal
+#' @noRd
 .assign_layers <- function(graph, method = "longest", rank = NULL) {
   method <- .assert_scalar_choice(method, c("longest", "sinks", "shortest"), "layering")
   names <- igraph::V(graph)$name

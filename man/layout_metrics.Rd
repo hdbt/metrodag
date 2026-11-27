@@ -15,7 +15,22 @@ attached to their named nodes; see \code{\link[=plot_metro_dag]{plot_metro_dag()
 by value, so distinct numeric IDs remain separate even if they print alike.}
 }
 \value{
-A one-row data frame.
+A one-row data frame with these columns. Lengths (Euclidean, so a
+diagonal step is longer than a straight one) and areas are in layout
+units, the grid on which stations and routes are placed.
+\itemize{
+\item \code{nodes}, \code{edges}: the numbers of nodes and edges in the graph.
+\item \code{crossings}: the crossings counted by \code{\link[=count_crossings]{count_crossings()}}.
+\item \code{total_bends}, \code{mean_bends}: the bends of all routes, in total and per
+edge.
+\item \code{total_edge_length}, \code{maximum_edge_length}: the length of all routes
+together, and of the longest route.
+\item \code{area}, \code{aspect_ratio}: the area and the width-to-height ratio of the
+box enclosing every station and route (\code{Inf} for a drawing with no
+height).
+\item \code{node_spacing_variance}, \code{directional_consistency}, \code{overlap_segments},
+\code{shared_track_length}, \code{node_edge_collisions}: as described above.
+}
 }
 \description{
 Diagnostics describe stored geometry, before physical-size arrow attachments

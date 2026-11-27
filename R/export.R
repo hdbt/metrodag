@@ -529,7 +529,9 @@ makeContent.metrodag_measure_grob <- function(x) {
 #' explicit `height`), which report every panel's problems.
 #'
 #' @param plot A MetroDAG plot, layout or result of [compare_metro_dags()].
-#' @return A grid grob.
+#' @return A grid `gTree` of class `metrodag_plot_grob`, or
+#'   `metrodag_comparison_grob` for a comparison. It holds the figure and lays
+#'   it out each time it is drawn, at the size of the viewport it is drawn in.
 #' @examples
 #' p <- metro_dag(metrodag_examples("causal"), exposure = "X", outcome = "Y")
 #' g <- as_metro_grob(p)

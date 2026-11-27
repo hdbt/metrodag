@@ -20,5 +20,9 @@ if (isTRUE(as.logical(Sys.getenv("NOT_CRAN")))) {
     "route-resolution", "style", "tidygraph-compatibility",
     "waypoint-order-regressions", "wrap-generation-regressions"
   )
+  # A misspelt name would silently drop its file from the selection.
+  unknown <- cran_tests[!file.exists(file.path("testthat", paste0("test-", cran_tests, ".R")))]
+  if (length(unknown))
+    stop("`cran_tests` names files that do not exist: ", paste(unknown, collapse = ", "), call. = FALSE)
   test_check("metrodag", filter = paste0("^(", paste(cran_tests, collapse = "|"), ")$"))
 }

@@ -34,8 +34,12 @@ commands and the example writing into a user's project directory are unevaluated
 Enable **GitHub Actions** as the publishing source under **Settings > Pages**.
 The repository is private, so Pages availability depends on its GitHub plan.
 Review the public site contents and the URL in `_pkgdown.yml` before enabling
-Pages. Pushes to `main` publish the built site once Pages is configured. For a
-manual deployment, run **Documentation** on `main` with **publish** enabled.
+Pages. Once Pages is configured, pushes to `main` publish the built site while
+`DESCRIPTION` has a release version such as 0.3.0. After a release,
+`usethis::use_dev_version()` adds a development suffix (0.3.0.9000), so pushes
+stop publishing and the site that CRAN links to keeps describing the release
+until the next one. For a manual deployment, run **Documentation** on `main`
+with **publish** enabled.
 Pull requests build a downloadable preview through the same workflow. The
 workflow stages the source without the development log and roadmap so the
 website contains the package documentation.

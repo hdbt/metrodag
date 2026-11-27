@@ -30,11 +30,17 @@ chooses where to draw the variables and arrows.
 
 ## Install and load the package
 
-Install the development version from GitHub. Include `build_vignettes = TRUE`
-if you want these guides available through R's `vignette()` interface; building
-them also requires knitr, rmarkdown, and Pandoc.
+Install the released version from CRAN:
 
 ```{r installation, eval=FALSE}
+install.packages("metrodag")
+```
+
+The development version is on GitHub. Include `build_vignettes = TRUE` if you
+want these guides available through R's `vignette()` interface; building them
+also requires knitr, rmarkdown, and Pandoc.
+
+```{r installation-dev, eval=FALSE}
 install.packages("remotes") # Once, if needed
 remotes::install_github("hdbt/metrodag")
 
@@ -207,9 +213,10 @@ converting a plotting table alone would discard causal information.
   temporal ranks, alignment, and exports to the space available.
 - [Algorithm and constraints](algorithm.html): understand the layout heuristic,
   its diagnostics, and its limitations.
-- [Six annotated examples](https://github.com/hdbt/metrodag/blob/main/inst/benchmarks/REPORT.md):
-  inspect larger social and environmental research diagrams and their complete
-  generation script.
+- [Six annotated examples](https://github.com/hdbt/metrodag/blob/main/inst/benchmarks/VISUAL_REFINEMENT.md):
+  inspect larger health-research diagrams, and the
+  [script](https://github.com/hdbt/metrodag/blob/main/data-raw/annotated_gallery.R)
+  that generates them.
 
 For an individual argument, use `?metro_dag`, `?plot_metro_dag`, or
 `?save_metro_dag`. If you installed the vignettes, `browseVignettes("metrodag")`

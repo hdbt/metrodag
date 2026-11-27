@@ -364,7 +364,21 @@ count_crossings <- function(x) {
 #'   coordinates, unambiguous segment order, non-missing route IDs and endpoints
 #'   attached to their named nodes; see [plot_metro_dag()]. Route IDs are compared
 #'   by value, so distinct numeric IDs remain separate even if they print alike.
-#' @return A one-row data frame.
+#' @return A one-row data frame with these columns. Lengths (Euclidean, so a
+#'   diagonal step is longer than a straight one) and areas are in layout
+#'   units, the grid on which stations and routes are placed.
+#'
+#'   * `nodes`, `edges`: the numbers of nodes and edges in the graph.
+#'   * `crossings`: the crossings counted by [count_crossings()].
+#'   * `total_bends`, `mean_bends`: the bends of all routes, in total and per
+#'     edge.
+#'   * `total_edge_length`, `maximum_edge_length`: the length of all routes
+#'     together, and of the longest route.
+#'   * `area`, `aspect_ratio`: the area and the width-to-height ratio of the
+#'     box enclosing every station and route (`Inf` for a drawing with no
+#'     height).
+#'   * `node_spacing_variance`, `directional_consistency`, `overlap_segments`,
+#'     `shared_track_length`, `node_edge_collisions`: as described above.
 #' @examples
 #' layout <- layout_metro_dag(metrodag_examples("causal"))
 #' layout_metrics(layout)

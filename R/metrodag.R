@@ -209,9 +209,11 @@
 #'   `"error"` (the default) rejects them; `"latent"` draws each as an
 #'   unlabelled unobserved common cause with dashed arrows into both
 #'   variables, which encodes the same assumption for adjustment checks.
-#' @return A `metrodag_layout` containing original nodes, routed edge segments
-#'   (unit or half-unit octilinear steps),
-#'   the unchanged graph topology, and layout parameters. The layout is
+#' @return A `metrodag_layout` list containing the nodes (`nodes`), routed
+#'   edge segments (`edges`, unit or half-unit octilinear steps), the graph
+#'   topology (`graph`), the `direction` and the layout `parameters`. Nodes and
+#'   topology are those of the input graph, plus the unlabelled common cause
+#'   drawn for each bidirected arc when `bidirected = "latent"`. The layout is
 #'   deterministic: ties are broken by node name, not by input order.
 #'   `parameters$stages` records, for each refinement stage, whether it
 #'   `"ran"`, was `"skipped (budget)"` because its work budget allowed no

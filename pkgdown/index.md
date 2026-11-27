@@ -68,9 +68,11 @@ export. Install the development version with
 ## Gallery {#gallery}
 
 Six annotated teaching models, all drawn with the default settings. Click a
-figure to open the full-size SVG. Each one comes with runnable R code in the
-[benchmark report](https://github.com/hdbt/metrodag/blob/main/inst/benchmarks/REPORT.md).
-Their roles and adjustment annotations are illustrative.
+figure to open the full-size SVG, or see the
+[script](https://github.com/hdbt/metrodag/blob/main/data-raw/annotated_gallery.R)
+that generates them. Their roles and adjustment annotations are illustrative:
+in the statin and obesity models, unmeasured confounding leaves no set of
+measured variables that meets the adjustment criterion for the total effect.
 
 <div class="md-gallery">
 <div class="md-gallery-item">

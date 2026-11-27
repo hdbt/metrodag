@@ -12,7 +12,7 @@ Run from the repository root.
 ```sh
 Rscript -e 'devtools::document()'          # after editing roxygen comments
 R CMD INSTALL .
-cd tests && Rscript --no-init-file testthat.R                     # CRAN selection, < 1 min
+cd tests && Rscript --no-init-file testthat.R                     # CRAN selection, ~2 min
 cd tests && NOT_CRAN=true TESTTHAT_CPUS=4 Rscript --no-init-file testthat.R   # full suite, ~8 min
 R CMD build . && R CMD check --as-cran metrodag_*.tar.gz
 Rscript -e 'pkgdown::build_site(devel = FALSE, preview = FALSE)'  # site in _site/, incl. llms.txt

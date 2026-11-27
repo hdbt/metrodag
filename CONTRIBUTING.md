@@ -47,8 +47,8 @@ cd tests && TESTTHAT_CPUS=4 NOT_CRAN=true Rscript --no-init-file testthat.R
 
 testthat prints "Starting 4 test processes" when the setting has taken effect.
 
-Without `NOT_CRAN=true`, `tests/testthat.R` runs only the CRAN selection of
-20 files (under a minute with two workers). The package supports ggplot2 3.4, which
+Without `NOT_CRAN=true`, `tests/testthat.R` runs only the CRAN selection listed
+in `cran_tests` (about two minutes with two workers). The package supports ggplot2 3.4, which
 names legend boxes and builds plots differently, so run that selection against
 ggplot2 3.4.4 before merging. Keep the old versions in a separate library and
 put it first in `R_LIBS`:

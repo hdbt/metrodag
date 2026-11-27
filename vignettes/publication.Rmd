@@ -268,12 +268,18 @@ publication-oriented export defaults used here.
 MetroDAG plots are ggplots, so patchwork and `ggplot2::ggplotGrob()` work and
 labels keep the plot's own margins. Titles are wrapped to the final width only
 when the figure is drawn through MetroDAG, so wrap a titled figure with
-`as_metro_grob()` before composing it:
+`as_metro_grob()` before composing it. Side by side at 180 mm, the titled
+figure would be too narrow to keep its arrows clear of the stations, so the
+two figures are stacked, and the composition is checked at its final size
+before it is saved:
 
-```{r combine, eval = FALSE}
+```{r combine, eval = requireNamespace("patchwork", quietly = TRUE)}
 library(patchwork)
-combined <- wrap_elements(full = as_metro_grob(captioned)) + compact
-save_metro_dag("combined.pdf", combined, width = 180, height = 90)
+combined <- wrap_elements(full = as_metro_grob(captioned)) / compact
+combined_report <- diagnose_metro_dag(combined, width = 180, height = 180)
+combined_report$ok
+if (combined_report$ok) save_metro_dag("combined.pdf", combined,
+  path = figure_dir, width = 180, height = 180)
 ```
 
 `save_metro_dag()` and `diagnose_metro_dag()` check every MetroDAG panel of a

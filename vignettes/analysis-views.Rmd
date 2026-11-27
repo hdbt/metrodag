@@ -227,7 +227,7 @@ if (requireNamespace("dagitty", quietly = TRUE)) {
   selected_plot <- metro_dag(sel_edges, labels = sel_labels, exposure = "X",
     outcome = "Y", adjusted = "C", selected = "P")
   highlighted <- highlight_paths(selected_plot)
-  highlighted
+  print(highlighted)
   attr(highlighted, "metrodag_paths")[, c("path", "open")]
 }
 ```

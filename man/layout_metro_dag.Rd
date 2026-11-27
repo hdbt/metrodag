@@ -75,9 +75,11 @@ unlabelled unobserved common cause with dashed arrows into both
 variables, which encodes the same assumption for adjustment checks.}
 }
 \value{
-A \code{metrodag_layout} containing original nodes, routed edge segments
-(unit or half-unit octilinear steps),
-the unchanged graph topology, and layout parameters. The layout is
+A \code{metrodag_layout} list containing the nodes (\code{nodes}), routed
+edge segments (\code{edges}, unit or half-unit octilinear steps), the graph
+topology (\code{graph}), the \code{direction} and the layout \code{parameters}. Nodes and
+topology are those of the input graph, plus the unlabelled common cause
+drawn for each bidirected arc when \code{bidirected = "latent"}. The layout is
 deterministic: ties are broken by node name, not by input order.
 \code{parameters$stages} records, for each refinement stage, whether it
 \code{"ran"}, was \code{"skipped (budget)"} because its work budget allowed no
