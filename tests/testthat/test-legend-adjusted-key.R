@@ -88,6 +88,41 @@ test_that("a comparison drops the Adjusted key when no view adjusts", {
   expect_identical(.legend_keys(plain$legend_plot), c("Exposure", "Outcome", "Observed"))
 })
 
+test_that("the observed key appears only when a station is drawn as observed", {
+  # C causes X and Y: adjusting for C leaves no station drawn as observed.
+  fixed <- layout_metro_dag(data.frame(from = c("C", "C", "X"), to = c("X", "Y", "Y")))
+  adjusted <- metro_dag(fixed, exposure = "X", outcome = "Y", adjusted = "C",
+    style = metro_style(legend_columns = 3L))
+  expect_false("observed" %in% adjusted$layers[[2L]]$geom_params$nodes$role)
+  expect_identical(.legend_keys(adjusted), c("Exposure", "Outcome", "Adjusted"))
+  expect_identical(adjusted$labels$subtitle, "Adjusted for: C")
+  # Legend rows count only the keys drawn: three fit one row of three.
+  expect_equal(attr(adjusted, "metrodag_legend_rows"), 1)
+  # An unadjusted view without observed stations has no observed key either.
+  crude <- metro_dag(fixed, exposure = "X", outcome = "Y", unobserved = "C", unadjusted = TRUE)
+  expect_identical(.legend_keys(crude), c("Exposure", "Outcome", "Unobserved"))
+  expect_identical(crude$labels$subtitle, "Unadjusted: no covariates")
+  # An observed variable left unadjusted brings the key back, with its wording.
+  edges <- data.frame(from = c("C", "C", "X", "M"), to = c("X", "Y", "Y", "Y"))
+  observed <- metro_dag(edges, exposure = "X", outcome = "Y", adjusted = "C")
+  expect_identical(.legend_keys(observed), c("Exposure", "Outcome", "Adjusted", "Observed, not adjusted"))
+})
+
+test_that("a comparison keeps the observed key when any panel draws an observed station", {
+  fixed <- layout_metro_dag(data.frame(from = c("C", "C", "X"), to = c("X", "Y", "Y")))
+  # Only the crude panel draws C as observed, not adjusted.
+  views <- list(
+    Crude = list(exposure = "X", outcome = "Y", unadjusted = TRUE),
+    Adjusted = list(exposure = "X", outcome = "Y", adjusted = "C"))
+  keys <- c("Exposure", "Outcome", "Adjusted", "Observed, not adjusted")
+  expect_identical(.legend_keys(compare_metro_dags(fixed, views)$legend_plot), keys)
+  expect_identical(.legend_keys(compare_metro_dags(fixed, rev(views))$legend_plot), keys)
+  # With C unobserved in the crude panel, no panel draws an observed station.
+  views$Crude$unobserved <- "C"
+  expect_identical(.legend_keys(compare_metro_dags(fixed, views)$legend_plot),
+    c("Exposure", "Outcome", "Adjusted", "Unobserved"))
+})
+
 test_that("the role legend comes after a legend the user orders first, and before edge_legend", {
   # The text of each legend in the drawn guide box, in drawing order.
   legend_texts <- function(p) {

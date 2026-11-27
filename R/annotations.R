@@ -174,10 +174,10 @@
 .metro_role_legend <- function(p, layout, background, style, roles = NULL, specified = NULL) {
   style <- .as_metro_style(style)
   present <- if (is.null(roles)) unique(igraph::vertex_attr(layout$graph, "role")) else roles
-  # An adjustment view explains hollow circles as "Observed, not adjusted";
-  # the Adjusted key itself needs a station drawn as adjusted.
+  # A role has a key only when a station is drawn in that role. An adjustment
+  # set changes the observed key's wording, to "Observed, not adjusted", but
+  # does not add the key.
   if (is.null(specified)) specified <- isTRUE(layout$analysis$adjustment_specified)
-  if (specified) present <- union(present, "observed")
   if (identical(present, "observed") && !specified && !length(layout$node_groups)) return(p)
   order <- c("exposure", "outcome", "adjusted", "selected", "observed", "unobserved")
   keys <- order[order %in% present]
