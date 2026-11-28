@@ -1,13 +1,16 @@
 # metrodag (development version)
 
-## Bug fixes
+## Changes to figures
+
+These fixes change some figures that earlier versions drew.
 
 - Layouts with `align` and the line colours of the `"metro"` style no longer
   depend on the session's collation locale. Both ordered node names in that
   locale, so with mixed-case or accented names a figure drawn under en_US or
   de_DE collation could differ from the same figure drawn under C collation,
   as in `R CMD check`. Both now use C-locale (radix) order like the rest of
-  the layout; figures drawn under C collation are unchanged.
+  the layout, so figures drawn under C collation are unchanged and others can
+  change.
 - Node names are made the same way everywhere. Whole numbers below 2^53 that
   name nodes are written in full, so the node 100000 is named and labelled
   `"100000"` instead of `"1e+05"`, and `exposure = 1e5` selects it. Node
@@ -15,26 +18,10 @@
   differently; refer to these nodes as `"100000"` in `labels`, `rank`,
   `align`, `node_groups` and `edge_style` keys. Names are converted to UTF-8,
   so a name declared as latin1 is laid out as the same name in UTF-8.
-- Names that differ only by white space at their ends, such as `"Smoking"`
-  and `"Smoking "`, stay separate nodes but now give a warning that names
-  them, since a stray space silently changes `check_metro_adjustment()`.
-- Roles inherited from an igraph `role` vertex attribute or a tidygraph `role`
-  column must be `"observed"`, `"exposure"`, `"outcome"`, `"adjusted"`,
-  `"unobserved"`, `"selected"` or `NA`, as `metro_graph()` already requires.
-  Other values, such as `"Exposure"` or `"latent"`, were drawn as observed
-  without a message; they are now an error that names the nodes and values.
-  A graph that uses a `role` attribute for another purpose needs every role
-  supplied in the call, or the attribute renamed.
-- `highlight_paths(paths = "biasing")` warns when the conditioning set
-  contains a variable that the adjustment criterion forbids, such as a
-  mediator or a descendant of a mediator or of the outcome, and names a
-  causal path it lies on or descends from. Such over-adjustment opens no
-  biasing path, so the empty view used to read as reassurance while
-  `check_metro_adjustment()` failed. A search stopped at `limit` no longer
-  warns about the limit when the set meets the adjustment criterion.
-- With several exposures or outcomes, `check_metro_adjustment()` prints its
-  result as a joint total effect, and its help page explains what a joint
-  check does not establish.
+- The "Observed, not adjusted" legend key appears only when a station is
+  drawn as observed, in single plots and in comparisons; specifying an
+  adjustment set used to add it to every legend. Such figures can be a legend
+  row shorter, which lowers the automatic export height.
 - Unobserved stations and the Unobserved legend key are dashed on the Windows
   GDI device too (`png()`, `tiff()` and related devices with their default
   `type = "windows"`, which knitr's `png` device and `ggsave()` without ragg
@@ -44,17 +31,40 @@
 - Figures drawn or saved with `on_error = "warn"` that leave out arrows, or
   draw stations overlapping or cut off, are marked in one corner, for example
   'Incomplete: 2 arrows not drawn (on_error = "warn")', so that a missing
-  arrow cannot pass for "no direct effect".
+  arrow cannot pass for "no direct effect". In a small preview the mark can
+  cover part of the figure.
+
+## Bug fixes
+
+- Roles inherited from an igraph `role` vertex attribute or a tidygraph `role`
+  column should be `"observed"`, `"exposure"`, `"outcome"`, `"adjusted"`,
+  `"unobserved"`, `"selected"` or `NA`, as `metro_graph()` requires. Other
+  values, such as `"Exposure"` or `"latent"`, were drawn as observed without
+  a message; they now give a warning that names the nodes and values, and
+  says that role names are lower case or that latent variables are
+  `"unobserved"`. The nodes are still drawn as observed.
+- `highlight_paths(paths = "biasing")` warns when the conditioning set
+  contains a variable that the adjustment criterion forbids, such as a
+  mediator or a descendant of a mediator or of the outcome, and names a
+  causal path it lies on or descends from. Such over-adjustment need not open
+  any biasing path, so an empty view could read as reassurance while
+  `check_metro_adjustment()` failed. The warning has class
+  `metrodag_overadjustment_warning`, so a figure that adjusts for a mediator
+  on purpose can silence it alone. A search stopped at `limit` no longer
+  warns about the limit when the set meets the adjustment criterion.
+- With several exposures or outcomes, `check_metro_adjustment()` prints its
+  result as a joint total effect, and its help page explains what a joint
+  check does not establish.
+- Names that differ only by white space at their ends, such as `"Smoking"`
+  and `"Smoking "` (or a trailing no-break space), stay separate nodes but
+  now give a warning that names them, since a stray space silently changes
+  `check_metro_adjustment()` results.
 - Without Cairo (for example on macOS without XQuartz), EPS export works
   again: the `postscript()` fallback is opened with the figure's font
   families. A family that the base `pdf()` or `postscript()` device cannot
   draw stops the export with an error that names it, instead of failing with
   "invalid font type" or drawing in another font. SVG export without svglite
   now warns that `grDevices::svg()` draws text as outlines.
-- The "Observed, not adjusted" legend key appears only when a station is
-  drawn as observed, in single plots and in comparisons; specifying an
-  adjustment set used to add it to every legend. Such figures can be a legend
-  row shorter.
 
 # metrodag 0.3.0
 

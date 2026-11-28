@@ -61,29 +61,36 @@ test_that("igraph role attributes use the role names metro_graph() accepts", {
   accepted <- "must use observed, exposure, outcome, adjusted, unobserved or selected (or NA)"
   expect_error(metro_graph(data.frame(name = c("C", "X", "Y"), role = c("observed", "Exposure", "outcom"))),
     accepted, fixed = TRUE)
-  message <- paste0("The graph's `role` vertex attribute ", accepted,
-    ", but node `X` has \"Exposure\" and node `Y` has \"outcom\". Role names are lower case.")
-  expect_error(metro_dag(bad), message, fixed = TRUE)
+  message <- paste0("The graph's `role` vertex attribute should use observed, exposure, outcome, ",
+    "adjusted, unobserved or selected (or NA), but node `X` has \"Exposure\" and node `Y` has ",
+    "\"outcom\"; these nodes are drawn as observed. Role names are lower case.")
+  expect_warning(p <- metro_dag(bad), message, fixed = TRUE)
   expect_identical(bad, original)
+  # No value is taken for a role it resembles: those nodes are drawn as observed.
+  drawn <- p$layers[[2L]]$geom_params$nodes
+  expect_identical(drawn$role[match(c("C", "X", "Y"), drawn$node)], rep("observed", 3L))
   # A layout ignores roles; drawing it reads them, in every view.
   expect_s3_class(layout <- layout_metro_dag(bad), "metrodag_layout")
-  expect_error(plot_metro_dag(layout), message, fixed = TRUE)
-  expect_error(compare_metro_dags(layout, list(A = list(exposure = "X"))), message, fixed = TRUE)
+  expect_warning(plot_metro_dag(layout), message, fixed = TRUE)
+  warnings <- testthat::capture_warnings(compare_metro_dags(layout, list(A = list(exposure = "X"))))
+  expect_true(any(grepl(message, warnings, fixed = TRUE)))
   draw <- function(role) {
     layout$graph <- with_roles(layout$graph, role)
     plot_metro_dag(layout)
   }
-  # Factors are read by their labels; no value is taken for a role it resembles.
-  expect_error(draw(factor(c(C = "observed", X = "Exposure", Y = "outcom"))), message, fixed = TRUE)
-  expect_error(draw(c(C = "Outcome", X = "exposure", Y = "Outcome")),
-    "but nodes `C` and `Y` have \"Outcome\". Role names are lower case.", fixed = TRUE)
-  expect_error(draw(c(C = "latent", X = "exposure", Y = "outcome")),
-    "but node `C` has \"latent\". Use \"unobserved\" for latent variables.", fixed = TRUE)
+  # Factors are read by their labels.
+  expect_warning(draw(factor(c(C = "observed", X = "Exposure", Y = "outcom"))), message, fixed = TRUE)
+  expect_warning(draw(c(C = "Outcome", X = "exposure", Y = "Outcome")), paste0(
+    "but nodes `C` and `Y` have \"Outcome\"; these nodes are drawn as observed. ",
+    "Role names are lower case."), fixed = TRUE)
+  expect_warning(draw(c(C = "latent", X = "exposure", Y = "outcome")), paste0(
+    "but node `C` has \"latent\"; these nodes are drawn as observed. ",
+    "Use \"unobserved\" for latent variables."), fixed = TRUE)
   # Up to six values are named; more are counted.
-  expect_error(.metro_check_role_attribute(letters[1:6], LETTERS[1:6]),
-    "node `E` has \"e\" and node `F` has \"f\".", fixed = TRUE)
-  expect_error(.metro_check_role_attribute(letters[1:8], LETTERS[1:8]),
-    "node `E` has \"e\" and 3 more values.", fixed = TRUE)
+  expect_warning(.metro_check_role_attribute(letters[1:6], LETTERS[1:6]),
+    "node `E` has \"e\" and node `F` has \"f\";", fixed = TRUE)
+  expect_warning(.metro_check_role_attribute(letters[1:8], LETTERS[1:8]),
+    "node `E` has \"e\" and 3 more values;", fixed = TRUE)
   # Supplying every role reads nothing from the attribute; one inherited role reads it.
   for (p in list(metro_dag(layout, exposure = "X", outcome = "Y", adjusted = character(0),
       unobserved = character(0), selected = character(0)),
@@ -92,7 +99,7 @@ test_that("igraph role attributes use the role names metro_graph() accepts", {
     drawn <- p$layers[[2L]]$geom_params$nodes
     expect_identical(drawn$role[match(c("C", "X", "Y"), drawn$node)], c("observed", "exposure", "outcome"))
   }
-  expect_error(metro_dag(layout, exposure = "X", outcome = "Y", unobserved = character(0),
+  expect_warning(metro_dag(layout, exposure = "X", outcome = "Y", unobserved = character(0),
     selected = character(0)), message, fixed = TRUE)
   # Valid roles are inherited, and NA is observed, in a list attribute too.
   p <- draw(c(C = NA, X = "exposure", Y = "outcome"))
@@ -101,7 +108,7 @@ test_that("igraph role attributes use the role names metro_graph() accepts", {
   expect_identical(attr(draw(list(C = NA, X = "exposure", Y = "outcome")), "metrodag_analysis"),
     attr(p, "metrodag_analysis"))
   skip_if_not_installed("dagitty")
-  expect_error(check_metro_adjustment(bad, exposure = "X", outcome = "Y", unadjusted = TRUE),
+  expect_warning(check_metro_adjustment(bad, exposure = "X", outcome = "Y", unadjusted = TRUE),
     message, fixed = TRUE)
 })
 
@@ -241,6 +248,9 @@ test_that("names that differ only by white space at their ends stay apart, with 
   expect_identical(warned(.as_metro_input(data.frame(from = c("A ", " A"), to = "A"))), paste(
     "Node names \"A \", \" A\" and \"A\" differ only by white space at their ends, so they are",
     "separate nodes. Remove the white space if they name the same variable."))
+  # A no-break space, which spreadsheets and web pages often leave, counts too.
+  expect_match(warned(.as_metro_input(data.frame(from = "Smoking ", to = "Smoking"))),
+    "differ only by white space at their ends", fixed = TRUE)
   expect_no_warning(.as_metro_input(data.frame(from = c("smoking", "Smoking status"),
     to = c("Smoking", "Smoking  status"))))
 })

@@ -155,8 +155,10 @@
 # Names that differ only by white space at their ends, such as "Smoking " and
 # "Smoking", are separate nodes that look alike in a figure, and separate
 # variables for adjustment checks. Say which, but keep the names as given.
+# Any horizontal or vertical white space counts, including the no-break space
+# that spreadsheets and web pages often leave at the end of a name.
 .metro_warn_padded_names <- function(nm) {
-  key <- trimws(nm)
+  key <- trimws(nm, whitespace = "[\\h\\v]")
   padded <- unique(key[duplicated(key)])
   if (!length(padded)) return(invisible(FALSE))
   # Show at most five sets, each quoted and escaped so that the white space shows.

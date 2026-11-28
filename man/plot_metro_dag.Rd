@@ -116,9 +116,9 @@ inherited roles. Adjusted variables use filled squares; observed variables
 not adjusted for use hollow circles. Unobserved variables are dashed.
 Inherited factor role attributes use their labels; missing roles are observed.
 When a role is inherited, every value of the graph's \code{role} vertex
-attribute must be \code{"observed"}, one of these role names in lower case, or
-NA; any other value, such as \code{"Exposure"} or \code{"latent"} (use
-\code{"unobserved"}), is an error.}
+attribute should be \code{"observed"}, one of these role names in lower case,
+or NA; any other value, such as \code{"Exposure"} or \code{"latent"} (use
+\code{"unobserved"}), gives a warning, and its node is drawn as observed.}
 
 \item{unadjusted}{TRUE explicitly selects an empty adjustment set, clearing
 inherited adjusted roles. Cannot be combined with a non-empty \code{adjusted}.}

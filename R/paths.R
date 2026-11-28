@@ -27,7 +27,10 @@
 #' path, so the biasing view does not show such over-adjustment. With
 #' `paths = "biasing"`, a warning names any such variable in the conditioning
 #' set and a causal path it lies on or descends from;
-#' [check_metro_adjustment()] checks the whole adjustment criterion.
+#' [check_metro_adjustment()] checks the whole adjustment criterion. The
+#' warning has class `metrodag_overadjustment_warning`, so a figure that
+#' adjusts for a mediator on purpose, for a direct effect, can silence it with
+#' `suppressWarnings(classes = "metrodag_overadjustment_warning")`.
 #'
 #' With several `from` or `to` nodes, the biasing view and that warning
 #' concern the joint effect of all `from` nodes on all `to` nodes, as in
@@ -180,7 +183,9 @@ highlight_paths <- function(plot, from = NULL, to = NULL, paths = "open",
   if (kind == "biasing" && !isTRUE(valid)) {
     overadjusted <- .metro_overadjustment_warning(translated, from, to, conditioned_names,
       tokens[table$causal & proper], complete, selection = length(analysis$selected) > 0L)
-    if (!is.null(overadjusted)) warning(overadjusted, call. = FALSE)
+    # A classed warning, so that deliberate mediator adjustment can silence it.
+    if (!is.null(overadjusted)) warning(structure(list(message = overadjusted, call = NULL),
+      class = c("metrodag_overadjustment_warning", "warning", "condition")))
   }
   if (nrow(arrows)) {
     styles <- arrows

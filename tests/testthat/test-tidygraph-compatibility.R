@@ -52,10 +52,12 @@ test_that("tidygraph role columns use the role names metro_graph() accepts", {
     x$nodes$role <- role
     tidygraph::as_tbl_graph(igraph::graph_from_data_frame(x$edges, vertices = x$nodes, directed = TRUE))
   }
-  expect_error(metro_dag(graph(replace(x$nodes$role, x$nodes$name == "X", "Exposure"))),
-    "but node `X` has \"Exposure\". Role names are lower case.", fixed = TRUE)
-  expect_error(metro_dag(graph(replace(x$nodes$role, x$nodes$name == "U", "latent"))),
-    "but node `U` has \"latent\". Use \"unobserved\" for latent variables.", fixed = TRUE)
+  expect_warning(metro_dag(graph(replace(x$nodes$role, x$nodes$name == "X", "Exposure"))),
+    "but node `X` has \"Exposure\"; these nodes are drawn as observed. Role names are lower case.",
+    fixed = TRUE)
+  expect_warning(metro_dag(graph(replace(x$nodes$role, x$nodes$name == "U", "latent"))), paste0(
+    "but node `U` has \"latent\"; these nodes are drawn as observed. ",
+    "Use \"unobserved\" for latent variables."), fixed = TRUE)
   p <- metro_dag(graph(replace(x$nodes$role, x$nodes$name == "I", NA)))
   expect_identical(attr(p, "metrodag_analysis")[c("exposure", "outcome", "adjusted", "unobserved")],
     list(exposure = "X", outcome = "Y", adjusted = "C", unobserved = "U"))

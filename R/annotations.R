@@ -88,10 +88,12 @@
   stop(message, call. = FALSE)
 }
 
-# An inherited `role` attribute must use the role names metro_graph() accepts
-# in `nodes$role`; `role` has NA already read as observed. Any other value
-# would be drawn as observed and drop its role from the analysis, so name the
+# An inherited `role` attribute should use the role names metro_graph() accepts
+# in `nodes$role`; `role` has NA already read as observed. Any other value is
+# drawn as observed and drops its role from the analysis, so warn and name the
 # nodes and values at fault. A value is never mapped to a role it resembles.
+# A warning rather than an error keeps graphs that use a `role` attribute for
+# something else drawing as they did.
 .metro_check_role_attribute <- function(role, nm) {
   valid <- c("observed", "exposure", "outcome", "adjusted", "unobserved", "selected")
   bad <- !role %in% valid
@@ -107,12 +109,13 @@
   }, character(1), USE.NAMES = FALSE)
   if (length(values) > length(shown))
     found <- c(found, sprintf("%d more values", length(values) - length(shown)))
-  message <- sprintf(paste("The graph's `role` vertex attribute must use observed, exposure, outcome,",
-    "adjusted, unobserved or selected (or NA), but %s."),
+  message <- sprintf(paste("The graph's `role` vertex attribute should use observed, exposure, outcome,",
+    "adjusted, unobserved or selected (or NA), but %s; these nodes are drawn as observed."),
     .metro_quote_list(found, max = 6L, quote = "", distinct = FALSE))
   if (any(tolower(values) %in% valid)) message <- paste(message, "Role names are lower case.")
   if (any(tolower(values) == "latent")) message <- paste(message, "Use \"unobserved\" for latent variables.")
-  stop(message, call. = FALSE)
+  warning(message, call. = FALSE)
+  invisible(FALSE)
 }
 
 # Nodes that carry variables: every node except those drawn for bidirected arcs.
@@ -200,7 +203,7 @@
 # station radius, not this grob, so nothing moves.
 .metro_circle_grob <- function(x, y, r, gp) {
   lty <- if (is.null(gp$lty)) "solid" else as.character(gp$lty)[1L]
-  if (lty %in% c("solid", "1", "blank", "0")) return(grid::circleGrob(x, y, r = r, gp = gp))
+  if (is.na(lty) || lty %in% c("solid", "1", "blank", "0")) return(grid::circleGrob(x, y, r = r, gp = gp))
   angle <- -2 * pi * (seq_len(72L) - 1L) / 72L
   grid::polygonGrob(x + r * cos(angle), y + r * sin(angle), gp = gp)
 }

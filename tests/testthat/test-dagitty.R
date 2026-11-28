@@ -92,6 +92,16 @@ test_that("highlight_paths() names over-adjustment that the biasing view cannot 
   expect_false(any(attr(result$value, "metrodag_paths")$highlighted))
   expect_identical(result$messages, c("No open biasing paths found between X and Y.",
     paste("Conditioning on M can bias the total effect of X on Y: M lies on the causal path X -> M -> Y.", advice)))
+  # The warning is classed, so a figure that adjusts for the mediator on
+  # purpose, for a direct effect, can silence it alone.
+  classes <- character()
+  withCallingHandlers(highlight_paths(mediator, paths = "biasing"), warning = function(w) {
+    classes <<- c(classes, class(w)[1L])
+    invokeRestart("muffleWarning")
+  })
+  expect_true("metrodag_overadjustment_warning" %in% classes)
+  expect_identical(.dagitty_warnings(suppressWarnings(highlight_paths(mediator, paths = "biasing"),
+    classes = "metrodag_overadjustment_warning"))$messages, "No open biasing paths found between X and Y.")
   # Descendants of the outcome and of the mediator are named with the node on
   # the causal path that they descend from.
   descendants <- view(exposure = "X", outcome = "Y", adjusted = c("C", "D", "E"))

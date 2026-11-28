@@ -62,7 +62,10 @@ of the outcome, can bias the total effect without opening any biasing
 path, so the biasing view does not show such over-adjustment. With
 \code{paths = "biasing"}, a warning names any such variable in the conditioning
 set and a causal path it lies on or descends from;
-\code{\link[=check_metro_adjustment]{check_metro_adjustment()}} checks the whole adjustment criterion.
+\code{\link[=check_metro_adjustment]{check_metro_adjustment()}} checks the whole adjustment criterion. The
+warning has class \code{metrodag_overadjustment_warning}, so a figure that
+adjusts for a mediator on purpose, for a direct effect, can silence it with
+\code{suppressWarnings(classes = "metrodag_overadjustment_warning")}.
 
 With several \code{from} or \code{to} nodes, the biasing view and that warning
 concern the joint effect of all \code{from} nodes on all \code{to} nodes, as in

@@ -101,9 +101,9 @@
 #'   not adjusted for use hollow circles. Unobserved variables are dashed.
 #'   Inherited factor role attributes use their labels; missing roles are observed.
 #'   When a role is inherited, every value of the graph's `role` vertex
-#'   attribute must be `"observed"`, one of these role names in lower case, or
-#'   NA; any other value, such as `"Exposure"` or `"latent"` (use
-#'   `"unobserved"`), is an error.
+#'   attribute should be `"observed"`, one of these role names in lower case,
+#'   or NA; any other value, such as `"Exposure"` or `"latent"` (use
+#'   `"unobserved"`), gives a warning, and its node is drawn as observed.
 #' @param node_groups Optional named list of non-empty character vectors of node
 #'   names, for example `list("Selection factors" = "U1", "Other factors" = "U2")`.
 #'   Categories are display annotations, independent of analysis roles and
