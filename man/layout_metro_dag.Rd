@@ -29,8 +29,11 @@ Self-loops, repeated arrows and cycles are rejected with a message that
 names them. DAGitty input requires
 the optional dagitty package; ggdag tidy input also requires ggdag. Both
 must contain only directed edges with supported analysis annotations.
-Vertex names are normalized to character identifiers, including numeric
-igraph names. The supplied graph is not modified.}
+Vertex names are normalized to character identifiers in UTF-8, including
+numeric igraph names. Whole numbers are written in full, so the node
+100000 is named \code{"100000"}, not \code{"1e+05"}. Names that differ only by white
+space at their ends, such as \code{"Smoking "} and \code{"Smoking"}, stay separate
+nodes, with a warning. The supplied graph is not modified.}
 
 \item{direction}{One of \code{"right"}, \code{"down"}, \code{"up"}, or \code{"left"}. Defaults
 to \code{"right"}, matching \code{\link[=metro_dag]{metro_dag()}}.}

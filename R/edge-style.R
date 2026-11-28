@@ -15,7 +15,8 @@
       table$colour <- table$color
     }
     table <- table[, intersect(c("from", "to", fields), names(table)), drop = FALSE]
-    table$from <- as.character(table$from); table$to <- as.character(table$to)
+    # Numeric ends name nodes as numeric edge tables do.
+    table$from <- .metro_node_names(table$from); table$to <- .metro_node_names(table$to)
   } else {
     if (!is.list(edge_style) || is.null(names(edge_style)))
       stop("`edge_style` must be a named list keyed \"from->to\", each element a list of linetype, colour and/or width, or a data frame with from/to columns.", call. = FALSE)

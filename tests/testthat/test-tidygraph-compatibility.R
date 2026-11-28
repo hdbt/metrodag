@@ -45,6 +45,24 @@ test_that("tidygraph inputs keep existing DAG validation and comparison behavior
   expect_error(metro_dag(tidygraph::as_tbl_graph(repeated)), "repeats the arrow X -> Y")
 })
 
+test_that("tidygraph role columns use the role names metro_graph() accepts", {
+  skip_if_not_installed("tidygraph")
+  x <- .compat_tables()
+  graph <- function(role) {
+    x$nodes$role <- role
+    tidygraph::as_tbl_graph(igraph::graph_from_data_frame(x$edges, vertices = x$nodes, directed = TRUE))
+  }
+  expect_warning(metro_dag(graph(replace(x$nodes$role, x$nodes$name == "X", "Exposure"))),
+    "but node `X` has \"Exposure\"; these nodes are drawn as observed. Role names are lower case.",
+    fixed = TRUE)
+  expect_warning(metro_dag(graph(replace(x$nodes$role, x$nodes$name == "U", "latent"))), paste0(
+    "but node `U` has \"latent\"; these nodes are drawn as observed. ",
+    "Use \"unobserved\" for latent variables."), fixed = TRUE)
+  p <- metro_dag(graph(replace(x$nodes$role, x$nodes$name == "I", NA)))
+  expect_identical(attr(p, "metrodag_analysis")[c("exposure", "outcome", "adjusted", "unobserved")],
+    list(exposure = "X", outcome = "Y", adjusted = "C", unobserved = "U"))
+})
+
 test_that("tidygraph node and edge tibbles can be constructed with explicit identifiers", {
   skip_if_not_installed("tidygraph")
   graph <- tidygraph::as_tbl_graph(.compat_reference())

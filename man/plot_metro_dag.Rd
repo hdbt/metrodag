@@ -104,8 +104,9 @@ NULL disables wrapping.}
 \item{family}{Font family, default \code{"sans"}.}
 
 \item{exposure, outcome, adjusted, unobserved, selected}{Character vectors of node
-names. Numbers and factors are converted with \code{\link[=as.character]{as.character()}}, so
-\code{exposure = 1} selects the node named \code{"1"}.
+names. Numbers name nodes as numeric edge tables do, and factors by their
+labels, so \code{exposure = 1} selects the node named \code{"1"} and
+\code{exposure = 1e5} the node named \code{"100000"}.
 \code{selected} marks variables the study conditions on through selection
 (for example hospital admission); they are drawn as squares with a
 double outline and are not adjustment covariates.
@@ -113,7 +114,11 @@ NULL inherits each role from the graph; a supplied vector replaces that
 role, and \code{character(0)} clears it. Roles must be disjoint, including
 inherited roles. Adjusted variables use filled squares; observed variables
 not adjusted for use hollow circles. Unobserved variables are dashed.
-Inherited factor role attributes use their labels; missing roles are observed.}
+Inherited factor role attributes use their labels; missing roles are observed.
+When a role is inherited, every value of the graph's \code{role} vertex
+attribute should be \code{"observed"}, one of these role names in lower case,
+or NA; any other value, such as \code{"Exposure"} or \code{"latent"} (use
+\code{"unobserved"}), gives a warning, and its node is drawn as observed.}
 
 \item{unadjusted}{TRUE explicitly selects an empty adjustment set, clearing
 inherited adjusted roles. Cannot be combined with a non-empty \code{adjusted}.}
@@ -184,7 +189,9 @@ lines with \code{"\\n"}; \code{\link[=diagnose_metro_dag]{diagnose_metro_dag()}}
 
 \item{on_error}{What happens when the drawing device is too small to draw an
 arrow or keep stations apart: \code{"stop"} (the default) raises an error;
-\code{"warn"} draws what fits and warns, which suits small previews.
+\code{"warn"} draws what fits and warns, which suits small previews. Such a
+drawing is marked in one corner, for example "Incomplete: 2 arrows not
+drawn", so that it cannot pass for the complete figure.
 \code{\link[=save_metro_dag]{save_metro_dag()}} stops unless it is given \code{on_error = "warn"} too.}
 
 \item{...}{Text options: \code{fontface}, \code{lineheight}, and \code{colour} (or \code{color}).}

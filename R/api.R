@@ -67,7 +67,8 @@ metro_dag <- function(graph, direction = "right", labels = TRUE,
       stop("When reusing a layout, omit direction, rank, layering, ordering, sweeps, align and bidirected.", call. = FALSE)
     layout <- graph
   } else {
-    graph <- .as_metro_input(graph, bidirected)
+    # layout_metro_dag() checks the graph again, and warns about its names once.
+    graph <- .as_metro_input(graph, bidirected, warn_spaces = FALSE)
     layout <- layout_metro_dag(graph, direction, rank, layering, ordering, sweeps, align = align)
   }
   args <- c(list(layout = layout, labels = labels, exposure = exposure, outcome = outcome,
@@ -122,14 +123,20 @@ metro_dag <- function(graph, direction = "right", labels = TRUE,
 #' @param dpi Raster resolution, default 600.
 #' @param path Optional existing directory in which to save `filename`.
 #' @param on_error `"stop"` (the default) refuses to write a figure that cannot
-#'   fit every arrow and station; `"warn"` writes what fits and warns.
+#'   fit every arrow and station; `"warn"` writes what fits, marked in one
+#'   corner (for example "Incomplete: 2 arrows not drawn"), and warns.
 #' @param ... Extra device arguments passed to [ggplot2::ggsave()]. `scale`
 #'   multiplies the requested width and any explicit height. Automatic height
 #'   uses the scaled width and retains the 45--220 mm physical height limits.
 #'   TIFF files use LZW compression unless `compression` is supplied or the
 #'   bitmap type is `"quartz"`, which does not support it. PDF and
 #'   EPS use Cairo devices when available; a warning reports the fallback to
-#'   the base devices, which do not embed fonts.
+#'   the base devices, which do not embed fonts and draw only the families
+#'   listed by [grDevices::pdfFonts()] and [grDevices::postscriptFonts()],
+#'   such as `"sans"`, `"serif"` and `"mono"`: text in another family then
+#'   stops the export with an error naming it. SVG uses svglite when it is
+#'   installed; otherwise [grDevices::svg()] draws text as outlines, which
+#'   cannot be edited or searched, and a warning says so.
 #' @return Invisibly, the output filename.
 #' @examples
 #' p <- metro_dag(metrodag_examples("causal"), exposure = "X", outcome = "Y")
@@ -188,7 +195,7 @@ save_metro_dag <- function(filename, plot, width = 180, height = NULL,
   if (is.null(scale)) scale <- 1
   .assert_number(scale, "scale", strict = TRUE)
   ext <- tolower(tools::file_ext(filename))
-  device <- .metro_export_device(ext)
+  device <- .metro_export_device(ext, plot)
   if (is.null(device)) stop("Use a .pdf, .svg, .eps, .ps, .png or .tiff filename.", call. = FALSE)
   extra <- list(...)
   # Quartz bitmaps (the macOS default type) do not support compression.

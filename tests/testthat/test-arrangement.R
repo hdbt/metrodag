@@ -128,7 +128,7 @@ test_that("compact review DAGs export clear labels and one arrowhead per edge", 
       }
       file <- tempfile(fileext = ".svg")
       expect_no_warning(save_metro_dag(file, p, width = width))
-      expect_equal(.svg_count(file, "polygon"), igraph::ecount(graph))
+      expect_equal(.svg_arrowheads(file), igraph::ecount(graph))
       unlink(file)
     }
   }

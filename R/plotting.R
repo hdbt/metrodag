@@ -89,8 +89,9 @@
 #'   positive offsets move right/up. Nodes and routes are unchanged. Resulting
 #'   label collisions are still reported at draw time.
 #' @param exposure,outcome,adjusted,unobserved,selected Character vectors of node
-#'   names. Numbers and factors are converted with [as.character()], so
-#'   `exposure = 1` selects the node named `"1"`.
+#'   names. Numbers name nodes as numeric edge tables do, and factors by their
+#'   labels, so `exposure = 1` selects the node named `"1"` and
+#'   `exposure = 1e5` the node named `"100000"`.
 #'   `selected` marks variables the study conditions on through selection
 #'   (for example hospital admission); they are drawn as squares with a
 #'   double outline and are not adjustment covariates.
@@ -99,6 +100,10 @@
 #'   inherited roles. Adjusted variables use filled squares; observed variables
 #'   not adjusted for use hollow circles. Unobserved variables are dashed.
 #'   Inherited factor role attributes use their labels; missing roles are observed.
+#'   When a role is inherited, every value of the graph's `role` vertex
+#'   attribute should be `"observed"`, one of these role names in lower case,
+#'   or NA; any other value, such as `"Exposure"` or `"latent"` (use
+#'   `"unobserved"`), gives a warning, and its node is drawn as observed.
 #' @param node_groups Optional named list of non-empty character vectors of node
 #'   names, for example `list("Selection factors" = "U1", "Other factors" = "U2")`.
 #'   Categories are display annotations, independent of analysis roles and
@@ -155,7 +160,9 @@
 #'   lines with `"\n"`; [diagnose_metro_dag()] reports headers that overlap.
 #' @param on_error What happens when the drawing device is too small to draw an
 #'   arrow or keep stations apart: `"stop"` (the default) raises an error;
-#'   `"warn"` draws what fits and warns, which suits small previews.
+#'   `"warn"` draws what fits and warns, which suits small previews. Such a
+#'   drawing is marked in one corner, for example "Incomplete: 2 arrows not
+#'   drawn", so that it cannot pass for the complete figure.
 #'   [save_metro_dag()] stops unless it is given `on_error = "warn"` too.
 #' @param ... Text options: `fontface`, `lineheight`, and `colour` (or `color`).
 #' @return A ggplot object, with geometry in `metrodag_layout` and selected

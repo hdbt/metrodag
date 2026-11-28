@@ -245,13 +245,14 @@ test_that("station and legend joins stay rounded in a mitre viewport", {
   plot <- metro_dag(.test_rounded_station_graph(2L), adjusted = "A",
     unobserved = "B", labels = FALSE, legend = FALSE)
   grob <- .test_rounded_station_grob(plot, linejoin = "mitre")
-  stations <- Filter(function(g) inherits(g, "rect") || inherits(g, "circle"),
-    grob$children)
+  # The graph has no arrows: the polygon is B's dashed outline.
+  stations <- Filter(function(g) inherits(g, "rect") || inherits(g, "circle") ||
+    inherits(g, "polygon"), grob$children)
   expect_length(stations, 2L)
   expect_true(all(vapply(stations, function(g) identical(g$gp$linejoin, "round"), logical(1))))
-  for (shape in c(21L, 22L)) {
+  for (linetype in c("solid", "dashed")) for (shape in c(21L, 22L)) {
     key <- .draw_key_metro_node(list(colour = "black", fill = "white",
-      linetype = "solid", shape = shape), list(), 4)
+      linetype = linetype, shape = shape), list(), 4)
     expect_identical(key$gp$linejoin, "round")
   }
 })

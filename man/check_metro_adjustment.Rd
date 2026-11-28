@@ -40,6 +40,14 @@ Plotting never calls this function implicitly.
 Graphs with selected (conditioned-on) nodes are rejected: this check
 covers covariate adjustment only, and selection must not be ignored.
 }
+\details{
+With several exposures or outcomes, the check concerns their joint total
+effect, the effect of setting all the exposures at once, and the printed
+result says so. Passing it does not make each exposure's coefficient in a
+model that adjusts the exposures for one another a total effect: when one
+exposure mediates part of another's effect, for example, adjusting for it
+removes that part. Check each exposure on its own for its total effect.
+}
 \examples{
 if (requireNamespace("dagitty", quietly = TRUE)) {
   g <- dagitty::dagitty("dag { C -> X; C -> Y; X -> Y }")

@@ -136,7 +136,11 @@ test_that("export width presets and EPS output work", {
   dir.create(directory)
   on.exit(unlink(directory, recursive = TRUE), add = TRUE)
   svg <- file.path(directory, "single.svg")
-  expect_no_warning(save_metro_dag(svg, p, width = "single"))
+  if (metrodag:::.metro_svglite_available()) {
+    expect_no_warning(save_metro_dag(svg, p, width = "single"))
+  } else {
+    expect_warning(save_metro_dag(svg, p, width = "single"), "outlines")
+  }
   expect_true(file.exists(svg))
   report <- diagnose_metro_dag(p, width = "single", device = "svg")
   expect_equal(unname(report$dimensions[["width"]]), 85, tolerance = 0.05)

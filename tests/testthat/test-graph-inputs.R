@@ -52,6 +52,66 @@ test_that("table validation never invents nodes, collapses edges or changes last
   expect_identical(ggplot2::last_plot(), previous)
 })
 
+test_that("igraph role attributes use the role names metro_graph() accepts", {
+  g <- igraph::graph_from_data_frame(data.frame(from = c("C", "C", "X"), to = c("X", "Y", "Y")))
+  with_roles <- function(graph, role) igraph::set_vertex_attr(graph, "role",
+    value = unname(role[igraph::V(graph)$name]))
+  bad <- with_roles(g, c(C = "observed", X = "Exposure", Y = "outcom"))
+  original <- bad
+  accepted <- "must use observed, exposure, outcome, adjusted, unobserved or selected (or NA)"
+  expect_error(metro_graph(data.frame(name = c("C", "X", "Y"), role = c("observed", "Exposure", "outcom"))),
+    accepted, fixed = TRUE)
+  message <- paste0("The graph's `role` vertex attribute should use observed, exposure, outcome, ",
+    "adjusted, unobserved or selected (or NA), but node `X` has \"Exposure\" and node `Y` has ",
+    "\"outcom\"; these nodes are drawn as observed. Role names are lower case.")
+  expect_warning(p <- metro_dag(bad), message, fixed = TRUE)
+  expect_identical(bad, original)
+  # No value is taken for a role it resembles: those nodes are drawn as observed.
+  drawn <- p$layers[[2L]]$geom_params$nodes
+  expect_identical(drawn$role[match(c("C", "X", "Y"), drawn$node)], rep("observed", 3L))
+  # A layout ignores roles; drawing it reads them, in every view.
+  expect_s3_class(layout <- layout_metro_dag(bad), "metrodag_layout")
+  expect_warning(plot_metro_dag(layout), message, fixed = TRUE)
+  warnings <- testthat::capture_warnings(compare_metro_dags(layout, list(A = list(exposure = "X"))))
+  expect_true(any(grepl(message, warnings, fixed = TRUE)))
+  draw <- function(role) {
+    layout$graph <- with_roles(layout$graph, role)
+    plot_metro_dag(layout)
+  }
+  # Factors are read by their labels.
+  expect_warning(draw(factor(c(C = "observed", X = "Exposure", Y = "outcom"))), message, fixed = TRUE)
+  expect_warning(draw(c(C = "Outcome", X = "exposure", Y = "Outcome")), paste0(
+    "but nodes `C` and `Y` have \"Outcome\"; these nodes are drawn as observed. ",
+    "Role names are lower case."), fixed = TRUE)
+  expect_warning(draw(c(C = "latent", X = "exposure", Y = "outcome")), paste0(
+    "but node `C` has \"latent\"; these nodes are drawn as observed. ",
+    "Use \"unobserved\" for latent variables."), fixed = TRUE)
+  # Up to six values are named; more are counted.
+  expect_warning(.metro_check_role_attribute(letters[1:6], LETTERS[1:6]),
+    "node `E` has \"e\" and node `F` has \"f\";", fixed = TRUE)
+  expect_warning(.metro_check_role_attribute(letters[1:8], LETTERS[1:8]),
+    "node `E` has \"e\" and 3 more values;", fixed = TRUE)
+  # Supplying every role reads nothing from the attribute; one inherited role reads it.
+  for (p in list(metro_dag(layout, exposure = "X", outcome = "Y", adjusted = character(0),
+      unobserved = character(0), selected = character(0)),
+    metro_dag(layout, exposure = "X", outcome = "Y", unadjusted = TRUE,
+      unobserved = character(0), selected = character(0)))) {
+    drawn <- p$layers[[2L]]$geom_params$nodes
+    expect_identical(drawn$role[match(c("C", "X", "Y"), drawn$node)], c("observed", "exposure", "outcome"))
+  }
+  expect_warning(metro_dag(layout, exposure = "X", outcome = "Y", unobserved = character(0),
+    selected = character(0)), message, fixed = TRUE)
+  # Valid roles are inherited, and NA is observed, in a list attribute too.
+  p <- draw(c(C = NA, X = "exposure", Y = "outcome"))
+  drawn <- p$layers[[2L]]$geom_params$nodes
+  expect_identical(drawn$role[match(c("C", "X", "Y"), drawn$node)], c("observed", "exposure", "outcome"))
+  expect_identical(attr(draw(list(C = NA, X = "exposure", Y = "outcome")), "metrodag_analysis"),
+    attr(p, "metrodag_analysis"))
+  skip_if_not_installed("dagitty")
+  expect_warning(check_metro_adjustment(bad, exposure = "X", outcome = "Y", unadjusted = TRUE),
+    message, fixed = TRUE)
+})
+
 test_that("named adjacency matrices preserve direction under independent permutations", {
   a <- matrix(0L, 3, 3, dimnames = list(c("X", "Y", "I"), c("X", "Y", "I")))
   a["X", "Y"] <- 1L; original <- a
@@ -125,9 +185,88 @@ test_that("table and adjacency exports keep every causal arrow and isolated stat
     path <- tempfile(fileext = ".svg"); on.exit(unlink(path), add = TRUE)
     expect_no_warning(save_metro_dag(path, p, width = 180))
     svg <- readLines(path)
-    expect_equal(sum(grepl("<polygon", svg, fixed = TRUE)), 5L)
+    expect_equal(.svg_arrowheads(path), 5L)
     expect_true(any(grepl("Isolated", svg, fixed = TRUE)))
     expect_true(any(grepl("variable", svg, fixed = TRUE)))
     expect_equal(igraph::degree(attr(p, "metrodag_layout")$graph, "I"), c(I = 0))
+  }
+})
+
+test_that("whole-number identifiers name nodes in full in every input and role argument", {
+  ids <- c("100000", "200000", "300000")
+  edges <- data.frame(from = c(100000, 200000), to = c(200000, 300000))
+  g <- igraph::make_ring(3, directed = TRUE, circular = FALSE)
+  igraph::V(g)$name <- c(1e5, 2e5, 3e5)
+  inputs <- list(edges, as.matrix(edges), unname(as.matrix(edges)), g,
+    metro_graph(data.frame(name = c(1e5, 2e5, 3e5)), edges))
+  for (input in inputs) expect_identical(igraph::V(.as_metro_input(input))$name, ids)
+  p <- metro_dag(edges, exposure = 100000, outcome = 3e5, adjusted = "200000",
+    edge_style = data.frame(from = 1e5, to = 2e5, colour = "red"))
+  expect_identical(attr(p, "metrodag_analysis")[c("exposure", "outcome", "adjusted")],
+    list(exposure = "100000", outcome = "300000", adjusted = "200000"))
+  params <- Find(function(l) inherits(l$geom, "GeomMetroDag"), p$layers)$geom_params
+  expect_identical(params$nodes$label, ids)
+  expect_identical(unique(params$edges$colour[params$edges$from == "100000"]), "red")
+  if (requireNamespace("dagitty", quietly = TRUE))
+    expect_identical(check_metro_adjustment(edges, exposure = 1e5, outcome = 300000,
+      unadjusted = TRUE)$exposure, "100000")
+  # Other values keep their as.character() text; -0 is "0", as it always was.
+  expect_identical(.metro_node_names(c(1e5, -1e5, 123456, 0.5, -0, 2^53, NA)),
+    c("100000", "-100000", "123456", "0.5", "0", as.character(2^53), NA))
+  expect_identical(.metro_node_names(c(100000L, NA)), c("100000", NA))
+  expect_identical(.metro_node_names(as.Date("2024-01-31")), "2024-01-31")
+})
+
+test_that("names that differ only by white space at their ends stay apart, with one warning", {
+  warned <- function(expr) {
+    found <- character()
+    withCallingHandlers(expr, warning = function(w) {
+      found <<- c(found, conditionMessage(w))
+      invokeRestart("muffleWarning")
+    })
+    found
+  }
+  # One arrow spells Smoking with a trailing space, so Age seems not to confound it.
+  edges <- data.frame(from = c("Age", "Age", "Smoking"), to = c("Smoking ", "Cancer", "Cancer"))
+  message <- paste("Node names \"Smoking\" and \"Smoking \" differ only by white space at their ends,",
+    "so they are separate nodes. Remove the white space if they name the same variable.")
+  expect_identical(warned(layout <- layout_metro_dag(edges)), message)
+  expect_identical(igraph::V(layout$graph)$name, c("Age", "Smoking", "Smoking ", "Cancer"))
+  expect_identical(warned(metro_dag(edges, exposure = "Smoking", outcome = "Cancer")), message)
+  expect_identical(warned(compare_metro_dags(edges, list(A = list(exposure = "Smoking")))), message)
+  expect_identical(warned(metro_graph(data.frame(name = c("Smoking", "Smoking ")))), message)
+  if (requireNamespace("dagitty", quietly = TRUE))
+    expect_identical(warned(check_metro_adjustment(edges, exposure = "Smoking", outcome = "Cancer",
+      unadjusted = TRUE)), message)
+  # The wording of the warning does not need a layout.
+  several <- data.frame(from = c("A ", " B", "C", "D\t", "E", "F "),
+    to = c("A", "B", "C ", "D", "E\n", "F"))
+  expect_identical(warned(.as_metro_input(several)), paste("Node names differ only by white space",
+    "at their ends, so these are separate nodes: \"A \" and \"A\"; \" B\" and \"B\"; \"C\" and \"C \";",
+    "\"D\\t\" and \"D\"; \"E\" and \"E\\n\"; and 1 more. Remove the white space where they name the",
+    "same variable."))
+  expect_identical(warned(.as_metro_input(data.frame(from = c("A ", " A"), to = "A"))), paste(
+    "Node names \"A \", \" A\" and \"A\" differ only by white space at their ends, so they are",
+    "separate nodes. Remove the white space if they name the same variable."))
+  # A no-break space, which spreadsheets and web pages often leave, counts too.
+  expect_match(warned(.as_metro_input(data.frame(from = "Smoking ", to = "Smoking"))),
+    "differ only by white space at their ends", fixed = TRUE)
+  expect_no_warning(.as_metro_input(data.frame(from = c("smoking", "Smoking status"),
+    to = c("Smoking", "Smoking  status"))))
+})
+
+test_that("a name declared in latin1 or in UTF-8 gives the same layout", {
+  utf8 <- "\u00e9tude"
+  latin <- iconv(utf8, "UTF-8", "latin1")
+  expect_identical(Encoding(latin), "latin1")
+  # Layout ties between the children of X are broken by name, in byte order.
+  edges <- function(name) data.frame(from = c("X", "X", "X", name), to = c(name, "\u00fcber", "Y", "Z"))
+  reference <- layout_metro_dag(edges(utf8))
+  for (input in list(edges(latin), as.matrix(edges(latin)),
+      igraph::graph_from_data_frame(edges(latin)))) {
+    layout <- layout_metro_dag(input)
+    expect_identical(layout$nodes, reference$nodes)
+    expect_identical(layout$edges, reference$edges)
+    expect_identical(Encoding(igraph::V(layout$graph)$name), Encoding(igraph::V(reference$graph)$name))
   }
 })

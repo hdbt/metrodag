@@ -15,19 +15,27 @@
   role <- igraph::vertex_attr(layout$graph, "role")
   if (is.null(role)) role <- rep("observed", length(nm))
   # Factor attributes need their labels before adding the missing-value default,
-  # which may not be one of the factor's declared levels.
+  # which may not be one of the factor's declared levels. NA elements of a list
+  # attribute are missing too, although as.character() writes them as "NA".
+  absent <- is.na(role)
   role <- as.character(role)
-  role[is.na(role)] <- "observed"
+  role[absent] <- "observed"
   roles <- list(exposure = exposure, outcome = outcome, adjusted = adjusted,
     unobserved = unobserved, selected = selected)
   supplied <- !vapply(roles, is.null, logical(1))
+  # Check the attribute whenever a role is read from it; `unadjusted = TRUE`
+  # replaces the adjusted role as a supplied set would.
+  inherited <- !supplied
+  inherited[["adjusted"]] <- inherited[["adjusted"]] && !unadjusted
+  if (any(inherited)) .metro_check_role_attribute(role, nm)
   hidden <- .metro_hidden_nodes(layout$graph)
   for (key in names(roles)) {
     value <- roles[[key]]
-    # Numeric edge tables give nodes such as "1"; accept exposure = 1 for them.
+    # Numeric edge tables give nodes such as "1"; accept exposure = 1 for them,
+    # naming nodes as edge tables do (exposure = 1e5 is "100000").
     # A bare NA is logical; report it as the missing value it is.
     if (is.numeric(value) || is.factor(value) || (is.logical(value) && length(value) && all(is.na(value))))
-      value <- as.character(value)
+      value <- .metro_node_names(value)
     if (!is.null(value)) {
       if (!is.character(value))
         stop(sprintf("`%s` must be a character vector of node names.", key), call. = FALSE)
@@ -78,6 +86,36 @@
     "`%s = character(0)` or give `%s` without `%s`."), inherited[[1L]], inherited[[1L]],
     inherited[[1L]], node))
   stop(message, call. = FALSE)
+}
+
+# An inherited `role` attribute should use the role names metro_graph() accepts
+# in `nodes$role`; `role` has NA already read as observed. Any other value is
+# drawn as observed and drops its role from the analysis, so warn and name the
+# nodes and values at fault. A value is never mapped to a role it resembles.
+# A warning rather than an error keeps graphs that use a `role` attribute for
+# something else drawing as they did.
+.metro_check_role_attribute <- function(role, nm) {
+  valid <- c("observed", "exposure", "outcome", "adjusted", "unobserved", "selected")
+  bad <- !role %in% valid
+  if (!any(bad)) return(invisible(TRUE))
+  values <- unique(role[bad])
+  # Name the nodes of up to six values, or of five and count the rest.
+  shown <- values[seq_len(if (length(values) > 6L) 5L else length(values))]
+  found <- vapply(shown, function(value) {
+    nodes <- nm[role == value]
+    one <- length(nodes) == 1L
+    sprintf("%s %s %s \"%s\"", if (one) "node" else "nodes", .metro_quote_list(nodes),
+      if (one) "has" else "have", value)
+  }, character(1), USE.NAMES = FALSE)
+  if (length(values) > length(shown))
+    found <- c(found, sprintf("%d more values", length(values) - length(shown)))
+  message <- sprintf(paste("The graph's `role` vertex attribute should use observed, exposure, outcome,",
+    "adjusted, unobserved or selected (or NA), but %s; these nodes are drawn as observed."),
+    .metro_quote_list(found, max = 6L, quote = "", distinct = FALSE))
+  if (any(tolower(values) %in% valid)) message <- paste(message, "Role names are lower case.")
+  if (any(tolower(values) == "latent")) message <- paste(message, "Use \"unobserved\" for latent variables.")
+  warning(message, call. = FALSE)
+  invisible(FALSE)
 }
 
 # Nodes that carry variables: every node except those drawn for bidirected arcs.
@@ -147,14 +185,31 @@
     inner_gp <- gp; inner_gp$fill <- NA
     return(grid::grobTree(outer, grid::rectGrob(x, y, width = 1.2 * r, height = 1.2 * r, gp = inner_gp)))
   }
-  if (marker != "ring") return(grid::circleGrob(x, y, r = r, gp = gp))
+  if (marker != "ring") return(.metro_circle_grob(x, y, r, gp))
   ring_gp <- gp; ring_gp$fill <- background
   dot_gp <- gp; dot_gp$col <- NA
-  grid::grobTree(grid::circleGrob(x, y, r = r, gp = ring_gp),
+  grid::grobTree(.metro_circle_grob(x, y, r, ring_gp),
     grid::circleGrob(x, y, r = 0.5 * r, gp = dot_gp))
 }
 
-# A custom legend key preserves the square and dashed-circle station symbols.
+# A circle of radius `r` at (x, y), all grid units. The Windows GDI device
+# (windows(), and png(), bmp(), jpeg() or tiff() with type = "windows", their
+# default on Windows) ignores the line type of a circle and draws it solid, so
+# an unobserved station would look observed there. A dashed outline is drawn
+# instead as a 72-sided polygon on the same circle, which every device dashes.
+# Its vertices run clockwise from three o'clock, as Cairo and ragg draw a
+# circle, so the dashes fall where they did on those devices. Solid and blank
+# outlines stay circles. Clearances, label placement and diagnostics use the
+# station radius, not this grob, so nothing moves.
+.metro_circle_grob <- function(x, y, r, gp) {
+  lty <- if (is.null(gp$lty)) "solid" else as.character(gp$lty)[1L]
+  if (is.na(lty) || lty %in% c("solid", "1", "blank", "0")) return(grid::circleGrob(x, y, r = r, gp = gp))
+  angle <- -2 * pi * (seq_len(72L) - 1L) / 72L
+  grid::polygonGrob(x + r * cos(angle), y + r * sin(angle), gp = gp)
+}
+
+# A custom legend key preserves the square and dashed-circle station symbols,
+# drawn as the stations are.
 .draw_key_metro_node <- function(data, params, size) {
   gp <- grid::gpar(col = data$colour, fill = data$fill,
     lty = data$linetype, lwd = 0.8, linejoin = "round")
@@ -174,10 +229,10 @@
 .metro_role_legend <- function(p, layout, background, style, roles = NULL, specified = NULL) {
   style <- .as_metro_style(style)
   present <- if (is.null(roles)) unique(igraph::vertex_attr(layout$graph, "role")) else roles
-  # An adjustment view explains hollow circles as "Observed, not adjusted";
-  # the Adjusted key itself needs a station drawn as adjusted.
+  # A role has a key only when a station is drawn in that role. An adjustment
+  # set changes the observed key's wording, to "Observed, not adjusted", but
+  # does not add the key.
   if (is.null(specified)) specified <- isTRUE(layout$analysis$adjustment_specified)
-  if (specified) present <- union(present, "observed")
   if (identical(present, "observed") && !specified && !length(layout$node_groups)) return(p)
   order <- c("exposure", "outcome", "adjusted", "selected", "observed", "unobserved")
   keys <- order[order %in% present]

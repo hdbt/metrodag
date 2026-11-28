@@ -137,3 +137,128 @@ test_that("base PDF fallback and explicit scaled heights retain export behavior"
   expect_identical(ggplot2::last_plot(), plot)
   expect_identical(list.files(directory, all.files = TRUE, no.. = TRUE), "base%03d.pdf")
 })
+
+# The messages of the warnings an expression raises.
+.test_warnings <- function(expr) {
+  warnings <- character()
+  withCallingHandlers(expr, warning = function(w) {
+    warnings <<- c(warnings, conditionMessage(w))
+    invokeRestart("muffleWarning")
+  })
+  warnings
+}
+
+test_that("a figure's font families include its themes, text layers and panels", {
+  graph <- metrodag_examples("chain")
+  plot <- metro_dag(graph, family = "serif") +
+    ggplot2::theme(plot.title = ggplot2::element_text(family = "Palatino")) +
+    ggplot2::annotate("text", x = 0, y = 0, label = "Note", family = "AvantGarde")
+  expect_setequal(.metro_figure_families(plot), c("serif", "Palatino", "AvantGarde"))
+  skip_on_cran()
+  comparison <- compare_metro_dags(graph, list(A = list(exposure = "A"), B = list(outcome = "D")),
+    family = "mono")
+  expect_identical(.metro_figure_families(comparison), "mono")
+  skip_if_not_installed("patchwork")
+  # Every plot of a composition counts, wrapped ones included, and so does
+  # its annotation theme.
+  other <- ggplot2::ggplot() + ggplot2::theme_grey(base_family = "Bookman")
+  composition <- patchwork::wrap_plots(patchwork::wrap_elements(full = as_metro_grob(comparison)),
+    other) + patchwork::plot_annotation(title = "Views",
+    theme = ggplot2::theme(plot.title = ggplot2::element_text(family = "Times")))
+  expect_setequal(.metro_figure_families(composition), c("mono", "Times", "Bookman"))
+})
+
+test_that("base PDF and EPS fallbacks draw labelled figures in the families they know", {
+  previous <- ggplot2::last_plot()
+  directory <- tempfile("fallback")
+  dir.create(directory)
+  on.exit({ unlink(directory, recursive = TRUE); ggplot2::set_last_plot(previous) }, add = TRUE)
+  testthat::local_mocked_bindings(.metro_cairo_available = function() FALSE, .package = "metrodag")
+  # Labels and legend are in the default family, "sans"; the title is in one
+  # of R's font families outside the standard three.
+  plot <- metro_dag(metrodag_examples("chain"), exposure = "A", outcome = "D",
+    estimand = "Total effect of A on D") +
+    ggplot2::theme(plot.title = ggplot2::element_text(family = "Palatino"))
+  # Each export warns once that the base device does not embed fonts,
+  # although an automatic height opens the device twice.
+  export <- function(ext) {
+    file <- file.path(directory, paste0("labelled.", ext))
+    warnings <- .test_warnings(save_metro_dag(file, plot, width = 85, fonts = "Bookman"))
+    expect_length(warnings, 1L)
+    expect_match(warnings, "does not embed fonts", fixed = TRUE)
+    file
+  }
+  # postscript() draws only the families it is opened with: R's standard
+  # three, those of the figure and those given as a device argument.
+  eps <- readLines(export("eps"), warn = FALSE)
+  expect_match(eps[1L], "^%!PS.*EPSF")
+  fonts <- sub("^.* font ", "", grep("^%%(DocumentNeededResources: |\\+ )font ", eps, value = TRUE))
+  expect_true(all(c("Helvetica", "Times-Roman", "Courier", "Palatino-Roman", "Bookman-Light") %in% fonts))
+  expect_identical(ggplot2::last_plot(), plot)
+  skip_on_cran()
+  # pdf() needs no declarations: it adds each font the figure uses (the
+  # title is bold).
+  pdf <- export("pdf")
+  bytes <- readBin(pdf, "raw", file.size(pdf))
+  text <- rawToChar(bytes[bytes != as.raw(0)])
+  Encoding(text) <- "bytes"
+  expect_match(text, "^%PDF", useBytes = TRUE)
+  for (font in c("Helvetica", "Palatino-Bold"))
+    expect_match(text, paste0("/BaseFont /", font), fixed = TRUE, useBytes = TRUE)
+  expect_identical(ggplot2::last_plot(), plot)
+  report <- diagnose_metro_dag(plot, width = 85, device = "eps")
+  expect_true(report$ok)
+  expect_identical(report$issues$type, "render_warning")
+  expect_match(report$issues$message, "does not embed fonts", fixed = TRUE)
+})
+
+test_that("base fallbacks stop on font families they cannot draw, naming them", {
+  previous <- ggplot2::last_plot()
+  directory <- tempfile("fallback")
+  dir.create(directory)
+  on.exit({ unlink(directory, recursive = TRUE); ggplot2::set_last_plot(previous) }, add = TRUE)
+  testthat::local_mocked_bindings(.metro_cairo_available = function() FALSE, .package = "metrodag")
+  graph <- metrodag_examples("chain")
+  # pdf() would fail while drawing a family outside its font database, and
+  # postscript() would draw it in its default font, measured differently.
+  unknown <- metro_dag(graph, family = "No Such Font")
+  for (device in c("pdf", "postscript")) {
+    file <- file.path(directory, paste0("unknown.", if (device == "pdf") "pdf" else "eps"))
+    expect_no_warning(error <- expect_error(save_metro_dag(file, unknown, width = 85),
+      sprintf("grDevices::%s() cannot draw font family \"No Such Font\"", device), fixed = TRUE))
+    expect_match(conditionMessage(error), "Use R with Cairo support, save as SVG (with svglite) or PNG",
+      fixed = TRUE)
+    expect_match(conditionMessage(error), sprintf("grDevices::%sFonts()", device), fixed = TRUE)
+  }
+  # A family set in the theme counts too, whichever text it styles.
+  titled <- unknown + ggplot2::theme(plot.title = ggplot2::element_text(family = "Another Missing Font"))
+  error <- expect_error(save_metro_dag(file.path(directory, "titled.pdf"), titled, width = 85),
+    "font families", fixed = TRUE)
+  expect_match(conditionMessage(error), "\"No Such Font\", \"Another Missing Font\"", fixed = TRUE)
+  report <- diagnose_metro_dag(unknown, width = 85, device = "pdf")
+  expect_false(report$ok)
+  expect_identical(report$issues$type, "render_error")
+  expect_match(report$issues$message, "font family \"No Such Font\"", fixed = TRUE)
+  expect_length(list.files(directory, all.files = TRUE, no.. = TRUE), 0L)
+  expect_identical(ggplot2::last_plot(), titled)
+})
+
+test_that("SVG export without svglite warns once that text is drawn as outlines", {
+  skip_on_cran()
+  skip_if_not(.metro_cairo_available(), "grDevices::svg() needs Cairo")
+  previous <- ggplot2::last_plot()
+  file <- tempfile(fileext = ".svg")
+  on.exit({ unlink(file); ggplot2::set_last_plot(previous) }, add = TRUE)
+  testthat::local_mocked_bindings(.metro_svglite_available = function() FALSE, .package = "metrodag")
+  plot <- metro_dag(metrodag_examples("chain"), exposure = "A", outcome = "D",
+    estimand = "Total effect of A on D")
+  # The automatic height opens the device twice; the export warns once.
+  warnings <- .test_warnings(save_metro_dag(file, plot, width = 85))
+  expect_length(warnings, 1L)
+  expect_match(warnings, "using grDevices::svg(), which draws text as outlines", fixed = TRUE)
+  expect_match(warnings, "Install the optional 'svglite' package", fixed = TRUE)
+  # The labels and title are drawn, as glyph outlines.
+  svg <- readLines(file, warn = FALSE)
+  expect_false(any(grepl("<text", svg, fixed = TRUE)))
+  expect_true(any(grepl("glyph", svg, fixed = TRUE)))
+})

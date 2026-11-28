@@ -58,9 +58,11 @@ test_that("checked exports retain routes, heads and labels after segment shuffle
         expect_no_warning(save_metro_dag(files[i], plots[[i]], width = 260, height = 220))
       expect_identical(.svg_primitives(files[2L]), .svg_primitives(files[1L]),
         info = paste(direction, style))
-      expect_equal(.svg_count(files[2L], "polygon"), igraph::ecount(fixed$graph))
-      # Monochrome draws the outcome as a ring: one extra circle for its centre.
-      expect_equal(.svg_count(files[2L], "circle"), 4L + (style == "monochrome"))
+      expect_equal(.svg_arrowheads(files[2L]), igraph::ecount(fixed$graph))
+      # U's dashed outline is a polygon; X, M and Y are circles. Monochrome
+      # draws the outcome as a ring: one extra circle for its centre.
+      expect_equal(.svg_dashed_outlines(files[2L]), 1L)
+      expect_equal(.svg_count(files[2L], "circle"), 3L + (style == "monochrome"))
       expect_identical(attr(plots[[2L]], "metrodag_layout")$edges, before$edges)
       expect_identical(input, before)
     }
@@ -91,8 +93,7 @@ test_that("ggsave and comparisons preserve segment order with transformed coordi
   for (i in seq_along(plots))
     expect_no_warning(save_metro_dag(files[i], plots[[i]], width = 360, height = 220))
   expect_identical(.svg_primitives(files[2L]), .svg_primitives(files[1L]))
-  expect_equal(.svg_count(files[2L], "polygon"),
-    2L * igraph::ecount(fixed$graph))
+  expect_equal(.svg_arrowheads(files[2L]), 2L * igraph::ecount(fixed$graph))
   expect_no_warning(report <- diagnose_metro_dag(plots[[2L]], width = 360, height = 220,
     device = "svg"))
   expect_true(report$ok)

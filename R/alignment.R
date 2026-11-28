@@ -21,7 +21,10 @@
   group <- match(group, unique(group))
   count <- max(group)
   target <- vapply(seq_len(count), function(g) round(stats::median(x[group == g])), numeric(1))
-  key <- vapply(seq_len(count), function(g) min(keys[group == g]), character(1))
+  # The group's first name in the C-locale (radix) order used below; min()
+  # would follow the session's collation locale.
+  key <- vapply(seq_len(count), function(g) sort(keys[group == g], method = "radix")[1L],
+    character(1))
   constraints <- list()
   for (rank in sort(unique(layer))) {
     ids <- which(layer == rank)

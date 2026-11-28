@@ -23,9 +23,10 @@ highlight_paths(
 \item{paths}{Which paths to highlight: \code{"open"} (the default), every path
 that is open given the conditioning set; \code{"biasing"}, open paths that are
 not directed from \code{from} to \code{to} and do not pass through another \code{from}
-node (DAGitty's proper paths), usually the target when judging an
-adjustment set; \code{"causal"}, open directed paths from \code{from} to \code{to}; or
-\code{"all"}, every path whether open or not.}
+node (DAGitty's proper paths), which an adjustment set must close but
+which do not show over-adjustment (see Details); \code{"causal"}, open
+directed paths from \code{from} to \code{to}; or \code{"all"}, every path whether open
+or not.}
 
 \item{colour, width, linetype}{Appearance of highlighted arrows. \code{width} in
 millimetres defaults to twice the plot's line width; \code{colour = NULL}
@@ -34,16 +35,18 @@ keeps each arrow's colour and \code{linetype = NULL} its linetype.}
 \item{limit}{Maximum number of paths DAGitty lists between each pair of
 nodes. Dense graphs can have very many paths; if the search stops at the
 limit, a warning says so. For \code{"open"} and \code{"causal"}, whether any such
-path exists is still decided exactly, so a truncated search is reported
-only when it may have missed one.}
+path exists is still decided exactly, and for \code{"biasing"} a conditioning
+set that meets DAGitty's adjustment criterion is known to leave none
+open, so a truncated search is reported only when it may have missed one.}
 }
 \value{
 The plot with highlighted arrows. The attribute
 \code{metrodag_paths} holds a data frame of the paths found, whether each is
 open, whether it is causal (directed from \code{from} to \code{to}) and whether it
 was highlighted. Its attribute \code{truncated} is \code{TRUE} if the search
-stopped at \code{limit} for some pair. Bidirected arcs drawn as hidden latent
-variables appear as \verb{<->} in the path text.
+stopped at \code{limit} for some pair and may have missed a path to
+highlight. Bidirected arcs drawn as hidden latent variables appear as
+\verb{<->} in the path text.
 }
 \description{
 Finds the paths between two sets of variables with DAGitty, given the
@@ -51,6 +54,26 @@ plot's adjustment set and any selected (conditioned-on) variables, and
 emphasises the arrows on the chosen kind of path. The layout, roles and
 labels are unchanged; only the arrows' colour, width or linetype change,
 exactly as with \code{edge_style}. Requires the optional dagitty package.
+}
+\details{
+A valid adjustment set must close every biasing path, but closing them is
+not enough: adjusting for a mediator, or for a descendant of a mediator or
+of the outcome, can bias the total effect without opening any biasing
+path, so the biasing view does not show such over-adjustment. With
+\code{paths = "biasing"}, a warning names any such variable in the conditioning
+set and a causal path it lies on or descends from;
+\code{\link[=check_metro_adjustment]{check_metro_adjustment()}} checks the whole adjustment criterion. The
+warning has class \code{metrodag_overadjustment_warning}, so a figure that
+adjusts for a mediator on purpose, for a direct effect, can silence it with
+\code{suppressWarnings(classes = "metrodag_overadjustment_warning")}.
+
+With several \code{from} or \code{to} nodes, the biasing view and that warning
+concern the joint effect of all \code{from} nodes on all \code{to} nodes, as in
+DAGitty's adjustment criterion: a path through another \code{from} node is not
+a biasing path. Closing every biasing path for the joint effect does not
+show that the set, with or without the other \code{from} nodes, identifies the
+total effect of each \code{from} node on its own; see
+\code{\link[=check_metro_adjustment]{check_metro_adjustment()}}.
 }
 \examples{
 if (requireNamespace("dagitty", quietly = TRUE)) {
