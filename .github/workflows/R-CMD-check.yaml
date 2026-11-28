@@ -179,6 +179,11 @@ jobs:
         with:
           dependencies: '"hard"'
           cache: false
+          # Left on "auto", these resolve every Suggests entry to decide
+          # whether pandoc is needed, and the snapshot predates ggdag 0.2.13.
+          # The vignettes are skipped, so neither tool is needed.
+          install-pandoc: false
+          install-quarto: false
           extra-packages: |
             any::rcmdcheck
             any::testthat
