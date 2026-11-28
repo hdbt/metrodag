@@ -34,6 +34,8 @@ articles:
       - metrodag
       - analysis-views
       - publication
+      - articles/recipes
+      - articles/coming-from-ggdag
   - title: Technical background
     navbar: Technical background
     contents:

@@ -102,6 +102,8 @@ measured variables that meets the adjustment criterion for the total effect.
 | Create your first graph | [Getting started](articles/metrodag.html) |
 | Show observed and unobserved variables, adjustment, and custom groups | [Variables and analysis views](articles/analysis-views.html) |
 | Prepare a figure for a paper | [Publication figures](articles/publication.html) |
+| Draw a standard structure such as M-bias, an instrument or selection bias | [Recipes for common causal structures](articles/recipes.html) |
+| Move from ggdag or dagitty | [Coming from ggdag or dagitty](articles/coming-from-ggdag.html) |
 | Understand layout decisions and limitations | [Algorithm and constraints](articles/algorithm.html) |
 | Look up an argument | [Function reference](reference/index.html) |
 
