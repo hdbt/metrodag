@@ -24,22 +24,15 @@ jobs:
     runs-on: ${{ matrix.config.os }}
     timeout-minutes: 120
     name: ${{ matrix.config.os }} / R ${{ matrix.config.r }} / ggplot2 ${{ matrix.config.ggplot }}
-    # An experimental entry shows its failures but does not fail the run.
-    continue-on-error: ${{ matrix.config.experimental }}
     strategy:
       fail-fast: false
       matrix:
         config:
-          - {os: ubuntu-latest, r: release, ggplot: current, experimental: false}
-          - {os: windows-latest, r: release, ggplot: current, experimental: false}
-          - {os: macos-latest, r: release, ggplot: current, experimental: false}
-          - {os: ubuntu-latest, r: oldrel-1, ggplot: '3.4.4', experimental: false}
-          - {os: ubuntu-latest, r: devel, ggplot: current, experimental: false}
-          # The declared floor, R (>= 4.1.0), with the oldest supported
-          # ggplot2. Non-blocking for now, as current releases of some
-          # dependencies may no longer support R 4.1. Make it blocking
-          # (experimental: false) once it is green.
-          - {os: ubuntu-latest, r: '4.1', ggplot: '3.4.4', experimental: true}
+          - {os: ubuntu-latest, r: release, ggplot: current}
+          - {os: windows-latest, r: release, ggplot: current}
+          - {os: macos-latest, r: release, ggplot: current}
+          - {os: ubuntu-latest, r: oldrel-1, ggplot: '3.4.4'}
+          - {os: ubuntu-latest, r: devel, ggplot: current}
     env:
       GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
       R_KEEP_PKG_SOURCE: yes
@@ -157,6 +150,45 @@ jobs:
           build_args: 'c("--no-manual", "--no-build-vignettes")'
           args: 'c("--no-manual", "--as-cran", "--ignore-vignettes")'
           error-on: '"warning"'
+
+  r-floor:
+    # The declared floor, R (>= 4.1.0). Today's CRAN no longer installs on
+    # R 4.1: ggplot2 4 needs S7, which needs R 4.2, and Matrix and MASS need
+    # R 4.4. So this job takes every package from a snapshot of CRAN made on
+    # 15 February 2024, when ggplot2 3.4.4 was current and R 4.1 supported:
+    # setup-r uses the RSPM variable and its cran input as the repositories.
+    # Like the no-Suggests job, it installs only Depends, Imports and testthat
+    # and skips the vignettes. Non-blocking until it has been green for a
+    # while; then remove continue-on-error.
+    runs-on: ubuntu-22.04
+    timeout-minutes: 60
+    name: ubuntu-22.04 / R 4.1 / CRAN snapshot 2024-02-15
+    continue-on-error: true
+    env:
+      GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
+      R_KEEP_PKG_SOURCE: yes
+      RSPM: https://packagemanager.posit.co/cran/__linux__/jammy/2024-02-15
+      _R_CHECK_FORCE_SUGGESTS_: false
+    steps:
+      - uses: actions/checkout@v6
+      - uses: r-lib/actions/setup-r@v2
+        with:
+          r-version: '4.1'
+          cran: https://packagemanager.posit.co/cran/__linux__/jammy/2024-02-15
+      - uses: r-lib/actions/setup-r-dependencies@v2
+        with:
+          dependencies: '"hard"'
+          cache: false
+          extra-packages: |
+            any::rcmdcheck
+            any::testthat
+      - uses: r-lib/actions/check-r-package@v2
+        env:
+          NOT_CRAN: false
+        with:
+          build_args: 'c("--no-manual", "--no-build-vignettes")'
+          args: 'c("--no-manual", "--ignore-vignettes")'
+          error-on: '"error"'
 
   ggplot2-devel:
     # The development versions of ggplot2 and patchwork, as an early warning

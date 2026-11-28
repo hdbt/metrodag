@@ -57,7 +57,9 @@ suite. Set `NOT_CRAN=true` to run the full suite during package checks, as the
 release and old-release GitHub jobs do. The R-devel job exercises the CRAN
 test selection, and the no-Suggests job runs it with only Depends and Imports
 (and testthat) installed, so the noSuggests check needs no manual run. The
-R 4.1 job checks the declared floor and does not block yet. The weekly run,
+R 4.1 job checks the declared floor with packages from a CRAN snapshot of
+15 February 2024, because ggplot2 4 (through S7) and current Matrix and MASS
+no longer install on R 4.1; it does not block yet. The weekly run,
 which can also be started by hand, checks against development ggplot2 and
 patchwork and writes covr coverage, `urlchecker::url_check()` and
 `spelling::spell_check_package()` results to its summary; read the latest one

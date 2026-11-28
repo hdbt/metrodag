@@ -74,8 +74,10 @@ checks on R-devel. A no-Suggests job runs the CRAN selection with only Depends
 and Imports installed, plus testthat, as CRAN's noSuggests checks do, and
 skips the vignettes. The Ubuntu release job also runs the README and home page
 tests from the checkout, because `R CMD check` skips them (a local run from
-the checkout, as above, includes them). A job at the declared floor, R 4.1 with
-ggplot2 3.4.4, reports failures but does not block merging yet. A weekly run,
+the checkout, as above, includes them). A job at the declared floor, R 4.1,
+takes its packages from a CRAN snapshot of February 2024 (ggplot2 3.4.4),
+since today's CRAN no longer installs on R 4.1; it reports failures but does
+not block merging yet. A weekly run,
 which you can also start from the Actions tab, adds a check against the
 development versions of ggplot2 and patchwork (it never runs on pull requests,
 and a failure fails the weekly run so that it is noticed), and writes test
