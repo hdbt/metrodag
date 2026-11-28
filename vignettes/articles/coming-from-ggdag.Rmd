@@ -112,27 +112,28 @@ measured.
 ## Reporting a DAG
 
 Tennant et al. (2021) reviewed the use of DAGs in applied health research and
-made eight recommendations for their reporting and use. Those that concern the
-figure map onto metrodag as follows.
+made recommendations to improve their reporting and use. Those that concern
+the figure map onto metrodag as follows.
 
 | Tennant et al. (2021) recommend | In metrodag |
 |:----------------|:--------------------|
-| 1. State the focal relationship and estimand in the study aims. | `estimand = "Total effect of X on Y"` repeats the target as the figure title. It is a label: nothing is checked. |
-| 2. Make the DAG for each estimand available: in the manuscript, in supplementary material, or through a working link to a platform such as dagitty.net. | `save_metro_dag()` exports the figure for the manuscript, and dagitty's `toString()` gives the DAGitty code for a supplement, as shown below. |
-| 3. Include all relevant variables, including those that were not measured directly. | Declare them `[latent]` in DAGitty code, or pass them as `unobserved`: their stations and outgoing arrows are dashed. |
-| 4. Arrange the variables so that all arcs flow in the same direction, for example left to right or top to bottom. | Every metrodag layout does this: each arrow advances along `direction`, which is `"right"` by default or can be `"down"`. |
-| 6. State the adjustment sets that the DAG implies for each estimand. | The set passed as `adjusted`, or declared `[adjusted]`, is listed in the subtitle and drawn as squares with an "Adjusted" legend key; `unadjusted = TRUE` reports an empty set. |
-| 8. Justify any alternative adjustment set and report its estimate separately. | Draw each set as a view of one layout with `compare_metro_dags()`, as in the recipe. |
+| State the focal relationship and estimand in the study aims. | `estimand = "Total effect of X on Y"` repeats the target as the figure title. It is a label: nothing is checked. |
+| Make the DAG for each estimand available: in the manuscript, in supplementary material, or through a working link to a platform such as dagitty.net. | `save_metro_dag()` exports the figure for the manuscript, and dagitty's `toString()` gives the DAGitty code for a supplement, as shown below. |
+| Include all relevant variables, including those that were not measured directly. | Declare them `[latent]` in DAGitty code, or pass them as `unobserved`: their stations and outgoing arrows are dashed. |
+| Arrange the variables so that all arcs flow in the same direction, for example left to right or top to bottom. | Every metrodag layout does this: each arrow advances along `direction`, which is `"right"` by default or can be `"down"`. |
+| State the adjustment sets that the DAG implies for each estimand. | The set passed as `adjusted`, or declared `[adjusted]`, is listed in the subtitle and drawn as squares with an "Adjusted" legend key; `unadjusted = TRUE` reports an empty set. |
+| Justify any alternative adjustment set and report its estimate separately. | Draw each set as a view of one layout with `compare_metro_dags()`, as in the recipe. |
 
-Recommendation 5 (assume, in general, that an arc exists between any two
-variables) and recommendation 7 (report the estimate from the unmodified
-adjustment set that the DAG implies, or its nearest approximation) concern the
-model and the analysis rather than the figure; metrodag draws exactly the
-arrows you supply. The recommendations do not cover selection. If a study
-conditions on selection, for example by including only people admitted to
-hospital, mark that variable as `selected` (DAGitty's `[selected]`). It is
-drawn as a double-outlined square and listed as "Selected (conditioned on)" in
-the legend.
+Two of the recommendations concern the model and the analysis rather than the
+figure: assume, in general, that an arc exists between any two variables, and
+report the estimate from the unmodified adjustment set that the DAG implies,
+or its nearest approximation. metrodag draws exactly the arrows you supply.
+
+The recommendations do not cover selection. If a study conditions on
+selection, for example by including only people admitted to hospital, mark
+that variable as `selected` (DAGitty's `[selected]`). It is drawn as a
+double-outlined square and listed as "Selected (conditioned on)" in the
+legend.
 
 Suppose `Z1` was not measured. Declaring it latent keeps it in the DAG, and
 dagitty then finds a single minimal set. Recording the chosen set in the same
