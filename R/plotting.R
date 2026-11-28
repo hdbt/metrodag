@@ -89,8 +89,9 @@
 #'   positive offsets move right/up. Nodes and routes are unchanged. Resulting
 #'   label collisions are still reported at draw time.
 #' @param exposure,outcome,adjusted,unobserved,selected Character vectors of node
-#'   names. Numbers and factors are converted with [as.character()], so
-#'   `exposure = 1` selects the node named `"1"`.
+#'   names. Numbers name nodes as numeric edge tables do, and factors by their
+#'   labels, so `exposure = 1` selects the node named `"1"` and
+#'   `exposure = 1e5` the node named `"100000"`.
 #'   `selected` marks variables the study conditions on through selection
 #'   (for example hospital admission); they are drawn as squares with a
 #'   double outline and are not adjustment covariates.

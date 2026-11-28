@@ -104,8 +104,9 @@ NULL disables wrapping.}
 \item{family}{Font family, default \code{"sans"}.}
 
 \item{exposure, outcome, adjusted, unobserved, selected}{Character vectors of node
-names. Numbers and factors are converted with \code{\link[=as.character]{as.character()}}, so
-\code{exposure = 1} selects the node named \code{"1"}.
+names. Numbers name nodes as numeric edge tables do, and factors by their
+labels, so \code{exposure = 1} selects the node named \code{"1"} and
+\code{exposure = 1e5} the node named \code{"100000"}.
 \code{selected} marks variables the study conditions on through selection
 (for example hospital admission); they are drawn as squares with a
 double outline and are not adjustment covariates.

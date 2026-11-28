@@ -1,6 +1,9 @@
 #' Validate and normalize a DAG
+#'
+#' `warn_spaces = FALSE` leaves the warning about names that differ only by
+#' white space to a later check of the same graph.
 #' @noRd
-.as_dag <- function(graph, bidirected = "error", argument = "graph") {
+.as_dag <- function(graph, bidirected = "error", argument = "graph", warn_spaces = TRUE) {
   if (inherits(graph, "tidy_dagitty")) graph <- .from_ggdag(graph, bidirected)
   if (inherits(graph, "dagitty")) graph <- .from_dagitty(graph, bidirected)
   if (!inherits(graph, "igraph")) .metro_graph_input_error(graph, argument)
@@ -20,11 +23,12 @@
   # igraph permits numeric name attributes. Treat them as identifiers, as we
   # do for edge tables, rather than numeric row/column indices during rendering.
   missing_names <- anyNA(nm)
-  nm <- as.character(nm)
+  nm <- .metro_node_names(nm)
   if (missing_names || anyNA(nm) || any(!nzchar(nm)) || anyDuplicated(nm))
     stop("Vertex names must be non-empty, non-missing and unique.", call. = FALSE)
   igraph::V(graph)$name <- nm
   .metro_assert_simple_dag(graph, argument)
+  if (warn_spaces) .metro_warn_padded_names(nm)
   graph
 }
 
@@ -132,6 +136,44 @@
   invisible(TRUE)
 }
 
+# Node identifiers as node names, for graph inputs and for the role and
+# edge_style arguments that name nodes. as.character() writes the number
+# 100000 as "1e+05", so whole numbers below 2^53, which doubles hold exactly,
+# are written in full. Other numbers, zero (sprintf() writes -0 as "-0") and
+# classed values such as dates are written as as.character() writes them.
+# Names are kept in UTF-8: they break layout ties in byte order, which must
+# not depend on the encoding the input declared.
+.metro_node_names <- function(x) {
+  text <- as.character(x)
+  if (is.numeric(x) && !is.object(x)) {
+    whole <- is.finite(x) & x == round(x) & abs(x) < 2^53 & x != 0
+    text[whole] <- sprintf("%.0f", x[whole])
+  }
+  enc2utf8(text)
+}
+
+# Names that differ only by white space at their ends, such as "Smoking " and
+# "Smoking", are separate nodes that look alike in a figure, and separate
+# variables for adjustment checks. Say which, but keep the names as given.
+.metro_warn_padded_names <- function(nm) {
+  key <- trimws(nm)
+  padded <- unique(key[duplicated(key)])
+  if (!length(padded)) return(invisible(FALSE))
+  # Show at most five sets, each quoted and escaped so that the white space shows.
+  sets <- vapply(head(padded, 5L), function(k) .metro_quote_list(encodeString(nm[key == k],
+    quote = "\""), quote = ""), character(1), USE.NAMES = FALSE)
+  if (length(padded) == 1L) {
+    warning(sprintf(paste("Node names %s differ only by white space at their ends, so they are",
+      "separate nodes. Remove the white space if they name the same variable."), sets), call. = FALSE)
+  } else {
+    if (length(padded) > 5L) sets <- c(sets, sprintf("and %d more", length(padded) - 5L))
+    warning(sprintf(paste("Node names differ only by white space at their ends, so these are",
+      "separate nodes: %s. Remove the white space where they name the same variable."),
+      paste(sets, collapse = "; ")), call. = FALSE)
+  }
+  invisible(TRUE)
+}
+
 # What a graph argument received, for messages that reject it.
 .metro_describe_input <- function(x) {
   if (is.null(x)) return("NULL")
@@ -180,17 +222,20 @@
 # Normalize all public graph inputs consistently, including numeric identifiers.
 # `layout` and `plot` only describe what the calling entry point also accepts
 # in error messages: metro_dag() and compare_metro_dags() take a layout too.
+# `warn_spaces` is passed to .as_dag().
 .as_metro_input <- function(graph, bidirected = "error", argument = "graph",
-  layout = TRUE, plot = FALSE) {
+  layout = TRUE, plot = FALSE, warn_spaces = TRUE) {
   if (inherits(graph, "tidy_dagitty") || inherits(graph, "dagitty"))
-    return(.as_dag(graph, bidirected, argument))
+    return(.as_dag(graph, bidirected, argument, warn_spaces))
   if (is.data.frame(graph)) {
     if (!all(c("from", "to") %in% names(graph)))
       stop(sprintf("An edge data frame must contain `from` and `to` columns; `%s` has %s.",
         argument, if (length(names(graph))) paste("columns", .metro_quote_list(names(graph)))
         else "no columns"), call. = FALSE)
     .metro_check_endpoints(graph$from, graph$to, argument)
-    graph <- igraph::graph_from_data_frame(graph[, c("from", "to"), drop = FALSE], directed = TRUE)
+    # Name the nodes here: igraph would write the node 100000 as "1e+05".
+    graph <- igraph::graph_from_data_frame(data.frame(from = .metro_node_names(graph$from),
+      to = .metro_node_names(graph$to)), directed = TRUE)
   } else if (is.matrix(graph)) {
     # Named `from` and `to` columns are matched by name, as for data frames,
     # so a matrix such as as.matrix(edges[, c("to", "from")]) keeps direction.
@@ -213,11 +258,11 @@
         call. = FALSE)
     }
     .metro_check_endpoints(graph[, 1L], graph[, 2L], argument)
-    graph <- igraph::graph_from_edgelist(matrix(as.character(graph), ncol = 2L), directed = TRUE)
+    graph <- igraph::graph_from_edgelist(matrix(.metro_node_names(graph), ncol = 2L), directed = TRUE)
   } else if (!inherits(graph, "igraph")) {
     .metro_graph_input_error(graph, argument, layout, plot)
   }
-  .as_dag(graph, argument = argument)
+  .as_dag(graph, argument = argument, warn_spaces = warn_spaces)
 }
 
 # Rendering and metrics must refer to the same complete set of stations.

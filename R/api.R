@@ -67,7 +67,8 @@ metro_dag <- function(graph, direction = "right", labels = TRUE,
       stop("When reusing a layout, omit direction, rank, layering, ordering, sweeps, align and bidirected.", call. = FALSE)
     layout <- graph
   } else {
-    graph <- .as_metro_input(graph, bidirected)
+    # layout_metro_dag() checks the graph again, and warns about its names once.
+    graph <- .as_metro_input(graph, bidirected, warn_spaces = FALSE)
     layout <- layout_metro_dag(graph, direction, rank, layering, ordering, sweeps, align = align)
   }
   args <- c(list(layout = layout, labels = labels, exposure = exposure, outcome = outcome,

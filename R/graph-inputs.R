@@ -63,7 +63,7 @@ metro_graph <- function(nodes, edges = NULL) .metro_graph(nodes, edges)
 .metro_input_ids <- function(x, argument) {
   if (!is.atomic(x) || !is.null(dim(x)) || anyNA(x))
     stop(sprintf("`%s` must contain non-missing, non-empty node identifiers.", argument), call. = FALSE)
-  x <- as.character(x)
+  x <- .metro_node_names(x)
   if (anyNA(x) || any(!nzchar(x)))
     stop(sprintf("`%s` must contain non-missing, non-empty node identifiers.", argument), call. = FALSE)
   x

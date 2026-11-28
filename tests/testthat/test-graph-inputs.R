@@ -184,3 +184,79 @@ test_that("table and adjacency exports keep every causal arrow and isolated stat
     expect_equal(igraph::degree(attr(p, "metrodag_layout")$graph, "I"), c(I = 0))
   }
 })
+
+test_that("whole-number identifiers name nodes in full in every input and role argument", {
+  ids <- c("100000", "200000", "300000")
+  edges <- data.frame(from = c(100000, 200000), to = c(200000, 300000))
+  g <- igraph::make_ring(3, directed = TRUE, circular = FALSE)
+  igraph::V(g)$name <- c(1e5, 2e5, 3e5)
+  inputs <- list(edges, as.matrix(edges), unname(as.matrix(edges)), g,
+    metro_graph(data.frame(name = c(1e5, 2e5, 3e5)), edges))
+  for (input in inputs) expect_identical(igraph::V(.as_metro_input(input))$name, ids)
+  p <- metro_dag(edges, exposure = 100000, outcome = 3e5, adjusted = "200000",
+    edge_style = data.frame(from = 1e5, to = 2e5, colour = "red"))
+  expect_identical(attr(p, "metrodag_analysis")[c("exposure", "outcome", "adjusted")],
+    list(exposure = "100000", outcome = "300000", adjusted = "200000"))
+  params <- Find(function(l) inherits(l$geom, "GeomMetroDag"), p$layers)$geom_params
+  expect_identical(params$nodes$label, ids)
+  expect_identical(unique(params$edges$colour[params$edges$from == "100000"]), "red")
+  if (requireNamespace("dagitty", quietly = TRUE))
+    expect_identical(check_metro_adjustment(edges, exposure = 1e5, outcome = 300000,
+      unadjusted = TRUE)$exposure, "100000")
+  # Other values keep their as.character() text; -0 is "0", as it always was.
+  expect_identical(.metro_node_names(c(1e5, -1e5, 123456, 0.5, -0, 2^53, NA)),
+    c("100000", "-100000", "123456", "0.5", "0", as.character(2^53), NA))
+  expect_identical(.metro_node_names(c(100000L, NA)), c("100000", NA))
+  expect_identical(.metro_node_names(as.Date("2024-01-31")), "2024-01-31")
+})
+
+test_that("names that differ only by white space at their ends stay apart, with one warning", {
+  warned <- function(expr) {
+    found <- character()
+    withCallingHandlers(expr, warning = function(w) {
+      found <<- c(found, conditionMessage(w))
+      invokeRestart("muffleWarning")
+    })
+    found
+  }
+  # One arrow spells Smoking with a trailing space, so Age seems not to confound it.
+  edges <- data.frame(from = c("Age", "Age", "Smoking"), to = c("Smoking ", "Cancer", "Cancer"))
+  message <- paste("Node names \"Smoking\" and \"Smoking \" differ only by white space at their ends,",
+    "so they are separate nodes. Remove the white space if they name the same variable.")
+  expect_identical(warned(layout <- layout_metro_dag(edges)), message)
+  expect_identical(igraph::V(layout$graph)$name, c("Age", "Smoking", "Smoking ", "Cancer"))
+  expect_identical(warned(metro_dag(edges, exposure = "Smoking", outcome = "Cancer")), message)
+  expect_identical(warned(compare_metro_dags(edges, list(A = list(exposure = "Smoking")))), message)
+  expect_identical(warned(metro_graph(data.frame(name = c("Smoking", "Smoking ")))), message)
+  if (requireNamespace("dagitty", quietly = TRUE))
+    expect_identical(warned(check_metro_adjustment(edges, exposure = "Smoking", outcome = "Cancer",
+      unadjusted = TRUE)), message)
+  # The wording of the warning does not need a layout.
+  several <- data.frame(from = c("A ", " B", "C", "D\t", "E", "F "),
+    to = c("A", "B", "C ", "D", "E\n", "F"))
+  expect_identical(warned(.as_metro_input(several)), paste("Node names differ only by white space",
+    "at their ends, so these are separate nodes: \"A \" and \"A\"; \" B\" and \"B\"; \"C\" and \"C \";",
+    "\"D\\t\" and \"D\"; \"E\" and \"E\\n\"; and 1 more. Remove the white space where they name the",
+    "same variable."))
+  expect_identical(warned(.as_metro_input(data.frame(from = c("A ", " A"), to = "A"))), paste(
+    "Node names \"A \", \" A\" and \"A\" differ only by white space at their ends, so they are",
+    "separate nodes. Remove the white space if they name the same variable."))
+  expect_no_warning(.as_metro_input(data.frame(from = c("smoking", "Smoking status"),
+    to = c("Smoking", "Smoking  status"))))
+})
+
+test_that("a name declared in latin1 or in UTF-8 gives the same layout", {
+  utf8 <- "\u00e9tude"
+  latin <- iconv(utf8, "UTF-8", "latin1")
+  expect_identical(Encoding(latin), "latin1")
+  # Layout ties between the children of X are broken by name, in byte order.
+  edges <- function(name) data.frame(from = c("X", "X", "X", name), to = c(name, "\u00fcber", "Y", "Z"))
+  reference <- layout_metro_dag(edges(utf8))
+  for (input in list(edges(latin), as.matrix(edges(latin)),
+      igraph::graph_from_data_frame(edges(latin)))) {
+    layout <- layout_metro_dag(input)
+    expect_identical(layout$nodes, reference$nodes)
+    expect_identical(layout$edges, reference$edges)
+    expect_identical(Encoding(igraph::V(layout$graph)$name), Encoding(igraph::V(reference$graph)$name))
+  }
+})

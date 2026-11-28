@@ -31,10 +31,11 @@
   hidden <- .metro_hidden_nodes(layout$graph)
   for (key in names(roles)) {
     value <- roles[[key]]
-    # Numeric edge tables give nodes such as "1"; accept exposure = 1 for them.
+    # Numeric edge tables give nodes such as "1"; accept exposure = 1 for them,
+    # naming nodes as edge tables do (exposure = 1e5 is "100000").
     # A bare NA is logical; report it as the missing value it is.
     if (is.numeric(value) || is.factor(value) || (is.logical(value) && length(value) && all(is.na(value))))
-      value <- as.character(value)
+      value <- .metro_node_names(value)
     if (!is.null(value)) {
       if (!is.character(value))
         stop(sprintf("`%s` must be a character vector of node names.", key), call. = FALSE)

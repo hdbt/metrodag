@@ -172,8 +172,11 @@
 #'   names them. DAGitty input requires
 #'   the optional dagitty package; ggdag tidy input also requires ggdag. Both
 #'   must contain only directed edges with supported analysis annotations.
-#'   Vertex names are normalized to character identifiers, including numeric
-#'   igraph names. The supplied graph is not modified.
+#'   Vertex names are normalized to character identifiers in UTF-8, including
+#'   numeric igraph names. Whole numbers are written in full, so the node
+#'   100000 is named `"100000"`, not `"1e+05"`. Names that differ only by white
+#'   space at their ends, such as `"Smoking "` and `"Smoking"`, stay separate
+#'   nodes, with a warning. The supplied graph is not modified.
 #' @param direction One of `"right"`, `"down"`, `"up"`, or `"left"`. Defaults
 #'   to `"right"`, matching [metro_dag()].
 #' @param rank Optional numeric vector of user-supplied ranks, named by node or
