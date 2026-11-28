@@ -55,7 +55,13 @@ R CMD check --as-cran metrodag_0.3.0.tar.gz
 The routine package check exercises the public workflows in a shorter test
 suite. Set `NOT_CRAN=true` to run the full suite during package checks, as the
 release and old-release GitHub jobs do. The R-devel job exercises the CRAN
-test selection. Test files run in parallel; "Running the tests" in
+test selection, and the no-Suggests job runs it with only Depends and Imports
+(and testthat) installed, so the noSuggests check needs no manual run. The
+R 4.1 job checks the declared floor and does not block yet. The weekly run,
+which can also be started by hand, checks against development ggplot2 and
+patchwork and writes covr coverage, `urlchecker::url_check()` and
+`spelling::spell_check_package()` results to its summary; read the latest one
+before a submission. Test files run in parallel; "Running the tests" in
 `CONTRIBUTING.md` shows how to set the number of workers and how to run the
 CRAN selection against ggplot2 3.4.4 before merging. The GitHub README and its
 benchmark figures stay in the repository. The source tarball includes the four

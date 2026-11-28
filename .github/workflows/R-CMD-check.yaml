@@ -1,28 +1,43 @@
-# Based on the r-lib/actions check-standard workflow.
+# Based on the r-lib/actions check-standard, check-no-suggests and
+# test-coverage example workflows.
 name: R-CMD-check
 on:
   push:
     branches: [main]
   pull_request:
+  # Weekly, to catch changes in dependencies, and by hand from the Actions
+  # tab. Only these two events run the ggplot2-devel and maintenance jobs.
+  schedule:
+    - cron: '17 5 * * 1'
+  workflow_dispatch:
 permissions:
   contents: read
 concurrency:
-  group: R-CMD-check-${{ github.ref }}
+  # The event name keeps a scheduled or manual run on main from cancelling a
+  # push run on main, or being cancelled by one.
+  group: R-CMD-check-${{ github.event_name }}-${{ github.ref }}
   cancel-in-progress: true
 jobs:
   check:
     runs-on: ${{ matrix.config.os }}
     timeout-minutes: 120
     name: ${{ matrix.config.os }} / R ${{ matrix.config.r }} / ggplot2 ${{ matrix.config.ggplot }}
+    # An experimental entry shows its failures but does not fail the run.
+    continue-on-error: ${{ matrix.config.experimental }}
     strategy:
       fail-fast: false
       matrix:
         config:
-          - {os: ubuntu-latest, r: release, ggplot: current}
-          - {os: windows-latest, r: release, ggplot: current}
-          - {os: macos-latest, r: release, ggplot: current}
-          - {os: ubuntu-latest, r: oldrel-1, ggplot: '3.4.4'}
-          - {os: ubuntu-latest, r: devel, ggplot: current}
+          - {os: ubuntu-latest, r: release, ggplot: current, experimental: false}
+          - {os: windows-latest, r: release, ggplot: current, experimental: false}
+          - {os: macos-latest, r: release, ggplot: current, experimental: false}
+          - {os: ubuntu-latest, r: oldrel-1, ggplot: '3.4.4', experimental: false}
+          - {os: ubuntu-latest, r: devel, ggplot: current, experimental: false}
+          # The declared floor, R (>= 4.1.0), with the oldest supported
+          # ggplot2. Non-blocking for now, as current releases of some
+          # dependencies may no longer support R 4.1. Make it blocking
+          # (experimental: false) once it is green.
+          - {os: ubuntu-latest, r: '4.1', ggplot: '3.4.4', experimental: true}
     env:
       GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
       R_KEEP_PKG_SOURCE: yes
@@ -105,3 +120,172 @@ jobs:
         run: |
           R CMD INSTALL .
           Rscript -e 'testthat::test_local(filter = "^documentation-coverage$", load_package = "installed")'
+
+  no-suggests:
+    # Depends and Imports only, plus testthat for the tests, as in CRAN's
+    # noSuggests checks: the CRAN test selection must skip cleanly without the
+    # suggested packages. knitr and rmarkdown are suggested too, so the
+    # vignettes are neither built nor checked. No package cache, as in the
+    # r-lib check-no-suggests example: a restored library could bring back a
+    # suggested package.
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    name: ubuntu-latest / R release / no Suggests
+    env:
+      GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
+      R_KEEP_PKG_SOURCE: yes
+      _R_CHECK_FORCE_SUGGESTS_: false
+    steps:
+      - uses: actions/checkout@v6
+      - uses: r-lib/actions/setup-pandoc@v2
+      - uses: r-lib/actions/setup-r@v2
+        with:
+          use-public-rspm: true
+      - uses: r-lib/actions/setup-r-dependencies@v2
+        with:
+          dependencies: '"hard"'
+          cache: false
+          extra-packages: |
+            any::rcmdcheck
+            any::testthat
+      - uses: r-lib/actions/check-r-package@v2
+        env:
+          NOT_CRAN: false
+        with:
+          build_args: 'c("--no-manual", "--no-build-vignettes")'
+          args: 'c("--no-manual", "--as-cran", "--ignore-vignettes")'
+          error-on: '"warning"'
+
+  ggplot2-devel:
+    # The development versions of ggplot2 and patchwork, as an early warning
+    # of upstream changes: weekly and on demand only, to save Actions
+    # minutes, and experimental, so a failure does not fail the run. Its own
+    # cache-version keeps the development versions out of the release jobs'
+    # package cache, and the matrix id keeps its check-r-package artifact
+    # names apart from those of the ubuntu release job.
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    runs-on: ${{ matrix.config.os }}
+    timeout-minutes: 120
+    name: ${{ matrix.config.os }} / R ${{ matrix.config.r }} / ggplot2 ${{ matrix.config.ggplot }}
+    continue-on-error: ${{ matrix.config.experimental }}
+    strategy:
+      fail-fast: false
+      matrix:
+        config:
+          - {os: ubuntu-latest, r: release, ggplot: devel, experimental: true, id: ggplot2-devel}
+    env:
+      GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
+      R_KEEP_PKG_SOURCE: yes
+    steps:
+      - uses: actions/checkout@v6
+      - uses: r-lib/actions/setup-pandoc@v2
+      - uses: r-lib/actions/setup-r@v2
+        with:
+          r-version: ${{ matrix.config.r }}
+          use-public-rspm: true
+      - uses: r-lib/actions/setup-r-dependencies@v2
+        with:
+          extra-packages: |
+            any::rcmdcheck
+            github::tidyverse/ggplot2
+            github::thomasp85/patchwork
+          needs: check
+          cache-version: ggplot2-devel
+      - name: Use every core for the full test suite
+        shell: Rscript {0}
+        run: |
+          cat(sprintf("TESTTHAT_CPUS=%d\n", parallel::detectCores()),
+            file = Sys.getenv("GITHUB_ENV"), append = TRUE)
+      - uses: r-lib/actions/check-r-package@v2
+        env:
+          NOT_CRAN: true
+        with:
+          build_args: 'c("--no-manual")'
+          args: 'c("--no-manual", "--as-cran")'
+          error-on: '"warning"'
+          upload-snapshots: true
+
+  maintenance:
+    # Weekly and on demand: test coverage, URLs and spelling, written to the
+    # run's summary page; no external service or token. Failing tests and
+    # broken URLs fail the job, possible misspellings do not. Each check runs
+    # even when an earlier one has failed. covr makes the full suite about
+    # nine times slower, hence the longer timeout.
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    name: ubuntu-latest / R release / coverage, URLs and spelling
+    env:
+      GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
+    steps:
+      - uses: actions/checkout@v6
+      - uses: r-lib/actions/setup-pandoc@v2
+      - uses: r-lib/actions/setup-r@v2
+        with:
+          use-public-rspm: true
+      - uses: r-lib/actions/setup-r-dependencies@v2
+        id: deps
+        with:
+          extra-packages: |
+            any::covr
+            any::urlchecker
+            any::spelling
+          needs: coverage
+      - name: Test coverage of the full suite
+        env:
+          NOT_CRAN: true
+        shell: Rscript {0}
+        run: |
+          Sys.setenv(TESTTHAT_CPUS = parallel::detectCores())
+          cov <- covr::package_coverage(quiet = FALSE)
+          print(cov)
+          lines <- covr::tally_coverage(cov, by = "line")
+          n <- tapply(lines$value, lines$filename, length)
+          hit <- tapply(lines$value > 0, lines$filename, sum)
+          row <- function(file, n, hit)
+            sprintf("| %s | %d | %d | %.1f%% |", file, n, hit, 100 * hit / n)
+          cat("## Test coverage", "",
+            "Lines run by the full test suite (`NOT_CRAN=true`).", "",
+            "| File | Lines | Covered | Coverage |", "|:--|--:|--:|--:|",
+            row(names(n), n, hit), row("**Total**", sum(n), sum(hit)), "",
+            file = Sys.getenv("GITHUB_STEP_SUMMARY"), sep = "\n", append = TRUE)
+      - name: Check URLs
+        if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
+        shell: Rscript {0}
+        run: |
+          res <- urlchecker::url_check()
+          # urlchecker names R Markdown vignettes by absolute path, which its
+          # print method cannot open; make every path relative to the package.
+          root <- paste0(normalizePath(".", winslash = "/"), "/")
+          if (nrow(res)) res$From <- lapply(res$From, function(f)
+            sub(root, "", normalizePath(f, winslash = "/", mustWork = FALSE), fixed = TRUE))
+          # A permanent redirect to a working page is reported (fix it with
+          # urlchecker::url_update()) but is not broken.
+          moved <- nzchar(res$New) & !nzchar(res$CRAN) & res$Status %in% c("200", "405")
+          problem <- ifelse(moved, paste("Moved to", res$New),
+            ifelse(nzchar(res$CRAN), "CRAN URL not in canonical form",
+              trimws(paste(res$Status, res$Message))))
+          from <- vapply(res$From, paste, "", collapse = ", ")
+          cell <- function(x) gsub("|", "&#124;", gsub("[[:space:]]+", " ", x), fixed = TRUE)
+          cat("## URLs", "",
+            if (nrow(res) == 0) "No problems found." else c(
+              "| URL | Found in | Problem |", "|:--|:--|:--|",
+              sprintf("| %s | %s | %s |", cell(res$URL), cell(from), cell(problem))), "",
+            file = Sys.getenv("GITHUB_STEP_SUMMARY"), sep = "\n", append = TRUE)
+          print(res)
+          if (any(!moved)) stop(sum(!moved), " broken URL(s); see the run summary.", call. = FALSE)
+      - name: Check spelling (report only)
+        if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
+        shell: Rscript {0}
+        run: |
+          # Language: en-GB in DESCRIPTION, with the words in inst/WORDLIST.
+          words <- spelling::spell_check_package()
+          print(words)
+          where <- vapply(words$found, paste, "", collapse = ", ")
+          cat("## Spelling (en-GB)", "",
+            if (nrow(words) == 0) "No possible misspellings." else c(
+              paste(nrow(words), "possible misspellings, which do not fail the job.",
+                "Correct them or add them to `inst/WORDLIST`."), "",
+              "| Word | Found in |", "|:--|:--|",
+              sprintf("| %s | %s |", words$word, where)), "",
+            file = Sys.getenv("GITHUB_STEP_SUMMARY"), sep = "\n", append = TRUE)
