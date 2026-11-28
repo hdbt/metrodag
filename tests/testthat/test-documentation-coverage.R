@@ -19,9 +19,18 @@
     label = paste("exports missing from", source))
 }
 
+# .Rbuildignore drops README.md and pkgdown/ from the source package, so their
+# tests skip under R CMD check. GitHub CI also runs this file from the
+# repository checkout with METRODAG_SOURCE_TESTS=true, where a missing file is
+# an error rather than a skip.
 .source_file <- function(...) {
   path <- test_path("..", "..", ...)
-  skip_if_not(file.exists(path), paste(file.path(...), "is not in the installed package"))
+  if (!file.exists(path)) {
+    if (isTRUE(as.logical(Sys.getenv("METRODAG_SOURCE_TESTS"))))
+      stop(file.path(...), " is missing, but METRODAG_SOURCE_TESTS=true ",
+        "requires a source checkout", call. = FALSE)
+    skip(paste(file.path(...), "is not in the installed package"))
+  }
   paste(readLines(path, encoding = "UTF-8", warn = FALSE), collapse = "\n")
 }
 

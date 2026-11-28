@@ -92,3 +92,16 @@ jobs:
             t <- stats::median(replicate(3, system.time(layout_metro_dag(metrodag_examples("causal")))[["elapsed"]]))
             cat(sprintf("causal layout %.2f s (reference %.2f s)\n", t, ref))
             if (t > 4 * ref) stop("Layout is more than four times slower than the recorded reference.")'
+      # .Rbuildignore drops README.md and pkgdown/, so R CMD check skips the
+      # README and home page tests. Run them from the checkout, where
+      # METRODAG_SOURCE_TESTS=true turns a missing file into a failure. The
+      # step installs the package with its help pages (the speed guard does
+      # not); testthat and svglite are installed above as Suggests.
+      - name: Documentation tests from the checkout
+        if: matrix.config.os == 'ubuntu-latest' && matrix.config.r == 'release'
+        env:
+          NOT_CRAN: true
+          METRODAG_SOURCE_TESTS: true
+        run: |
+          R CMD INSTALL .
+          Rscript -e 'testthat::test_local(filter = "^documentation-coverage$", load_package = "installed")'

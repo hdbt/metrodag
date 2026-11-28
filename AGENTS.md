@@ -47,7 +47,10 @@ new test file there only if it is fast and covers a public workflow.
   article indexes in `_pkgdown.yml`.
 - `tests/testthat/test-documentation-coverage.R` checks that the README and
   the help page name every exported function and no unexported one, and runs
-  the README and home page code. Update these files when the API changes.
+  the README and home page code. `R CMD check` skips the README and home page
+  tests because `.Rbuildignore` drops those files; the Ubuntu release CI job
+  runs them from the checkout with `METRODAG_SOURCE_TESTS=true`, which turns a
+  missing file into a failure. Update these files when the API changes.
 - README links must be absolute URLs: many repository files are excluded from
   the source package by `.Rbuildignore`.
 - Add a bullet to `NEWS.md` for user-visible changes.
