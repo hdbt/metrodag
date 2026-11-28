@@ -1,13 +1,23 @@
-# Based on the r-lib/actions check-standard workflow.
+# Based on the r-lib/actions check-standard, check-no-suggests and
+# test-coverage example workflows.
 name: R-CMD-check
 on:
   push:
     branches: [main]
   pull_request:
+  # Weekly, to catch changes in dependencies, and by hand from the Actions
+  # tab. Only these two events run the ggplot2-devel and maintenance jobs.
+  # GitHub disables scheduled workflows after 60 days without activity in
+  # the repository; re-enable this one from the Actions tab if that happens.
+  schedule:
+    - cron: '17 5 * * 1'
+  workflow_dispatch:
 permissions:
   contents: read
 concurrency:
-  group: R-CMD-check-${{ github.ref }}
+  # The event name keeps a scheduled or manual run on main from cancelling a
+  # push run on main, or being cancelled by one.
+  group: R-CMD-check-${{ github.event_name }}-${{ github.ref }}
   cancel-in-progress: true
 jobs:
   check:
@@ -92,3 +102,235 @@ jobs:
             t <- stats::median(replicate(3, system.time(layout_metro_dag(metrodag_examples("causal")))[["elapsed"]]))
             cat(sprintf("causal layout %.2f s (reference %.2f s)\n", t, ref))
             if (t > 4 * ref) stop("Layout is more than four times slower than the recorded reference.")'
+      # .Rbuildignore drops README.md and pkgdown/, so R CMD check skips the
+      # README and home page tests. Run them from the checkout, where
+      # METRODAG_SOURCE_TESTS=true turns a missing file into a failure. The
+      # step installs the package with its help pages (the speed guard does
+      # not); testthat and svglite are installed above as Suggests.
+      - name: Documentation tests from the checkout
+        if: matrix.config.os == 'ubuntu-latest' && matrix.config.r == 'release'
+        env:
+          NOT_CRAN: true
+          METRODAG_SOURCE_TESTS: true
+        run: |
+          R CMD INSTALL .
+          Rscript -e 'testthat::test_local(filter = "^documentation-coverage$", load_package = "installed")'
+
+  no-suggests:
+    # Depends and Imports only, plus testthat for the tests, as in CRAN's
+    # noSuggests checks: the CRAN test selection must skip cleanly without the
+    # suggested packages. knitr and rmarkdown are suggested too, so the
+    # vignettes are neither built nor checked. No package cache, as in the
+    # r-lib check-no-suggests example: a restored library could bring back a
+    # suggested package.
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    name: ubuntu-latest / R release / no Suggests
+    env:
+      GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
+      R_KEEP_PKG_SOURCE: yes
+      _R_CHECK_FORCE_SUGGESTS_: false
+    steps:
+      - uses: actions/checkout@v6
+      - uses: r-lib/actions/setup-pandoc@v2
+      - uses: r-lib/actions/setup-r@v2
+        with:
+          use-public-rspm: true
+      - uses: r-lib/actions/setup-r-dependencies@v2
+        with:
+          dependencies: '"hard"'
+          cache: false
+          extra-packages: |
+            any::rcmdcheck
+            any::testthat
+      - uses: r-lib/actions/check-r-package@v2
+        env:
+          NOT_CRAN: false
+        with:
+          build_args: 'c("--no-manual", "--no-build-vignettes")'
+          args: 'c("--no-manual", "--as-cran", "--ignore-vignettes")'
+          error-on: '"warning"'
+
+  r-floor:
+    # The declared floor, R (>= 4.1.0). Today's CRAN no longer installs on
+    # R 4.1: ggplot2 4 needs S7, which needs R 4.2, and Matrix and MASS need
+    # R 4.4. So this job takes every package from a snapshot of CRAN made on
+    # 15 February 2024, when ggplot2 3.4.4 was current and R 4.1 supported:
+    # setup-r uses the RSPM variable and its cran input as the repositories.
+    # Like the no-Suggests job, it installs only Depends, Imports and testthat
+    # and skips the vignettes. Non-blocking until it has been green for a
+    # while; then remove continue-on-error.
+    runs-on: ubuntu-22.04
+    timeout-minutes: 60
+    name: ubuntu-22.04 / R 4.1 / CRAN snapshot 2024-02-15
+    continue-on-error: true
+    env:
+      GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
+      R_KEEP_PKG_SOURCE: yes
+      RSPM: https://packagemanager.posit.co/cran/__linux__/jammy/2024-02-15
+      _R_CHECK_FORCE_SUGGESTS_: false
+    steps:
+      - uses: actions/checkout@v6
+      - uses: r-lib/actions/setup-r@v2
+        with:
+          r-version: '4.1'
+          cran: https://packagemanager.posit.co/cran/__linux__/jammy/2024-02-15
+      - uses: r-lib/actions/setup-r-dependencies@v2
+        with:
+          dependencies: '"hard"'
+          cache: false
+          # Left on "auto", these resolve every Suggests entry to decide
+          # whether pandoc is needed, and the snapshot predates ggdag 0.2.13.
+          # The vignettes are skipped, so neither tool is needed.
+          install-pandoc: false
+          install-quarto: false
+          extra-packages: |
+            any::rcmdcheck
+            any::testthat
+      - uses: r-lib/actions/check-r-package@v2
+        env:
+          NOT_CRAN: false
+        with:
+          build_args: 'c("--no-manual", "--no-build-vignettes")'
+          args: 'c("--no-manual", "--ignore-vignettes")'
+          error-on: '"error"'
+
+  ggplot2-devel:
+    # The development versions of ggplot2 and patchwork, as an early warning
+    # of upstream changes: weekly and on demand only, to save Actions
+    # minutes. It never runs on pull requests, so it cannot block one; a
+    # failure fails the weekly run, which is what notifies the maintainer.
+    # Its own cache-version keeps the development versions out of the release
+    # jobs' package cache, and the matrix id keeps its check-r-package
+    # artifact names apart from those of the ubuntu release job.
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    runs-on: ${{ matrix.config.os }}
+    timeout-minutes: 120
+    name: ${{ matrix.config.os }} / R ${{ matrix.config.r }} / ggplot2 ${{ matrix.config.ggplot }}
+    strategy:
+      fail-fast: false
+      matrix:
+        config:
+          - {os: ubuntu-latest, r: release, ggplot: devel, id: ggplot2-devel}
+    env:
+      GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
+      R_KEEP_PKG_SOURCE: yes
+    steps:
+      - uses: actions/checkout@v6
+      - uses: r-lib/actions/setup-pandoc@v2
+      - uses: r-lib/actions/setup-r@v2
+        with:
+          r-version: ${{ matrix.config.r }}
+          use-public-rspm: true
+      - uses: r-lib/actions/setup-r-dependencies@v2
+        with:
+          extra-packages: |
+            any::rcmdcheck
+            github::tidyverse/ggplot2
+            github::thomasp85/patchwork
+          needs: check
+          cache-version: ggplot2-devel
+      - name: Use every core for the full test suite
+        shell: Rscript {0}
+        run: |
+          cat(sprintf("TESTTHAT_CPUS=%d\n", parallel::detectCores()),
+            file = Sys.getenv("GITHUB_ENV"), append = TRUE)
+      - uses: r-lib/actions/check-r-package@v2
+        env:
+          NOT_CRAN: true
+        with:
+          build_args: 'c("--no-manual")'
+          args: 'c("--no-manual", "--as-cran")'
+          error-on: '"warning"'
+          upload-snapshots: true
+
+  maintenance:
+    # Weekly and on demand: test coverage, URLs and spelling, written to the
+    # run's summary page; no external service or token. Failing tests and
+    # broken URLs fail the job, possible misspellings do not. Each check runs
+    # even when an earlier one has failed. covr makes the full suite about
+    # nine times slower, hence the longer timeout.
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    name: ubuntu-latest / R release / coverage, URLs and spelling
+    env:
+      GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
+    steps:
+      - uses: actions/checkout@v6
+      - uses: r-lib/actions/setup-pandoc@v2
+      - uses: r-lib/actions/setup-r@v2
+        with:
+          use-public-rspm: true
+      - uses: r-lib/actions/setup-r-dependencies@v2
+        id: deps
+        with:
+          extra-packages: |
+            any::covr
+            any::urlchecker
+            any::spelling
+          needs: coverage
+      - name: Test coverage of the full suite
+        env:
+          NOT_CRAN: true
+        shell: Rscript {0}
+        run: |
+          Sys.setenv(TESTTHAT_CPUS = parallel::detectCores())
+          cov <- covr::package_coverage(quiet = FALSE)
+          print(cov)
+          lines <- covr::tally_coverage(cov, by = "line")
+          n <- tapply(lines$value, lines$filename, length)
+          hit <- tapply(lines$value > 0, lines$filename, sum)
+          row <- function(file, n, hit)
+            sprintf("| %s | %d | %d | %.1f%% |", file, n, hit, 100 * hit / n)
+          cat("## Test coverage", "",
+            "Lines run by the full test suite (`NOT_CRAN=true`).", "",
+            "| File | Lines | Covered | Coverage |", "|:--|--:|--:|--:|",
+            row(names(n), n, hit), row("**Total**", sum(n), sum(hit)), "",
+            file = Sys.getenv("GITHUB_STEP_SUMMARY"), sep = "\n", append = TRUE)
+      - name: Check URLs
+        if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
+        shell: Rscript {0}
+        run: |
+          res <- urlchecker::url_check()
+          # urlchecker names R Markdown vignettes by absolute path, which its
+          # print method cannot open; make every path relative to the package.
+          root <- paste0(normalizePath(".", winslash = "/"), "/")
+          if (nrow(res)) res$From <- lapply(res$From, function(f)
+            sub(root, "", normalizePath(f, winslash = "/", mustWork = FALSE), fixed = TRUE))
+          # A permanent redirect to a working page is reported (fix it with
+          # urlchecker::url_update()) but is not broken. Publishers behind
+          # doi.org often refuse automated requests with 403 or 429; those are
+          # reported for a manual look but do not fail the job. urlchecker
+          # scans the package sources, not the website-only vignettes/articles.
+          moved <- nzchar(res$New) & !nzchar(res$CRAN) & res$Status %in% c("200", "405")
+          refused <- !moved & !nzchar(res$CRAN) & res$Status %in% c("403", "429")
+          problem <- ifelse(moved, paste("Moved to", res$New),
+            ifelse(nzchar(res$CRAN), "CRAN URL not in canonical form",
+              ifelse(refused, paste(res$Status, "(automated access refused; check by hand)"),
+                trimws(paste(res$Status, res$Message)))))
+          from <- vapply(res$From, paste, "", collapse = ", ")
+          cell <- function(x) gsub("|", "&#124;", gsub("[[:space:]]+", " ", x), fixed = TRUE)
+          cat("## URLs", "",
+            if (nrow(res) == 0) "No problems found." else c(
+              "| URL | Found in | Problem |", "|:--|:--|:--|",
+              sprintf("| %s | %s | %s |", cell(res$URL), cell(from), cell(problem))), "",
+            file = Sys.getenv("GITHUB_STEP_SUMMARY"), sep = "\n", append = TRUE)
+          print(res)
+          broken <- !moved & !refused
+          if (any(broken)) stop(sum(broken), " broken URL(s); see the run summary.", call. = FALSE)
+      - name: Check spelling (report only)
+        if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
+        shell: Rscript {0}
+        run: |
+          # Language: en-GB in DESCRIPTION, with the words in inst/WORDLIST.
+          words <- spelling::spell_check_package()
+          print(words)
+          where <- vapply(words$found, paste, "", collapse = ", ")
+          cat("## Spelling (en-GB)", "",
+            if (nrow(words) == 0) "No possible misspellings." else c(
+              paste(nrow(words), "possible misspellings, which do not fail the job.",
+                "Correct them or add them to `inst/WORDLIST`."), "",
+              "| Word | Found in |", "|:--|:--|",
+              sprintf("| %s | %s |", words$word, where)), "",
+            file = Sys.getenv("GITHUB_STEP_SUMMARY"), sep = "\n", append = TRUE)

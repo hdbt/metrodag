@@ -65,6 +65,24 @@ cd tests && R_LIBS=~/R/ggplot2-3.4.4 Rscript testthat.R
 
 The old-release GitHub job runs the full suite with the same versions.
 
+## Continuous integration
+
+GitHub Actions runs `R CMD check --as-cran` on every push to `main` and every
+pull request: the full suite on R release (Ubuntu, Windows and macOS) and on
+R oldrel-1 with ggplot2 3.4.4, and the CRAN selection with CRAN's incoming
+checks on R-devel. A no-Suggests job runs the CRAN selection with only Depends
+and Imports installed, plus testthat, as CRAN's noSuggests checks do, and
+skips the vignettes. The Ubuntu release job also runs the README and home page
+tests from the checkout, because `R CMD check` skips them (a local run from
+the checkout, as above, includes them). A job at the declared floor, R 4.1,
+takes its packages from a CRAN snapshot of February 2024 (ggplot2 3.4.4),
+since today's CRAN no longer installs on R 4.1; it reports failures but does
+not block merging yet. A weekly run,
+which you can also start from the Actions tab, adds a check against the
+development versions of ggplot2 and patchwork (it never runs on pull requests,
+and a failure fails the weekly run so that it is noticed), and writes test
+coverage, broken URLs and possible misspellings to the run summary.
+
 ## Style
 
 The package uses base R and `::`-qualified calls, two-space indentation, and
