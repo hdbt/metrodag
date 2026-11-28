@@ -83,3 +83,6 @@ figures:
   dpi: 120
   fig.width: 7
   fig.height: 5
+  # pkgdown's default aspect ratio (0.618) would override every chunk's
+  # fig.height in the articles; the guides set their heights on purpose.
+  fig.asp: ~
