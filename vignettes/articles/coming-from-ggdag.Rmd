@@ -1,0 +1,237 @@
+---
+title: "Coming from ggdag or dagitty"
+description: "Map familiar ggdag and dagitty calls to metrodag, draw the adjustment sets you choose, and report the DAG."
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(collapse = TRUE, comment = "#>", error = FALSE,
+  fig.width = 7, fig.height = 3, fig.align = "center",
+  dev = if (requireNamespace("svglite", quietly = TRUE)) "svglite" else "png",
+  fig.ext = if (requireNamespace("svglite", quietly = TRUE)) "svg" else "png",
+  dev.args = list(bg = "white"))
+library(metrodag)
+has_dagitty <- requireNamespace("dagitty", quietly = TRUE)
+```
+
+This article is for readers who already draw DAGs with ggdag or analyse them
+with dagitty. It maps familiar calls to metrodag, works through a DAG with two
+minimal adjustment sets, and shows how a metrodag figure can support the
+reporting of a DAG.
+
+## What changes and why
+
+Several ggdag functions, such as `ggdag_adjustment_set()`, analyse the graph
+as they draw it. metrodag keeps drawing and analysis apart:
+
+- **Layout and drawing are separate.** `layout_metro_dag()` computes node
+  positions and arrow routes once. The layout is deterministic: the same graph
+  gives the same geometry on every platform, with no seed. `metro_dag()` and
+  `plot_metro_dag()` draw that geometry, so several analyses can share it.
+- **Roles are annotations you supply.** Exposure, outcome, adjusted,
+  unobserved and selected variables come from your arguments or from the
+  statuses declared in a DAGitty graph. metrodag never infers a role from the
+  graph, and roles never move a node or an arrow.
+- **Plotting never checks adjustment.** metrodag does not compute adjustment
+  sets, and drawing a figure never runs a dagitty check. Ask dagitty, or call
+  `check_metro_adjustment()`, when you want one.
+- **Text is measured on the output device.** Labels are wrapped and placed when
+  the figure is drawn, at its real size, so check and export a figure at its
+  final width.
+- **Your graphs work as input.** `metro_dag()` accepts dagitty graphs,
+  including `dagify()` results, ggdag `tidy_dagitty` objects, igraph and
+  tidygraph graphs, edge matrices and `from`/`to` data frames.
+
+## Familiar calls in metrodag
+
+| ggdag or dagitty | metrodag |
+|:----------|:------------------------------|
+| `dagitty("dag { X -> Y }")` or `dagify(Y ~ X)` | Pass the graph to `metro_dag()` or `layout_metro_dag()`. Node names, isolated nodes and arrows are kept, and a `dagify()` result is read without loading ggdag. Without dagitty, a `from`/`to` data frame, or `metro_graph()` for isolated variables, describes the same graph. |
+| `tidy_dagitty(dag)` | Not needed: `layout_metro_dag(dag)` computes the layout, the same every time and with no seed. A `tidy_dagitty` object is accepted too, when ggdag is installed. metrodag reads the dagitty graph inside it and the table's `label` column, but not its coordinates, and stops if the table's nodes, arrows, `status` or `adjusted` column disagree with that graph. |
+| `ggdag(dag)` or `ggdag_status(dag)` | `metro_dag(dag)` draws the graph with role markers and a legend: filled markers for the exposure and outcome, squares for adjusted variables and dashed outlines for unobserved ones. |
+| `exposure`, `outcome` and `latent` in `dagify()`; `[exposure]`, `[outcome]` and `[latent]` in DAGitty code | Imported as the exposure, outcome and unobserved roles. DAGitty's `[adjusted]` and `[selected]` become the adjusted and selected roles. You can also give roles to `metro_dag()`, for example `unobserved = "U"`: a role you supply replaces the imported one. Roles must not overlap. |
+| `control_for(dag, "Z")` or `adjust_for()` | `metro_dag(dag, adjusted = "Z")`, or `unadjusted = TRUE` for an explicitly empty set. metrodag takes adjustment from the dagitty graph inside a ggdag object, never from its plotting table: an `adjusted` column that disagrees with that graph's `[adjusted]` nodes stops the import, and so does any table row that is not a plain `->` arrow, such as collider lines that `control_for()` can add. Pass the dagitty graph and set `adjusted` instead. |
+| `ggdag_adjustment_set(dag)` | No equivalent: metrodag does not compute or suggest adjustment sets. Call `dagitty::adjustmentSets()` yourself and draw each set you choose as a view of one layout with `compare_metro_dags()`, as in the recipe below. |
+| `ggdag_paths(dag)` and other path plots | `highlight_paths(p)` asks dagitty for the paths between exposure and outcome, given the plot's adjusted and selected variables, and emphasises the arrows of the open ones on the same figure. `paths = "biasing"` or `"causal"` narrows the choice, and the result's `metrodag_paths` attribute lists every path. |
+| `ggdag_collider()` or `ggdag_dseparated()` | No equivalent: metrodag does not mark colliders or d-separation. Ask dagitty with `dagitty::isCollider()` or `dagitty::dseparated()`. To show the path that conditioning on a collider opens, mark it `adjusted` or `selected` and call `highlight_paths()`. |
+| Coordinates from `dagify(coords = )` or `dagitty::coordinates()` | Not supported: imported coordinates are ignored, and metrodag computes its own layout. Constrain it with `direction`, `rank` (temporal order) and `align` (repeated measures on one row), and move a single label with `label_nudge`. |
+| `theme_dag()` and `geom_dag_*()` layers | Not needed: metrodag draws its own layers on an empty theme. Choose `style = "publication"`, `"monochrome"` or `"metro"`, change details with `metro_style()`, and restyle single arrows with `edge_style`. `ggplot2::labs()` still adds a title or caption. |
+| `ggsave("dag.pdf", width = 7, height = 5)` | `save_metro_dag("dag.pdf", p, width = "double")`. Widths are in millimetres or the presets `"single"` (85 mm), `"1.5"` (120 mm) and `"double"` (180 mm), the height is automatic, and text is measured on the export device. A figure that cannot fit every arrow and station is not written unless you pass `on_error = "warn"`; check a size first with `diagnose_metro_dag()`. `ggplot2::ggsave()` also works. |
+| Labels from `dagify(labels = )` or `label(dag) <- labels` | Imported, as is the `label` column of a `tidy_dagitty` table. `labels = c(Z3 = "Shared cause")` overrides the nodes it names. Labels are wrapped and placed when the figure is drawn, clear of stations and arrows where possible; adjust them with `label_wrap` and `label_nudge`. Role arguments take node names, not labels. |
+| Bidirected arcs, `X <-> Y` | Rejected unless you say how to draw them, so the assumption is never dropped silently. `bidirected = "latent"` draws each arc as an unlabelled, dashed unobserved common cause with arrows into both variables. Undirected and partially directed graphs are not supported. |
+
+## Recipe: one view per minimal adjustment set
+
+The bow-tie DAG below, also called the butterfly, has two minimal adjustment
+sets for the total effect of `X` on `Y`. `Z3` is a common cause of `X` and
+`Y`, and also a collider on the path `X <- Z1 -> Z3 <- Z2 -> Y`. Adjusting for
+`Z3` closes the other back-door paths, which all pass through it, but opens
+that one, which `Z1` or `Z2` then closes. Ding and Miratrix (2015) discuss the
+bias this structure creates when `Z1` and `Z2` are not measured.
+
+In ggdag, you might draw the sets like this (not run here):
+
+```{r ggdag-sets, eval=FALSE}
+library(ggdag)
+bowtie_gg <- dagify(Y ~ X + Z2 + Z3, X ~ Z1 + Z3, Z3 ~ Z1 + Z2,
+  exposure = "X", outcome = "Y")
+ggdag_adjustment_set(bowtie_gg)
+```
+
+In metrodag, the sets come from an explicit call to dagitty. Here the model is
+written as DAGitty code; `metro_dag(bowtie_gg)` would read the `dagify()`
+version in the same way.
+
+```{r bowtie, eval=has_dagitty}
+bowtie <- dagitty::dagitty("dag {
+  X [exposure]
+  Y [outcome]
+  Z1 -> X; Z1 -> Z3; Z2 -> Z3; Z2 -> Y
+  Z3 -> X; Z3 -> Y; X -> Y
+}")
+sets <- dagitty::adjustmentSets(bowtie)
+sets
+```
+
+These are the minimal sets dagitty finds under the assumed graph. Compute the
+layout once and give each set its own view, so that both panels share one
+geometry. Sorting the sets by name keeps the panels in the same order whatever
+order dagitty lists them in:
+
+```{r bowtie-sets, eval=has_dagitty, fig.height=2.8, fig.cap="Each minimal set that dagitty lists, drawn as a view of one fixed layout.", fig.alt="Two panels, Minimal set 1 and Minimal set 2, show the same drawing from left to right: Z1 at top left and Z2 at bottom left point to Z3, Z1 and Z3 point to the exposure X, and X, Z3 and Z2 point to the outcome Y. Minimal set 1 draws Z1 and Z3 as adjusted squares; Minimal set 2 draws Z2 and Z3. A shared legend lists exposure, outcome, adjusted, and observed but not adjusted."}
+fixed <- layout_metro_dag(bowtie)
+sets <- sets[order(vapply(sets, function(set) paste(sort(set), collapse = " "), ""))]
+views <- lapply(sets, function(set) list(adjusted = set))
+names(views) <- paste("Minimal set", seq_along(views))
+compare_metro_dags(fixed, views)
+```
+
+The views inherit the exposure and outcome declared in the DAGitty code, and
+each subtitle lists its adjustment set. Both sets meet the adjustment
+criterion under this graph. Choosing between them is the analyst's decision,
+on grounds the graph does not show, such as how well each variable is
+measured.
+
+## Reporting a DAG
+
+Tennant et al. (2021) reviewed the use of DAGs in applied health research and
+made recommendations to improve their reporting and use. Those that concern
+the figure map onto metrodag as follows.
+
+| Tennant et al. (2021) recommend | In metrodag |
+|:----------------|:--------------------|
+| State the focal relationship and estimand in the study aims. | `estimand = "Total effect of X on Y"` repeats the target as the figure title. It is a label: nothing is checked. |
+| Make the DAG for each estimand available: in the manuscript, in supplementary material, or through a working link to a platform such as dagitty.net. | `save_metro_dag()` exports the figure for the manuscript, and dagitty's `toString()` gives the DAGitty code for a supplement, as shown below. |
+| Include all relevant variables, including those that were not measured directly. | Declare them `[latent]` in DAGitty code, or pass them as `unobserved`: their stations and outgoing arrows are dashed. |
+| Arrange the variables so that all arcs flow in the same direction, for example left to right or top to bottom. | Every metrodag layout does this: each arrow advances along `direction`, which is `"right"` by default or can be `"down"`. |
+| State the adjustment sets that the DAG implies for each estimand. | Obtain them with `dagitty::adjustmentSets()`, draw them as in the recipe, and confirm the set you use with `check_metro_adjustment()`. The subtitle and the "Adjusted" legend key show the set you passed as `adjusted` (or declared `[adjusted]`); metrodag does not know whether the DAG implies it. |
+| Justify any alternative adjustment set and report its estimate separately. | Draw the alternative set beside a set the DAG implies, as views of one layout with `compare_metro_dags()`. `check_metro_adjustment()` may fail for the alternative; that is what the justification has to address. |
+
+Two of the recommendations concern the model and the analysis rather than the
+figure: assume, in general, that an arc exists between any two variables, and
+report the estimate from the unmodified adjustment set that the DAG implies,
+or its nearest approximation. metrodag draws exactly the arrows you supply.
+
+The recommendations do not cover selection. If a study conditions on
+selection, for example by including only people admitted to hospital, mark
+that variable as `selected` (DAGitty's `[selected]`). It is drawn as a
+double-outlined square and listed as "Selected (conditioned on)" in the
+legend.
+
+Suppose `Z1` was not measured. Declaring it latent keeps it in the DAG, and
+dagitty then finds a single minimal set. Recording the chosen set in the same
+graph lets one object give the figure, the check and the supplement:
+
+```{r report-sets, eval=has_dagitty}
+reported <- bowtie
+dagitty::latents(reported) <- "Z1"
+dagitty::adjustmentSets(reported)
+dagitty::adjustedNodes(reported) <- c("Z2", "Z3")
+```
+
+The layout depends on the graph alone, not on its statuses, so this figure has
+the geometry of the recipe's panels:
+
+```{r report-figure, eval=has_dagitty, fig.height=4, fig.cap="A figure for the manuscript: the estimand as the title, the adjustment set in the subtitle and legend, and the unmeasured Z1 dashed.", fig.alt="The bow-tie DAG drawn from left to right under the title Total effect of X on Y and the subtitle Adjusted for: Z2, Z3. Z2 and Z3 are squares; Z1 is a dashed circle whose arrows to X and Z3 are dashed. The legend lists exposure, outcome, adjusted and unobserved."}
+report_plot <- metro_dag(reported, estimand = "Total effect of X on Y")
+report_plot
+```
+
+Export the figure at the journal's width, and write the DAGitty code for the
+supplement with dagitty's own `toString()`. Both files go to a temporary
+folder here:
+
+```{r report-files, eval=has_dagitty}
+figure_dir <- tempdir()
+save_metro_dag("bowtie.pdf", report_plot, path = figure_dir, width = "double")
+dagitty_code <- toString(reported)
+writeLines(dagitty_code, file.path(figure_dir, "bowtie-dagitty.txt"))
+cat(dagitty_code)
+```
+
+The text file holds the model and the reported analysis in DAGitty's own
+syntax, so a reader can reload it with `dagitty::dagitty()`.
+
+## Using DAGitty alongside
+
+metrodag draws the DAG; dagitty, the R interface to DAGitty (Textor et al.,
+2016), analyses it. The two work together in three ways.
+
+**In the browser.** [dagitty.net](https://www.dagitty.net/) reads the same
+code: paste the code printed above into the Model code box of the web
+application and choose Update DAG. Its Causal effect identification and
+Testable implications panels then describe the same model, and Model > Publish
+on dagitty.net puts it online, which gives the kind of link that Tennant et al.
+mention.
+
+**Testable implications.** A DAG implies conditional independencies that data
+can contradict. `dagitty::impliedConditionalIndependencies()` lists them, and
+`dagitty::localTests()` tests them against a data set. Passing these tests
+does not confirm the DAG: graphs that imply the same independencies fit the
+data equally well.
+
+```{r implications, eval=has_dagitty}
+dagitty::impliedConditionalIndependencies(bowtie)
+length(dagitty::impliedConditionalIndependencies(reported))
+```
+
+Each of the three involves `Z1`. In the reported graph, where `Z1` is
+unobserved, dagitty lists none.
+
+**Checks in metrodag.** `check_metro_adjustment()` passes the graph, its roles
+and an adjustment set to DAGitty's adjustment criterion for a total effect.
+Plotting never calls it, so call it yourself:
+
+```{r checks, eval=has_dagitty}
+check_metro_adjustment(report_plot)
+check_metro_adjustment(bowtie, adjusted = "Z3")
+```
+
+Adjusting for `Z3` alone fails. `highlight_paths()` shows why: with
+`paths = "biasing"`, it emphasises the open paths that are not causal, here
+the one that conditioning on the collider `Z3` opens.
+
+```{r collider-path, eval=has_dagitty, fig.height=3.8, fig.cap="Adjusting for Z3 alone leaves the path X <- Z1 -> Z3 <- Z2 -> Y open; its arrows are drawn thicker in red.", fig.alt="The bow-tie DAG with Z3 drawn as an adjusted square and the subtitle Adjusted for: Z3. The arrows from Z1 to X, Z1 to Z3, Z2 to Z3 and Z2 to Y are thicker and red; the arrows from Z3 to X, Z3 to Y and X to Y stay grey."}
+z3_only <- metro_dag(fixed, adjusted = "Z3")
+highlight_paths(z3_only, paths = "biasing")
+```
+
+A passing check concerns identification of a total effect by adjustment under
+the assumed graph. It does not validate the graph, the measurements or the
+estimator; see the [analysis guide](analysis-views.html#check-adjustment-separately)
+for more.
+
+## References
+
+Ding, P., & Miratrix, L. W. (2015). To adjust or not to adjust? Sensitivity
+analysis of M-bias and butterfly-bias. *Journal of Causal Inference*, 3(1),
+41-57. <https://doi.org/10.1515/jci-2013-0021>
+
+Tennant, P. W. G., Murray, E. J., Arnold, K. F., et al. (2021). Use of
+directed acyclic graphs (DAGs) to identify confounders in applied health
+research: review and recommendations. *International Journal of
+Epidemiology*, 50(2), 620-632. <https://doi.org/10.1093/ije/dyaa213>
+
+Textor, J., van der Zander, B., Gilthorpe, M. S., Liśkiewicz, M., & Ellison,
+G. T. H. (2016). Robust causal inference using directed acyclic graphs: the R
+package 'dagitty'. *International Journal of Epidemiology*, 45(6), 1887-1894.
+<https://doi.org/10.1093/ije/dyw341>

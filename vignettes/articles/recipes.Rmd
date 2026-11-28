@@ -1,0 +1,312 @@
+---
+title: "Recipes for common causal structures"
+description: "Draw confounding, mediation, M-bias, instruments, selection, measurement error and treatment-confounder feedback with roles you choose."
+---
+
+```{r setup, include=FALSE}
+# pkgdown sets fig.asp for articles, which would override each chunk's
+# fig.height; every figure here is checked at its own height.
+knitr::opts_chunk$set(collapse = TRUE, comment = "#>", error = FALSE,
+  fig.width = 7, fig.height = 3.4, fig.asp = NULL, fig.align = "center",
+  dev = if (requireNamespace("svglite", quietly = TRUE)) "svglite" else "png",
+  fig.ext = if (requireNamespace("svglite", quietly = TRUE)) "svg" else "png",
+  dev.args = list(bg = "white"))
+library(metrodag)
+has_dagitty <- requireNamespace("dagitty", quietly = TRUE)
+```
+
+## How to use these recipes
+
+Each recipe draws one structure that comes up often in epidemiology. It gives
+an edge table with one row per arrow, display labels named by node, the roles
+you choose for the analysis, and the figure they produce. Every recipe runs on
+its own once metrodag is loaded with `library(metrodag)`; copy one and replace
+the variables with your own.
+
+The roles are always yours. A variable is drawn as adjusted, unobserved or
+selected because you passed it to `adjusted`, `unobserved` or `selected`. The
+package never decides that a variable is a confounder, a collider or an
+instrument, and it never recommends an adjustment set. The graphs are teaching
+examples, not established causal models.
+
+Some recipes test an adjustment set with `check_metro_adjustment()` or
+emphasise open paths with `highlight_paths()`. Both need the optional dagitty
+package, and that code runs here only when it is installed. The check asks
+whether the set you give meets the adjustment criterion for a total effect
+under the graph you drew; it does not test the graph itself.
+
+## Confounding and mediation
+
+Smoking affects lung cancer directly and through tar deposits in the lung, and
+socioeconomic position affects both smoking and lung cancer. To target the
+total effect of smoking under this graph, the analysis adjusts for the
+confounder and leaves the mediator alone.
+
+```{r confounding, fig.height=3.4, fig.cap="Confounding and mediation: for the total effect, the confounder is adjusted for and the mediator is not.", fig.alt="Four variables. Socioeconomic position, drawn as an adjusted square, points to smoking and to lung cancer. Smoking, the exposure, points to tar deposits and to lung cancer, the outcome. Tar deposits, a hollow circle, point to lung cancer."}
+smoking_edges <- data.frame(
+  from = c("C", "C", "X", "X", "M"),
+  to   = c("X", "Y", "M", "Y", "Y")
+)
+smoking_labels <- c(C = "Socioeconomic position", X = "Smoking",
+  M = "Tar deposits", Y = "Lung cancer")
+total <- metro_dag(smoking_edges, labels = smoking_labels,
+  exposure = "X", outcome = "Y", adjusted = "C",
+  estimand = "Total effect of smoking on lung cancer")
+total
+```
+
+The square marks socioeconomic position as adjusted for. Tar deposits stay a
+hollow circle because the path through them is part of the total effect;
+adding `M` to `adjusted` would block it. Under this graph, the set {C} meets
+the adjustment criterion:
+
+```{r confounding-check, eval=has_dagitty}
+check_metro_adjustment(total)
+```
+
+The figure records your choices. It does not show that socioeconomic position
+is the only confounder, or that it is measured well enough to remove
+confounding.
+
+## M-bias: adjusting for a pre-exposure collider
+
+A variable measured before the exposure is not automatically safe to adjust
+for. Suppose that childhood income affects education and mother's diabetes,
+that genetic risk affects mother's diabetes and the child's own diabetes, and
+that neither shared cause is measured. Mother's diabetes is then a collider on
+the path `X <- U1 -> Z <- U2 -> Y`: the path is closed when you leave `Z`
+alone and opened when you adjust for it. `compare_metro_dags()` draws both
+analyses on one layout, so only the annotations differ.
+
+```{r m-bias, fig.height=3.1, fig.cap="M-bias: adjusting for a pre-exposure collider opens a path between its two unobserved causes.", fig.alt="Two panels with the same layout. Dashed, unobserved childhood income points to education and to mother's diabetes; dashed genetic risk of diabetes points to mother's diabetes and to diabetes; education, the exposure, points to diabetes, the outcome. In the left panel mother's diabetes is a hollow circle; in the right panel it is an adjusted square."}
+m_edges <- data.frame(
+  from = c("U1", "U1", "U2", "U2", "X"),
+  to   = c("X",  "Z",  "Z",  "Y",  "Y")
+)
+m_labels <- c(U1 = "Childhood income", U2 = "Genetic risk of diabetes",
+  Z = "Mother's diabetes", X = "Education", Y = "Diabetes")
+m_views <- compare_metro_dags(m_edges, labels = m_labels, views = list(
+  "No adjustment" = list(exposure = "X", outcome = "Y",
+    unobserved = c("U1", "U2"), unadjusted = TRUE),
+  "Adjusted for mother's diabetes" = list(exposure = "X", outcome = "Y",
+    unobserved = c("U1", "U2"), adjusted = "Z")
+))
+m_views
+```
+
+Each panel is a MetroDAG plot, so `check_metro_adjustment()` reads its roles:
+
+```{r m-bias-check, eval=has_dagitty}
+lapply(m_views$plots, check_metro_adjustment)
+```
+
+Under this graph the empty set meets the criterion and {Z} does not. Childhood
+income and genetic risk are unobserved, so they cannot be added to the set to
+close the path again. The figure shows which analysis opens the path, not how
+large the resulting bias is.
+
+## Instrumental variable
+
+An instrument affects the exposure, affects the outcome only through the
+exposure, and shares no cause with the outcome. In Mendelian randomisation
+studies of alcohol, variants in ALDH2, a gene involved in alcohol metabolism,
+serve as instruments. There is no instrument role, so a display group names
+the instrument, and the confounders of alcohol intake and blood pressure that
+cannot be measured are marked `unobserved`.
+
+```{r instrument, fig.height=3.2, fig.cap="An instrument, numbered as a display group, beside unmeasured confounding of the exposure and the outcome.", fig.alt="Four variables. ALDH2 genotype, marked with the number 1 of the instrument group, points to alcohol intake, the exposure, which points to blood pressure, the outcome. Dashed unmeasured confounders point to alcohol intake and to blood pressure. No arrow joins the genotype to blood pressure or to the confounders."}
+iv_edges <- data.frame(
+  from = c("Z", "X", "U", "U"),
+  to   = c("X", "Y", "X", "Y")
+)
+iv_labels <- c(Z = "ALDH2 genotype", X = "Alcohol intake",
+  Y = "Blood pressure", U = "Unmeasured confounders")
+iv <- metro_dag(iv_edges, labels = iv_labels,
+  exposure = "X", outcome = "Y", unobserved = "U",
+  node_groups = list(Instrument = "Z"))
+iv
+```
+
+The arrow from `Z` to `X` is the first condition. The other two are arrows
+that are missing: none from `Z` to `Y`, and no common cause of `Z` and `Y`,
+drawn or not. Here that means none between `U` and `Z`; in Mendelian
+randomisation, ancestry (population stratification) is the usual threat. The
+figure states these assumptions; it cannot test them. With `U` unobserved,
+neither the empty set nor {Z} meets the adjustment criterion, which is the
+situation an instrument is meant for:
+
+```{r instrument-check, eval=has_dagitty}
+check_metro_adjustment(iv, unadjusted = TRUE)$valid
+check_metro_adjustment(iv, adjusted = "Z")$valid
+```
+
+An instrumental variable estimate also needs a further assumption that a DAG
+does not show, and that assumption decides which effect is estimated:
+homogeneity of the effect gives the average effect, whereas monotonicity gives
+only the effect in those whose exposure the instrument changes, which is hard
+to interpret for a genotype and a continuous exposure.
+
+## Selection bias
+
+Restricting a study to patients admitted to hospital conditions on admission.
+Suppose that obesity and other serious illnesses both lead to admission, and
+that those illnesses also affect the risk of death. Among admitted patients,
+obesity and the other illnesses are then associated, which can make obesity
+look protective. Mark admission with `selected`: it is drawn as a
+double-outlined square, and it is not an adjustment choice. Here `rank` also
+places admission before death.
+
+```{r selection}
+sel_edges <- data.frame(
+  from = c("X", "X", "U", "U"),
+  to   = c("S", "Y", "S", "Y")
+)
+sel_labels <- c(X = "Obesity", U = "Other serious illness",
+  S = "Hospital admission", Y = "Death")
+admitted <- metro_dag(sel_edges, labels = sel_labels,
+  rank = c(X = 0, U = 0, S = 1, Y = 2),
+  exposure = "X", outcome = "Y", unobserved = "U", selected = "S")
+```
+
+`highlight_paths()` asks DAGitty for the paths between exposure and outcome,
+given the selected variable. With `paths = "biasing"`, it emphasises the open
+paths that are not causal:
+
+```{r selection-paths, eval=has_dagitty, fig.height=3.4, fig.cap="Selection on hospital admission opens a path through an unobserved illness, drawn with thick red arrows.", fig.alt="Obesity, the exposure, points to hospital admission, a double-outlined selected square, and to death, the outcome. Dashed other serious illness points to admission and to death. The arrows from obesity to admission, from the illness to admission and from the illness to death are thick and red; the arrow from obesity to death is thin and grey."}
+opened <- highlight_paths(admitted, paths = "biasing")
+opened
+attr(opened, "metrodag_paths")[, c("path", "open", "causal", "highlighted")]
+```
+
+Selection opens the path `X -> S <- U -> Y`, drawn in red; the causal arrow
+from obesity to death stays grey. Because `U` is unobserved, no adjustment can
+close that path under this graph, and `check_metro_adjustment()` refuses
+graphs with selected variables rather than ignore them. Conditioning on a
+common effect of the exposure and a cause of the outcome is the shared
+structure of many selection biases (Hernán, Hernández-Díaz and Robins 2004).
+The red arrows show which path the assumed graph leaves open, not how large
+the bias is.
+
+## Measurement error
+
+An analysis uses the exposure as it was recorded, not as it is. Draw both:
+true physical activity `X` affects diabetes and the reported activity
+`Xstar`, which also depends on other causes of the report `E`, such as recall
+and wanting to give a good impression. Mark `X` and `E` as unobserved: you
+have no data on them, so they and the arrows leaving them are drawn dashed.
+Roles are disjoint, so a variable cannot be both unobserved and the exposure.
+The question concerns the true activity `X`, but the analysis can only use
+the report, so the exposure marker goes on `Xstar` as the analysed proxy and
+the `estimand` label states the effect of interest. Do not run
+`check_metro_adjustment()` or `highlight_paths()` on this figure: they would
+treat the report itself as the exposure, whose effect on diabetes is null in
+this graph, and the path through `X` as bias.
+
+```{r measurement, fig.height=3.4, fig.cap="The analysed exposure is the report; the true exposure and the other causes of the report are unobserved.", fig.alt="Dashed true physical activity points to type 2 diabetes, the outcome, and to reported physical activity, the exposure. Dashed other causes of the report also point to reported physical activity. Every arrow is dashed, and none goes from the report to diabetes."}
+me_edges <- data.frame(
+  from = c("X", "X", "E"),
+  to   = c("Xstar", "Y", "Xstar")
+)
+me_labels <- c(X = "True physical activity",
+  Xstar = "Reported physical activity",
+  E = "Other causes of the report", Y = "Type 2 diabetes")
+measured <- metro_dag(me_edges, labels = me_labels,
+  exposure = "Xstar", outcome = "Y", unobserved = c("X", "E"),
+  estimand = "Effect of true physical activity on type 2 diabetes")
+measured
+```
+
+No arrow goes from the report to diabetes: an association between `Xstar` and
+`Y` arises only through `X`. With no arrow into `E`, the error is
+non-differential: it does not depend on diabetes. Recall bias in a
+case-control study would add an arrow from `Y` to `E` and make it differential
+(Hernán and Cole 2009). The figure does not show how large the bias is, or in
+which direction it goes.
+
+## Time-varying confounding with treatment-confounder feedback
+
+In a cohort of people with HIV, CD4 count is measured at months 0 and 6,
+antiretroviral therapy in each following period depends on the latest count,
+and therapy raises later counts. The count at month 6, `L1`, then confounds
+therapy in the second period, `A1`, and is itself affected by therapy in the
+first period, `A0`. `rank` fixes the time order and `rank_labels` names it.
+Every arrow must point to a later rank, so counts and treatment periods take
+alternate ranks. `align` keeps each repeated measure on one row.
+
+```{r feedback, fig.height=4, fig.cap="Treatment-confounder feedback over two treatment periods, with ranks for time and aligned repeated measures.", fig.alt="Five variables under the headers Month 0, Months 0-6, Month 6, Months 6-12 and Month 12. The two CD4 counts share the upper row and the two periods of antiretroviral therapy, both exposures, share the lower row. The baseline count points to first-period therapy and to the month 6 count; first-period therapy points to the month 6 count and to second-period therapy; the month 6 count points to second-period therapy. AIDS or death, the outcome, receives arrows from all four earlier variables."}
+tv_edges <- data.frame(
+  from = c("L0", "L0", "L0", "A0", "A0", "A0", "L1", "L1", "A1"),
+  to   = c("A0", "L1", "Y",  "L1", "A1", "Y",  "A1", "Y",  "Y")
+)
+tv_labels <- c(L0 = "CD4 count", A0 = "Antiretroviral therapy",
+  L1 = "CD4 count", A1 = "Antiretroviral therapy", Y = "AIDS or death")
+feedback <- metro_dag(tv_edges, labels = tv_labels,
+  rank = c(L0 = 0, A0 = 1, L1 = 2, A1 = 3, Y = 4),
+  rank_labels = c("Month\n0", "Months\n0-6", "Month\n6", "Months\n6-12",
+    "Month\n12"),
+  align = list(c("L0", "L1"), c("A0", "A1")),
+  exposure = c("A0", "A1"), outcome = "Y",
+  estimand = "Joint effect of therapy in both periods on AIDS or death")
+feedback
+```
+
+Both periods of therapy carry the exposure marker. No adjustment set is drawn,
+because none meets the adjustment criterion for their joint effect:
+
+```{r feedback-check, eval=has_dagitty}
+check_metro_adjustment(feedback, adjusted = "L0")
+check_metro_adjustment(feedback, adjusted = c("L0", "L1"))
+```
+
+Without `L1`, the back-door path `A1 <- L1 -> Y` stays open. With `L1`, the
+set conditions on a variable on the causal path `A0 -> L1 -> Y` and removes
+part of the effect of `A0`; if an unmeasured common cause `U` of `L1` and `Y`
+were added to the graph, it would also open the path `A0 -> L1 <- U -> Y`.
+Each treatment's own total effect can still be identified by adjustment under
+this graph, with {L0} for `A0` and {A0, L1} for `A1`, but no set identifies
+their joint effect, such as always against never treating. G-methods, such as
+the parametric g-formula, inverse probability weighting of marginal structural
+models and g-estimation, can estimate it under the drawn graph (sequential
+exchangeability given the measured counts), with positivity, consistency and
+correctly specified models, because they account for `L1` as a confounder of
+`A1` without blocking the part of the effect of `A0` that passes through it
+(Naimi, Cole and Kennedy 2017).
+
+The same structure appears in mediation analysis when a confounder of the
+mediator and the outcome is itself affected by the exposure: read `A0` as the
+exposure, `L1` as that confounder and `A1` as the mediator. Natural direct and
+indirect effects are then not identified without further assumptions, even
+when the confounder is measured (VanderWeele, Vansteelandt and Robins 2014), and a controlled direct
+effect is a joint effect of exposure and mediator, like the one above.
+
+## Where to go next
+
+- [Getting started](../articles/metrodag.html): build, label and export a
+  first DAG.
+- [Variables, adjustment sets, and analysis views](../articles/analysis-views.html):
+  the role markers, reusing a layout, and the DAGitty checks in more detail.
+- [Preparing figures for publication](../articles/publication.html): styles,
+  labels, temporal ranks, alignment and export sizes. Check a recipe with
+  `diagnose_metro_dag()` at its final size before saving it with
+  `save_metro_dag()`.
+- [Algorithm and constraints](../articles/algorithm.html): how the layout is
+  computed and where it stops.
+
+### References
+
+Hernán, M. A., & Cole, S. R. (2009). Invited commentary: causal diagrams and
+measurement bias. *American Journal of Epidemiology*, 170(8), 959-962.
+<https://doi.org/10.1093/aje/kwp293>
+
+Hernán, M. A., Hernández-Díaz, S., & Robins, J. M. (2004). A structural
+approach to selection bias. *Epidemiology*, 15(5), 615-625.
+<https://doi.org/10.1097/01.ede.0000135174.63482.43>
+
+Naimi, A. I., Cole, S. R., & Kennedy, E. H. (2017). An introduction to g
+methods. *International Journal of Epidemiology*, 46(2), 756-762.
+<https://doi.org/10.1093/ije/dyw323>
+
+VanderWeele, T. J., Vansteelandt, S., & Robins, J. M. (2014). Effect
+decomposition in the presence of an exposure-induced mediator-outcome
+confounder. *Epidemiology*, 25(2), 300-306.
+<https://doi.org/10.1097/EDE.0000000000000034>

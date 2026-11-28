@@ -66,6 +66,20 @@ These fixes change some figures that earlier versions drew.
   "invalid font type" or drawing in another font. SVG export without svglite
   now warns that `grDevices::svg()` draws text as outlines.
 
+## Documentation
+
+- A new website article, "Recipes for common causal structures", draws
+  confounding and mediation, M-bias, an instrumental variable, selection
+  bias, measurement error, and time-varying confounding with
+  treatment-confounder feedback. Each recipe passes its roles explicitly and,
+  with dagitty installed, tests adjustment sets with
+  `check_metro_adjustment()` and shows open paths with `highlight_paths()`.
+- A new website article, "Coming from ggdag or dagitty", maps familiar ggdag
+  and dagitty calls to metrodag, draws each minimal adjustment set from an
+  explicit `dagitty::adjustmentSets()` call as a view of one layout, and maps
+  the DAG reporting recommendations of Tennant et al. (2021) to figure
+  features.
+
 # metrodag 0.3.0
 
 Initial CRAN release.

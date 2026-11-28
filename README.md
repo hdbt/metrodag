@@ -260,6 +260,8 @@ The rendered guides and function reference are on the
 | [Getting started](https://hdbt.github.io/metrodag/articles/metrodag.html) | Build a DAG from an edge table, add labels, inspect it, and export it |
 | [Variables and analysis views](https://hdbt.github.io/metrodag/articles/analysis-views.html) | Observability, adjustment, custom groups and research targets; compare analyses and run DAGitty checks |
 | [Publication figures](https://hdbt.github.io/metrodag/articles/publication.html) | Styles, fonts, labels, temporal ranks, alignment, and output dimensions |
+| [Recipes for common causal structures](https://hdbt.github.io/metrodag/articles/recipes.html) | Confounding and mediation, M-bias, instruments, selection bias, measurement error and treatment-confounder feedback, each with explicit roles |
+| [Coming from ggdag or dagitty](https://hdbt.github.io/metrodag/articles/coming-from-ggdag.html) | Familiar ggdag and dagitty calls in metrodag, drawing each adjustment set you choose, and reporting a DAG |
 | [Algorithm and constraints](https://hdbt.github.io/metrodag/articles/algorithm.html) | How the layout heuristic works and where it stops |
 
 Locally, install with `build_vignettes = TRUE` and run:
