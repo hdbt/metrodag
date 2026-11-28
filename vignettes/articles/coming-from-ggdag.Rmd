@@ -49,7 +49,7 @@ as they draw it. metrodag keeps drawing and analysis apart:
 | `tidy_dagitty(dag)` | Not needed: `layout_metro_dag(dag)` computes the layout, the same every time and with no seed. A `tidy_dagitty` object is accepted too, when ggdag is installed. metrodag reads the dagitty graph inside it and the table's `label` column, but not its coordinates, and stops if the table's nodes, arrows, `status` or `adjusted` column disagree with that graph. |
 | `ggdag(dag)` or `ggdag_status(dag)` | `metro_dag(dag)` draws the graph with role markers and a legend: filled markers for the exposure and outcome, squares for adjusted variables and dashed outlines for unobserved ones. |
 | `exposure`, `outcome` and `latent` in `dagify()`; `[exposure]`, `[outcome]` and `[latent]` in DAGitty code | Imported as the exposure, outcome and unobserved roles. DAGitty's `[adjusted]` and `[selected]` become the adjusted and selected roles. You can also give roles to `metro_dag()`, for example `unobserved = "U"`: a role you supply replaces the imported one. Roles must not overlap. |
-| `control_for(dag, "Z")` or `adjust_for()` | `metro_dag(dag, adjusted = "Z")`, or `unadjusted = TRUE` for an explicitly empty set. metrodag takes adjustment from the dagitty graph inside a ggdag object, never from its plotting table: an `adjusted` column that disagrees with that graph's `[adjusted]` nodes stops the import. |
+| `control_for(dag, "Z")` or `adjust_for()` | `metro_dag(dag, adjusted = "Z")`, or `unadjusted = TRUE` for an explicitly empty set. metrodag takes adjustment from the dagitty graph inside a ggdag object, never from its plotting table: an `adjusted` column that disagrees with that graph's `[adjusted]` nodes stops the import, and so does any table row that is not a plain `->` arrow, such as collider lines that `control_for()` can add. Pass the dagitty graph and set `adjusted` instead. |
 | `ggdag_adjustment_set(dag)` | No equivalent: metrodag does not compute or suggest adjustment sets. Call `dagitty::adjustmentSets()` yourself and draw each set you choose as a view of one layout with `compare_metro_dags()`, as in the recipe below. |
 | `ggdag_paths(dag)` and other path plots | `highlight_paths(p)` asks dagitty for the paths between exposure and outcome, given the plot's adjusted and selected variables, and emphasises the arrows of the open ones on the same figure. `paths = "biasing"` or `"causal"` narrows the choice, and the result's `metrodag_paths` attribute lists every path. |
 | `ggdag_collider()` or `ggdag_dseparated()` | No equivalent: metrodag does not mark colliders or d-separation. Ask dagitty with `dagitty::isCollider()` or `dagitty::dseparated()`. To show the path that conditioning on a collider opens, mark it `adjusted` or `selected` and call `highlight_paths()`. |
@@ -94,10 +94,12 @@ sets
 
 These are the minimal sets dagitty finds under the assumed graph. Compute the
 layout once and give each set its own view, so that both panels share one
-geometry:
+geometry. Sorting the sets by name keeps the panels in the same order whatever
+order dagitty lists them in:
 
-```{r bowtie-sets, eval=has_dagitty, fig.height=2.8, fig.cap="Each minimal set that dagitty lists, drawn as a view of one fixed layout.", fig.alt="Two panels, Minimal set 1 and Minimal set 2, show the same drawing from left to right: Z1 at top left and Z2 at bottom left point to Z3, Z1 and Z3 point to the exposure X, and X, Z3 and Z2 point to the outcome Y. Minimal set 1 draws Z2 and Z3 as adjusted squares; Minimal set 2 draws Z1 and Z3. A shared legend lists exposure, outcome, adjusted, and observed but not adjusted."}
+```{r bowtie-sets, eval=has_dagitty, fig.height=2.8, fig.cap="Each minimal set that dagitty lists, drawn as a view of one fixed layout.", fig.alt="Two panels, Minimal set 1 and Minimal set 2, show the same drawing from left to right: Z1 at top left and Z2 at bottom left point to Z3, Z1 and Z3 point to the exposure X, and X, Z3 and Z2 point to the outcome Y. Minimal set 1 draws Z1 and Z3 as adjusted squares; Minimal set 2 draws Z2 and Z3. A shared legend lists exposure, outcome, adjusted, and observed but not adjusted."}
 fixed <- layout_metro_dag(bowtie)
+sets <- sets[order(vapply(sets, function(set) paste(sort(set), collapse = " "), ""))]
 views <- lapply(sets, function(set) list(adjusted = set))
 names(views) <- paste("Minimal set", seq_along(views))
 compare_metro_dags(fixed, views)
@@ -121,8 +123,8 @@ the figure map onto metrodag as follows.
 | Make the DAG for each estimand available: in the manuscript, in supplementary material, or through a working link to a platform such as dagitty.net. | `save_metro_dag()` exports the figure for the manuscript, and dagitty's `toString()` gives the DAGitty code for a supplement, as shown below. |
 | Include all relevant variables, including those that were not measured directly. | Declare them `[latent]` in DAGitty code, or pass them as `unobserved`: their stations and outgoing arrows are dashed. |
 | Arrange the variables so that all arcs flow in the same direction, for example left to right or top to bottom. | Every metrodag layout does this: each arrow advances along `direction`, which is `"right"` by default or can be `"down"`. |
-| State the adjustment sets that the DAG implies for each estimand. | The set passed as `adjusted`, or declared `[adjusted]`, is listed in the subtitle and drawn as squares with an "Adjusted" legend key; `unadjusted = TRUE` reports an empty set. |
-| Justify any alternative adjustment set and report its estimate separately. | Draw each set as a view of one layout with `compare_metro_dags()`, as in the recipe. |
+| State the adjustment sets that the DAG implies for each estimand. | Obtain them with `dagitty::adjustmentSets()`, draw them as in the recipe, and confirm the set you use with `check_metro_adjustment()`. The subtitle and the "Adjusted" legend key show the set you passed as `adjusted` (or declared `[adjusted]`); metrodag does not know whether the DAG implies it. |
+| Justify any alternative adjustment set and report its estimate separately. | Draw the alternative set beside a set the DAG implies, as views of one layout with `compare_metro_dags()`. `check_metro_adjustment()` may fail for the alternative; that is what the justification has to address. |
 
 Two of the recommendations concern the model and the analysis rather than the
 figure: assume, in general, that an arc exists between any two variables, and
@@ -183,7 +185,9 @@ mention.
 
 **Testable implications.** A DAG implies conditional independencies that data
 can contradict. `dagitty::impliedConditionalIndependencies()` lists them, and
-`dagitty::localTests()` tests them against a data set:
+`dagitty::localTests()` tests them against a data set. Passing these tests
+does not confirm the DAG: graphs that imply the same independencies fit the
+data equally well.
 
 ```{r implications, eval=has_dagitty}
 dagitty::impliedConditionalIndependencies(bowtie)

@@ -128,7 +128,9 @@ iv
 ```
 
 The arrow from `Z` to `X` is the first condition. The other two are arrows
-that are missing: none from `Z` to `Y`, and none between `U` and `Z`. The
+that are missing: none from `Z` to `Y`, and no common cause of `Z` and `Y`,
+drawn or not. Here that means none between `U` and `Z`; in Mendelian
+randomisation, ancestry (population stratification) is the usual threat. The
 figure states these assumptions; it cannot test them. With `U` unobserved,
 neither the empty set nor {Z} meets the adjustment criterion, which is the
 situation an instrument is meant for:
@@ -138,8 +140,11 @@ check_metro_adjustment(iv, unadjusted = TRUE)$valid
 check_metro_adjustment(iv, adjusted = "Z")$valid
 ```
 
-An instrumental variable estimate also needs assumptions that a DAG does not
-show, such as homogeneity of the effect or monotonicity.
+An instrumental variable estimate also needs a further assumption that a DAG
+does not show, and that assumption decides which effect is estimated:
+homogeneity of the effect gives the average effect, whereas monotonicity gives
+only the effect in those whose exposure the instrument changes, which is hard
+to interpret for a genotype and a continuous exposure.
 
 ## Selection bias
 
@@ -189,8 +194,13 @@ true physical activity `X` affects diabetes and the reported activity
 `Xstar`, which also depends on other causes of the report `E`, such as recall
 and wanting to give a good impression. Mark `X` and `E` as unobserved: you
 have no data on them, so they and the arrows leaving them are drawn dashed.
-Roles are disjoint, so a variable cannot be both unobserved and the exposure;
-the exposure marker goes on `Xstar`, the variable the analysis uses.
+Roles are disjoint, so a variable cannot be both unobserved and the exposure.
+The question concerns the true activity `X`, but the analysis can only use
+the report, so the exposure marker goes on `Xstar` as the analysed proxy and
+the `estimand` label states the effect of interest. Do not run
+`check_metro_adjustment()` or `highlight_paths()` on this figure: they would
+treat the report itself as the exposure, whose effect on diabetes is null in
+this graph, and the path through `X` as bias.
 
 ```{r measurement, fig.height=3.4, fig.cap="The analysed exposure is the report; the true exposure and the other causes of the report are unobserved.", fig.alt="Dashed true physical activity points to type 2 diabetes, the outcome, and to reported physical activity, the exposure. Dashed other causes of the report also point to reported physical activity. Every arrow is dashed, and none goes from the report to diabetes."}
 me_edges <- data.frame(
@@ -201,7 +211,8 @@ me_labels <- c(X = "True physical activity",
   Xstar = "Reported physical activity",
   E = "Other causes of the report", Y = "Type 2 diabetes")
 measured <- metro_dag(me_edges, labels = me_labels,
-  exposure = "Xstar", outcome = "Y", unobserved = c("X", "E"))
+  exposure = "Xstar", outcome = "Y", unobserved = c("X", "E"),
+  estimand = "Effect of true physical activity on type 2 diabetes")
 measured
 ```
 
@@ -255,15 +266,17 @@ Each treatment's own total effect can still be identified by adjustment under
 this graph, with {L0} for `A0` and {A0, L1} for `A1`, but no set identifies
 their joint effect, such as always against never treating. G-methods, such as
 the parametric g-formula, inverse probability weighting of marginal structural
-models and g-estimation, can estimate it, because they account for `L1` as a
-confounder of `A1` without blocking the part of the effect of `A0` that passes
-through it (Naimi, Cole and Kennedy 2017).
+models and g-estimation, can estimate it under the drawn graph (sequential
+exchangeability given the measured counts), with positivity, consistency and
+correctly specified models, because they account for `L1` as a confounder of
+`A1` without blocking the part of the effect of `A0` that passes through it
+(Naimi, Cole and Kennedy 2017).
 
 The same structure appears in mediation analysis when a confounder of the
 mediator and the outcome is itself affected by the exposure: read `A0` as the
 exposure, `L1` as that confounder and `A1` as the mediator. Natural direct and
-indirect effects are then not identified, even when the confounder is
-measured (VanderWeele, Vansteelandt and Robins 2014), and a controlled direct
+indirect effects are then not identified without further assumptions, even
+when the confounder is measured (VanderWeele, Vansteelandt and Robins 2014), and a controlled direct
 effect is a joint effect of exposure and mediator, like the one above.
 
 ## Where to go next
