@@ -7,6 +7,8 @@ on:
   pull_request:
   # Weekly, to catch changes in dependencies, and by hand from the Actions
   # tab. Only these two events run the ggplot2-devel and maintenance jobs.
+  # GitHub disables scheduled workflows after 60 days without activity in
+  # the repository; re-enable this one from the Actions tab if that happens.
   schedule:
     - cron: '17 5 * * 1'
   workflow_dispatch:
@@ -159,20 +161,20 @@ jobs:
   ggplot2-devel:
     # The development versions of ggplot2 and patchwork, as an early warning
     # of upstream changes: weekly and on demand only, to save Actions
-    # minutes, and experimental, so a failure does not fail the run. Its own
-    # cache-version keeps the development versions out of the release jobs'
-    # package cache, and the matrix id keeps its check-r-package artifact
-    # names apart from those of the ubuntu release job.
+    # minutes. It never runs on pull requests, so it cannot block one; a
+    # failure fails the weekly run, which is what notifies the maintainer.
+    # Its own cache-version keeps the development versions out of the release
+    # jobs' package cache, and the matrix id keeps its check-r-package
+    # artifact names apart from those of the ubuntu release job.
     if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
     runs-on: ${{ matrix.config.os }}
     timeout-minutes: 120
     name: ${{ matrix.config.os }} / R ${{ matrix.config.r }} / ggplot2 ${{ matrix.config.ggplot }}
-    continue-on-error: ${{ matrix.config.experimental }}
     strategy:
       fail-fast: false
       matrix:
         config:
-          - {os: ubuntu-latest, r: release, ggplot: devel, experimental: true, id: ggplot2-devel}
+          - {os: ubuntu-latest, r: release, ggplot: devel, id: ggplot2-devel}
     env:
       GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
       R_KEEP_PKG_SOURCE: yes
@@ -260,11 +262,16 @@ jobs:
           if (nrow(res)) res$From <- lapply(res$From, function(f)
             sub(root, "", normalizePath(f, winslash = "/", mustWork = FALSE), fixed = TRUE))
           # A permanent redirect to a working page is reported (fix it with
-          # urlchecker::url_update()) but is not broken.
+          # urlchecker::url_update()) but is not broken. Publishers behind
+          # doi.org often refuse automated requests with 403 or 429; those are
+          # reported for a manual look but do not fail the job. urlchecker
+          # scans the package sources, not the website-only vignettes/articles.
           moved <- nzchar(res$New) & !nzchar(res$CRAN) & res$Status %in% c("200", "405")
+          refused <- !moved & !nzchar(res$CRAN) & res$Status %in% c("403", "429")
           problem <- ifelse(moved, paste("Moved to", res$New),
             ifelse(nzchar(res$CRAN), "CRAN URL not in canonical form",
-              trimws(paste(res$Status, res$Message))))
+              ifelse(refused, paste(res$Status, "(automated access refused; check by hand)"),
+                trimws(paste(res$Status, res$Message)))))
           from <- vapply(res$From, paste, "", collapse = ", ")
           cell <- function(x) gsub("|", "&#124;", gsub("[[:space:]]+", " ", x), fixed = TRUE)
           cat("## URLs", "",
@@ -273,7 +280,8 @@ jobs:
               sprintf("| %s | %s | %s |", cell(res$URL), cell(from), cell(problem))), "",
             file = Sys.getenv("GITHUB_STEP_SUMMARY"), sep = "\n", append = TRUE)
           print(res)
-          if (any(!moved)) stop(sum(!moved), " broken URL(s); see the run summary.", call. = FALSE)
+          broken <- !moved & !refused
+          if (any(broken)) stop(sum(broken), " broken URL(s); see the run summary.", call. = FALSE)
       - name: Check spelling (report only)
         if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
         shell: Rscript {0}
